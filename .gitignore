@@ -1,0 +1,6 @@
+.idea
+test-output
+*.iml
+*~
+target
+CVS
