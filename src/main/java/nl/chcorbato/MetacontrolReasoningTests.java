@@ -98,10 +98,15 @@ public class MetacontrolReasoningTests {
         OWLDataPropertyAssertionAxiom axiom;
         for (OWLNamedIndividual ind : reasoner.getInstances(componentState, false).getFlattened()) {
         	// componentState update, motor4 in error
-			if (ind == factory.getOWLNamedIndividual(":motor4", pm)) axiom = factory.getOWLDataPropertyAssertionAxiom(c_status, ind, false);
-		    else axiom = factory.getOWLDataPropertyAssertionAxiom(c_status, ind, true);		
-    		manager.applyChange(new AddAxiom(ontology, axiom));
-    		    		
+			if (ind == factory.getOWLNamedIndividual(":motor4", pm)) 
+				axiom = factory.getOWLDataPropertyAssertionAxiom(c_status, ind, false);
+				
+		    else
+		    	axiom = factory.getOWLDataPropertyAssertionAxiom(c_status, ind, true);	
+
+			manager.applyChange(new AddAxiom(ontology, axiom));
+			//Ontology is updated
+		    reasoner.flush();    		
             // print values given to component statuses
             for (OWLLiteral value : reasoner.getDataPropertyValues(ind, c_status)) {
                 System.out.println("Component " + renderer.render(ind) + " status= " + value.getLiteral());
