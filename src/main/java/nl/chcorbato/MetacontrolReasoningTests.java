@@ -19,6 +19,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
@@ -59,33 +60,50 @@ public class MetacontrolReasoningTests {
         OWLClass objective = factory.getOWLClass(":Objective", pm);
         OWLClass functionDesign = factory.getOWLClass(":FunctionDesign", pm);
         OWLClass functionGrounding = factory.getOWLClass(":FunctionGrounding", pm);
-                
+        
+        // SET the status of components in the ontology (metacontrol sensory input)
         ontology = updateComponentStates(manager, ontology, reasoner, factory, pm); // TODO replace with real update using ROS introspection
 		
-        //get values of selected properties on the individual
-        OWLDataProperty o_status = factory.getOWLDataProperty(":o_status", pm);
-        OWLNamedIndividual o_move_fwd = factory.getOWLNamedIndividual(":o_move_fwd", pm);
-
+	    //Ontology is updated
+	    reasoner.flush();
+	    try {
+			manager.saveOntology(ontology);
+		} catch (OWLOntologyStorageException e) {
+			e.printStackTrace();
+		}
         
-        // get value for objective states
-        for (OWLLiteral ind : reasoner.getDataPropertyValues(o_move_fwd, o_status)) {
-            System.out.println("objective " + renderer.render(o_move_fwd) + " status= " + ind.getLiteral());
+        //get values of selected properties of the individual
+        OWLDataProperty o_status = factory.getOWLDataProperty(":o_status", pm);
+        OWLNamedIndividual o_move_fw = factory.getOWLNamedIndividual(":o_move_fw", pm);
+
+        // check if the status of that objective is true (but does not add the axiom!!!)
+        for (OWLLiteral ind : reasoner.getDataPropertyValues(o_move_fw, o_status)) {
+            System.out.println("objective " + renderer.render(o_move_fw) + " status= " + ind.getLiteral());
         }
         
-        //update 
-        OWLDataPropertyAssertionAxiom axiomToExplain = factory.getOWLDataPropertyAssertionAxiom(o_status, o_move_fwd, false);
+        //check whether the SWRL rule is used
+        OWLDataPropertyAssertionAxiom axiomToExplain = factory.getOWLDataPropertyAssertionAxiom(o_status, o_move_fw, false);
+        System.out.println("Is Status of objective obained using the SWRL? : " + reasoner.isEntailed(axiomToExplain));
         
         //get explanation
-//        DefaultExplanationGenerator explanationGenerator =
-//                new DefaultExplanationGenerator(
-//                        manager, reasonerFactory, ontology, reasoner, new SilentExplanationProgressMonitor());
-//        Set<OWLAxiom> explanation = explanationGenerator.getExplanation(axiomToExplain);
-//        ExplanationOrderer deo = new ExplanationOrdererImpl(manager);
-//        ExplanationTree explanationTree = deo.getOrderedExplanation(axiomToExplain, explanation);
+        DefaultExplanationGenerator explanationGenerator =
+                new DefaultExplanationGenerator(
+                        manager, reasonerFactory, ontology, reasoner, new SilentExplanationProgressMonitor());
+        Set<OWLAxiom> explanation = explanationGenerator.getExplanation(axiomToExplain);
+        ExplanationOrderer deo = new ExplanationOrdererImpl(manager);
+//        ExplanationTree explanationTree = deo.getOrderedExplanation(axiomToExplain, explanation); // this causes an exception
 //        System.out.println();
-//        System.out.println("-- explanation why Ivan is in class ChildOfMarriedParents --");
-//        printIndented(explanationTree, "");
+//        System.out.println("-- explanation why objective state is false --");
+//        printIndented(explanationTree, ""); 
+
         
+	    //Ontology is updated
+	    reasoner.flush();
+	    try {
+			manager.saveOntology(ontology);
+		} catch (OWLOntologyStorageException e) {
+			e.printStackTrace();
+		}
 	}
 	
     private static OWLOntology updateComponentStates(OWLOntologyManager manager, OWLOntology ontology, OWLReasoner reasoner, OWLDataFactory factory, PrefixDocumentFormat pm) {
@@ -104,9 +122,9 @@ public class MetacontrolReasoningTests {
 		    else
 		    	axiom = factory.getOWLDataPropertyAssertionAxiom(c_status, ind, true);	
 
+			//apply changes - add axioms
 			manager.applyChange(new AddAxiom(ontology, axiom));
-			//Ontology is updated
-		    reasoner.flush();    		
+  		
             // print values given to component statuses
             for (OWLLiteral value : reasoner.getDataPropertyValues(ind, c_status)) {
                 System.out.println("Component " + renderer.render(ind) + " status= " + value.getLiteral());
