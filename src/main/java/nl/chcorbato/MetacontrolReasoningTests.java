@@ -16,6 +16,8 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -60,8 +62,13 @@ public class MetacontrolReasoningTests {
         OWLClass objective = factory.getOWLClass(":Objective", pm);
         OWLClass functionDesign = factory.getOWLClass(":FunctionDesign", pm);
         OWLClass functionGrounding = factory.getOWLClass(":FunctionGrounding", pm);
+        OWLObjectProperty typeF = factory.getOWLObjectProperty(":typeF", pm);
+        OWLObjectProperty solves = factory.getOWLObjectProperty(":solves", pm);
+        OWLDataProperty realisability = factory.getOWLDataProperty(":realisability", pm);
+        OWLDataProperty confidence_level_fd = factory.getOWLDataProperty(":confidence_level_fd", pm);        
         
-        // SET the status of components in the ontology (metacontrol sensory input)
+        /** SET the status of components in the ontology (metacontrol sensory input) **/
+        // TODO complete metacontrol perception SWRL
         ontology = updateComponentStates(manager, ontology, reasoner, factory, pm); // TODO replace with real update using ROS introspection
 		
 	    //Ontology is updated
@@ -96,6 +103,30 @@ public class MetacontrolReasoningTests {
 //        System.out.println("-- explanation why objective state is false --");
 //        printIndented(explanationTree, ""); 
 
+        /** REASON the best configuration possible to address objectives in false status **/
+        // TODO:
+        // obtain the typeF(unction) of the objective
+        OWLNamedIndividual function_ins = reasoner.getObjectPropertyValues(o_move_fw, typeF).getFlattened().iterator().next();
+        // obtain available function designs for that function (using the inverse property)
+        OWLObjectPropertyExpression inverse = factory.getOWLObjectInverseOf(solves);
+        float comp = 0;
+        OWLNamedIndividual best_fd = null;
+        for (OWLNamedIndividual fd : reasoner.getObjectPropertyValues(function_ins, inverse).getFlattened()) {	
+        	for ( OWLLiteral ind : reasoner.getDataPropertyValues(fd, realisability) ) {
+        		System.out.println("FD " + renderer.render(fd) + " realisability: " + ind.getLiteral());
+        	}
+        	// if FD is realisable
+        	if (  !reasoner.isEntailed( factory.getOWLDataPropertyAssertionAxiom(realisability, fd, false) ) ) {        		
+	        	for ( OWLLiteral conf : reasoner.getDataPropertyValues(fd, confidence_level_fd) ) {
+	        		float value = Float.parseFloat(conf.getLiteral());
+	        		if (value > comp) {
+	        			best_fd = fd;
+	        			comp = value;
+	                }//Close if
+	        	}//Close for
+        	}//Close if
+        }//Close for
+        System.out.println("Best FD: " + renderer.render(best_fd) );
         
 	    //Ontology is updated
 	    reasoner.flush();
