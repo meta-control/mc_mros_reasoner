@@ -40,32 +40,53 @@ import uk.ac.manchester.cs.owl.explanation.ordering.Tree;
  *
  */
 public class MetacontrolReasoningTests {
+
 	private static final String ONTOLOGY_FILE = "file:/home/chcorbato/mros_ws/tomasys/metacontrol_unexmin.owl";
 	private static final String ONTOLOGY_IRI = "http://www.semanticweb.org/chcorbato/ontologies/2018/metacontrol_unexmin";
 	private static OWLObjectRenderer renderer = new DLSyntaxObjectRenderer();
 	
+	//prepare ontology and reasoner
+    static OWLOntologyManager manager;
+    static OWLOntology ontology;
+    static OWLReasonerFactory reasonerFactory;
+    static OWLReasoner reasoner;
+    static OWLDataFactory factory;
+    static PrefixDocumentFormat pm;
+    
+    //get tomasys classes
+    static OWLClass componentState;
+    static OWLClass componentClass;
+    static OWLClass function;
+    static OWLClass objective;
+    static OWLClass functionDesign;
+    static OWLClass functionGrounding;
+    static OWLObjectProperty typeF;
+    static OWLObjectProperty solves;
+    static OWLDataProperty realisability;
+    static OWLDataProperty confidence_level_fd;
+	
 	public static void main(String[] args) throws OWLOntologyCreationException {
+		manager = OWLManager.createOWLOntologyManager();
+		ontology = manager.loadOntologyFromOntologyDocument(IRI.create(ONTOLOGY_FILE));
+	    reasonerFactory = PelletReasonerFactory.getInstance();
+	    reasoner = reasonerFactory.createReasoner(ontology, new SimpleConfiguration());
+	    factory = manager.getOWLDataFactory();
+	    pm = manager.getOntologyFormat(ontology).asPrefixOWLOntologyFormat();
+		pm.setDefaultPrefix(ONTOLOGY_IRI + "#");// TODO Auto-generated constructor stub
+
 		
-		//prepare ontology and reasoner
-        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-        OWLOntology ontology = manager.loadOntologyFromOntologyDocument(IRI.create(ONTOLOGY_FILE));
-        OWLReasonerFactory reasonerFactory = PelletReasonerFactory.getInstance();
-        OWLReasoner reasoner = reasonerFactory.createReasoner(ontology, new SimpleConfiguration());
-        OWLDataFactory factory = manager.getOWLDataFactory();
-        PrefixDocumentFormat pm = manager.getOntologyFormat(ontology).asPrefixOWLOntologyFormat();
-        pm.setDefaultPrefix(ONTOLOGY_IRI + "#");
-		
-        //get tomasys classes
-        OWLClass componentState = factory.getOWLClass(":ComponentState", pm);
-        OWLClass componentClass = factory.getOWLClass(":ComponentClass", pm);
-        OWLClass function = factory.getOWLClass(":Function", pm);
-        OWLClass objective = factory.getOWLClass(":Objective", pm);
-        OWLClass functionDesign = factory.getOWLClass(":FunctionDesign", pm);
-        OWLClass functionGrounding = factory.getOWLClass(":FunctionGrounding", pm);
-        OWLObjectProperty typeF = factory.getOWLObjectProperty(":typeF", pm);
-        OWLObjectProperty solves = factory.getOWLObjectProperty(":solves", pm);
-        OWLDataProperty realisability = factory.getOWLDataProperty(":realisability", pm);
-        OWLDataProperty confidence_level_fd = factory.getOWLDataProperty(":confidence_level_fd", pm);        
+	    //get tomasys classes
+	    componentState = factory.getOWLClass(":ComponentState", pm);
+	    componentClass = factory.getOWLClass(":ComponentClass", pm);
+	    function = factory.getOWLClass(":Function", pm);
+	    objective = factory.getOWLClass(":Objective", pm);
+	    functionDesign = factory.getOWLClass(":FunctionDesign", pm);
+	    functionGrounding = factory.getOWLClass(":FunctionGrounding", pm);
+	    typeF = factory.getOWLObjectProperty(":typeF", pm);
+	    solves = factory.getOWLObjectProperty(":solves", pm);
+	    realisability = factory.getOWLDataProperty(":realisability", pm);
+	    confidence_level_fd = factory.getOWLDataProperty(":confidence_level_fd", pm);
+        
         
         /** SET the status of components in the ontology (metacontrol sensory input) **/
         // TODO complete metacontrol perception SWRL
@@ -103,30 +124,8 @@ public class MetacontrolReasoningTests {
 //        System.out.println("-- explanation why objective state is false --");
 //        printIndented(explanationTree, ""); 
 
-        /** REASON the best configuration possible to address objectives in false status **/
-        // TODO:
-        // obtain the typeF(unction) of the objective
-        OWLNamedIndividual function_ins = reasoner.getObjectPropertyValues(o_move_fw, typeF).getFlattened().iterator().next();
-        // obtain available function designs for that function (using the inverse property)
-        OWLObjectPropertyExpression inverse = factory.getOWLObjectInverseOf(solves);
-        float comp = 0;
-        OWLNamedIndividual best_fd = null;
-        for (OWLNamedIndividual fd : reasoner.getObjectPropertyValues(function_ins, inverse).getFlattened()) {	
-        	for ( OWLLiteral ind : reasoner.getDataPropertyValues(fd, realisability) ) {
-        		System.out.println("FD " + renderer.render(fd) + " realisability: " + ind.getLiteral());
-        	}
-        	// if FD is realisable
-        	if (  !reasoner.isEntailed( factory.getOWLDataPropertyAssertionAxiom(realisability, fd, false) ) ) {        		
-	        	for ( OWLLiteral conf : reasoner.getDataPropertyValues(fd, confidence_level_fd) ) {
-	        		float value = Float.parseFloat(conf.getLiteral());
-	        		if (value > comp) {
-	        			best_fd = fd;
-	        			comp = value;
-	                }//Close if
-	        	}//Close for
-        	}//Close if
-        }//Close for
-        System.out.println("Best FD: " + renderer.render(best_fd) );
+        /** REASON the best Function Design possible to address objectives in false status **/      
+        System.out.println("Best FD: " + renderer.render(obtainBestFunctionDesign(o_move_fw)) );
         
 	    //Ontology is updated
 	    reasoner.flush();
@@ -137,6 +136,15 @@ public class MetacontrolReasoningTests {
 		}
 	}
 	
+	/**
+	 * Updates the status of the components in the system
+	 * @param manager
+	 * @param ontology
+	 * @param reasoner
+	 * @param factory
+	 * @param pm
+	 * @return
+	 */
     private static OWLOntology updateComponentStates(OWLOntologyManager manager, OWLOntology ontology, OWLReasoner reasoner, OWLDataFactory factory, PrefixDocumentFormat pm) {
     	//get tomasys classes and properties
         OWLClass componentState = factory.getOWLClass(":ComponentState", pm);
@@ -165,6 +173,32 @@ public class MetacontrolReasoningTests {
             	
     	return ontology; 	
     
+    }
+    
+    private static  OWLNamedIndividual obtainBestFunctionDesign(OWLNamedIndividual objective_ins) {
+    	
+    	// obtain the typeF(unction) of the objective
+        OWLNamedIndividual function_ins = reasoner.getObjectPropertyValues(objective_ins, typeF).getFlattened().iterator().next();
+        // obtain available function designs for that function (using the inverse property)
+        OWLObjectPropertyExpression inverse = factory.getOWLObjectInverseOf(solves);
+        float comp = 0;
+        OWLNamedIndividual best_fd = null;
+        for (OWLNamedIndividual fd : reasoner.getObjectPropertyValues(function_ins, inverse).getFlattened()) {	
+        	for ( OWLLiteral ind : reasoner.getDataPropertyValues(fd, realisability) ) {
+        		System.out.println("FD " + renderer.render(fd) + " realisability: " + ind.getLiteral());
+        	}
+        	// if FD is realisable
+        	if (  !reasoner.isEntailed( factory.getOWLDataPropertyAssertionAxiom(realisability, fd, false) ) ) {        		
+	        	for ( OWLLiteral conf : reasoner.getDataPropertyValues(fd, confidence_level_fd) ) {
+	        		float value = Float.parseFloat(conf.getLiteral());
+	        		if (value > comp) {
+	        			best_fd = fd;
+	        			comp = value;
+	                }//Close if
+	        	}//Close for
+        	}//Close if
+        }//Close for
+    	return best_fd;
     }
     
     /**
