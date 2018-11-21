@@ -2,6 +2,8 @@ from owlready2 import *
 
 """
 author: c.h.corbato@tudelft.nl
+using Owlready to manipulate the ontology
+Problem: not possible to access inferred facts in individuals, because it is not supported by Owlready yet
 """
 
 # Load unexmin metacontrol ontology
@@ -21,5 +23,6 @@ for i in onto.ComponentState.instances() :
 sync_reasoner()
 for i in onto.Objective.instances() :
     print(i)
+    # the following does not work because the inferred facts in individuals (property values) cannot be accessed
     if i.o_status == False:
         print(i, " o_status= ", i.o_status)
