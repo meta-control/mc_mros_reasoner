@@ -20,7 +20,8 @@ for i in onto.ComponentState.instances() :
     print(i, " c_status= ", i.c_status)
 
 # REASON objective(s) in error
-sync_reasoner()
+# sync_reasoner()
+sync_reasoner_pellet()
 for i in onto.Objective.instances() :
     print(i)
     # the following does not work because the inferred facts in individuals (property values) cannot be accessed
