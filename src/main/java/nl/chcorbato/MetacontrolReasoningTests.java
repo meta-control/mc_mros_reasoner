@@ -164,7 +164,7 @@ public class MetacontrolReasoningTests {
 			//apply changes - add axioms
 			manager.applyChange(new AddAxiom(ontology, axiom));
   		
-            // print values given to component statuses
+            // print values given to component statuses - does not work for the values added here ??
             for (OWLLiteral value : reasoner.getDataPropertyValues(ind, c_status)) {
                 System.out.println("Component " + renderer.render(ind) + " status= " + value.getLiteral());
             }
