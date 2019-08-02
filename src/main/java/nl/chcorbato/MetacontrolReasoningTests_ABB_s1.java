@@ -76,6 +76,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
     static OWLObjectProperty roleDef;
     static OWLDataProperty realisability;
     static OWLDataProperty fd_efficacy;
+    static OWLDataProperty o_status;
 	
 	public static void main(String[] args) throws OWLOntologyCreationException {
 		manager = OWLManager.createOWLOntologyManager();
@@ -105,6 +106,20 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	    realisability = factory.getOWLDataProperty(":realisability", tm);
 	    fd_efficacy = factory.getOWLDataProperty(":fd_efficacy", tm);
         
+	    /**
+	     * TESTs
+	     */
+	    String str_objective_tag = ":o_detect_ws1_tag";  // CHANGE TO TEST ANOTHER OBJECTIVE
+	    
+        //get values of selected properties of the individual
+        OWLDataProperty o_status = factory.getOWLDataProperty(":o_status", tm);
+        OWLNamedIndividual o_tag = factory.getOWLNamedIndividual(str_objective_tag, om);
+
+        // print the status of that objective
+        for (OWLLiteral ind : reasoner.getDataPropertyValues(o_tag, o_status)) {
+            System.out.println("objective " + renderer.render(o_tag) + " status= " + ind.getLiteral());
+        }
+        
         
         /** 
          * MONITORING INPUT (from Components loop o similar) 
@@ -112,6 +127,9 @@ public class MetacontrolReasoningTests_ABB_s1 {
          */
         // TODO complete metacontrol perception SWRL
         ontology = updateComponentStates(manager, ontology, reasoner, factory, tm); // TODO replace with real update using ROS introspection
+        
+        // INPUT from objectives observers - TODO: replace with input from monitoring infrastructure
+        manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(o_status, o_tag, false));
 		
         /**
          * DIAGNOSIS REASONING
@@ -125,27 +143,14 @@ public class MetacontrolReasoningTests_ABB_s1 {
 		}
         
 	    
-	    /**
-	     * TESTs
-	     */
-	    String objective = ":o_detect_ws1_tag";  // CHANGE TO TEST ANOTHER OBJECTIVE
 	    
-        //get values of selected properties of the individual
-        OWLDataProperty o_status = factory.getOWLDataProperty(":o_status", tm);
-        OWLNamedIndividual o = factory.getOWLNamedIndividual(objective, om);
-
-        // print the status of that objective
-        for (OWLLiteral ind : reasoner.getDataPropertyValues(o, o_status)) {
-            System.out.println("objective " + renderer.render(o) + " status= " + ind.getLiteral());
-        }
-        
 
         /** RECONFIGURATION REASONING
-         * compute the best Function Design possible to address objectives in false status 
-         * TODO: do for all objectives needed
+         * compute the best Function Design possible to address objectives in false status (aka in ERROR)
+         * TODO: do for all objectives needed (ni ERROR)
          */      
-        OWLNamedIndividual fd = obtainBestFunctionDesign(o);
-        System.out.println("Best FunctionDesign: " + renderer.render(fd) );
+        OWLNamedIndividual fd = obtainBestFunctionDesign(o_tag);
+        System.out.println("\nBest FunctionDesign: " + renderer.render(fd) );
         
 	    
 	    /**
@@ -209,7 +214,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
      * @param objective_ins the objective in error
      * @return besdt_fd the best FD available (fd_efficacy is the criteria)
      */
-    private static  OWLNamedIndividual obtainBestFunctionDesign(OWLNamedIndividual objective_ins) {
+    private static OWLNamedIndividual obtainBestFunctionDesign(OWLNamedIndividual objective_ins) {
     	
     	// obtain the typeF(unction) of the objective
         OWLNamedIndividual function_ins = reasoner.getObjectPropertyValues(objective_ins, typeF).getFlattened().iterator().next();
