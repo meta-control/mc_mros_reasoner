@@ -62,7 +62,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
     static PrefixDocumentFormat om;
     static PrefixDocumentFormat tm;
     
-    //get tomasys classes
+    // tomasys classes
     static OWLClass componentState;
     static OWLClass componentClass;
     static OWLClass function;
@@ -74,9 +74,17 @@ public class MetacontrolReasoningTests_ABB_s1 {
     static OWLObjectProperty fd_error_log;
     static OWLObjectProperty roles;
     static OWLObjectProperty roleDef;
-    static OWLDataProperty realisability;
+    static OWLDataProperty fd_realisability;
     static OWLDataProperty fd_efficacy;
     static OWLDataProperty o_status;
+    static OWLDataProperty o_performance;
+    static OWLDataProperty b_status;
+    static OWLDataProperty c_status;
+    static OWLDataProperty c_performance;
+    static OWLDataProperty cc_availability;
+    static OWLDataProperty cc_unique;
+    static OWLDataProperty fg_performance;
+    static OWLDataProperty fg_status;
 	
 	public static void main(String[] args) throws OWLOntologyCreationException {
 		manager = OWLManager.createOWLOntologyManager();
@@ -92,80 +100,125 @@ public class MetacontrolReasoningTests_ABB_s1 {
 		tm.setDefaultPrefix(TOMASYS_IRI + "#");// TODO Auto-generated constructor stub
 
 	    //get tomasys classes
-	    componentState = factory.getOWLClass(":ComponentState", tm);
-	    componentClass = factory.getOWLClass(":ComponentClass", tm);
-	    function = factory.getOWLClass(":Function", tm);
-	    objective = factory.getOWLClass(":Objective", tm);
-	    functionDesign = factory.getOWLClass(":FunctionDesign", tm);
-	    functionGrounding = factory.getOWLClass(":FunctionGrounding", tm);
-	    typeF = factory.getOWLObjectProperty(":typeF", tm);
-	    solves = factory.getOWLObjectProperty(":solves", tm);
-	    fd_error_log = factory.getOWLObjectProperty(":fd_error_log", tm);
-	    roles = factory.getOWLObjectProperty(":roles", tm);
-	    roleDef = factory.getOWLObjectProperty(":roleDef", tm);
-	    realisability = factory.getOWLDataProperty(":realisability", tm);
-	    fd_efficacy = factory.getOWLDataProperty(":fd_efficacy", tm);
-        
-	    /**
-	     * TESTs
-	     */
-	    String str_objective_tag = ":o_detect_ws1_tag";  // CHANGE TO TEST ANOTHER OBJECTIVE
-	    
-        //get values of selected properties of the individual
-        OWLDataProperty o_status = factory.getOWLDataProperty(":o_status", tm);
-        OWLNamedIndividual o_tag = factory.getOWLNamedIndividual(str_objective_tag, om);
+	    componentState	  = factory.getOWLClass("ComponentState",tm);         
+	    componentClass    = factory.getOWLClass("ComponentClass",tm);         
+	    function          = factory.getOWLClass("Function",tm);         
+	    objective         = factory.getOWLClass("Objective",tm);         
+	    functionDesign    = factory.getOWLClass(":functionDesign",tm);         
+	    functionGrounding = factory.getOWLClass(":functionGrounding",tm);
+	    typeF             = factory.getOWLObjectProperty(":typeF",tm);
+	    solves            = factory.getOWLObjectProperty(":solves",tm);
+	    fd_error_log      = factory.getOWLObjectProperty(":fd_error_log",tm);
+	    roles             = factory.getOWLObjectProperty(":roles",tm);
+	    roleDef           = factory.getOWLObjectProperty(":roleDef",tm);  
+	    fd_realisability  = factory.getOWLDataProperty(":fd_realisability",tm);  
+	    fd_efficacy       = factory.getOWLDataProperty(":fd_efficacy",tm);  
+	    o_status          = factory.getOWLDataProperty(":o_status",tm);  
+	    o_performance     = factory.getOWLDataProperty(":o_performance",tm);  
+	    b_status          = factory.getOWLDataProperty(":b_status",tm);  
+	    c_status          = factory.getOWLDataProperty(":c_status",tm);  
+	    c_performance     = factory.getOWLDataProperty(":c_performance",tm);  
+	    cc_availability   = factory.getOWLDataProperty(":cc_availability",tm);  
+	    cc_unique         = factory.getOWLDataProperty(":cc_unique",tm);  
+	    fg_performance    = factory.getOWLDataProperty(":fg_performance",tm);  
+	    fg_status         = factory.getOWLDataProperty(":fg_status",tm);  
+	                        
 
-        // print the status of that objective
-        for (OWLLiteral ind : reasoner.getDataPropertyValues(o_tag, o_status)) {
-            System.out.println("objective " + renderer.render(o_tag) + " status= " + ind.getLiteral());
-        }
-        
-        
-        /** 
-         * MONITORING INPUT (from Components loop o similar) 
-         * e.g. SET the status of components in the ontology (metacontrol sensory input) 
-         */
-        // TODO complete metacontrol perception SWRL
-        ontology = updateComponentStates(manager, ontology, reasoner, factory, tm); // TODO replace with real update using ROS introspection
-        
-        // INPUT from objectives observers - TODO: replace with input from monitoring infrastructure
-        manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(o_status, o_tag, false));
-		
+	    /**
+	     * TEST to run
+	     */
+	    
+	    int test = -1;
+	    
+	    // parse arguments [1..n]
+	    try {
+		    test = Integer.parseInt(args[0]);	
+		} catch (Exception e) {
+			System.out.println("No test specified");
+		}
+    
+	    switch ( test ) {
+	    
+		    case 0: 
+		    	System.out.println("\nSimple test: print objective status after injecting the fact that it is 'true'");
+		    	SimpleTest();
+		    	break;
+		    	
+		    case 1: // scenario 1 minimal reasoning = objective observed in error
+		    	System.out.println("\nscenario 1 minimal reasoning = objective observed in error");
+		    	String str_objective_tag = ":o_detect_ws1_tag";  // CHANGE TO TEST ANOTHER OBJECTIVE
+			    //get values of selected properties of the individual
+			    OWLNamedIndividual o_tag = factory.getOWLNamedIndividual(str_objective_tag, om);
+		        manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(o_status, o_tag, false));
+		    	break;
+		    	
+		    case 2: // scenario 1.b = camera in permanent error
+		    	System.out.println("\nscenario 1.b = camera in permanent error");
+		    	String str_camera = ":c_camera";
+		    	String str_c_camera = ":cc_camera";
+			    OWLNamedIndividual camera = factory.getOWLNamedIndividual(str_camera, om);
+			    OWLNamedIndividual c_camera = factory.getOWLNamedIndividual(str_c_camera, om);
+			    // camera in error
+			    manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(c_status, camera, false));
+			    // camera unavailable
+			    manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(cc_availability, c_camera, false));
+			    reasoner.flush();
+		    	break;
+		    
+		    default:
+				System.out.println("\nRunning default metacontrol reasoning using monitoring input");
+
+		    	/** 
+		         * MONITORING INPUT (from Components loop o similar) 
+		         * e.g. SET the status of components in the ontology (metacontrol sensory input) 
+		         */
+		        // TODO complete metacontrol perception SWRL
+		        ontology = updateComponentStates(manager, ontology, reasoner, factory, tm); // TODO replace with real update using ROS introspection, including objective observers
+		    }
+	    	
         /**
          * DIAGNOSIS REASONING
          */
-	    //Ontology is updated, SWRL are triggered
+	    //KB is updated, SWRL are triggered
 	    reasoner.flush();
-	    try {
-			manager.saveOntology(ontology);
-		} catch (OWLOntologyStorageException e) {
-			e.printStackTrace();
-		}
-        
-	    
-	    
+      
 
         /** RECONFIGURATION REASONING
          * compute the best Function Design possible to address objectives in false status (aka in ERROR)
-         * TODO: do for all objectives needed (ni ERROR)
-         */      
-        OWLNamedIndividual fd = obtainBestFunctionDesign(o_tag);
-        System.out.println("\nBest FunctionDesign: " + renderer.render(fd) );
-        
+         * TODO: filter out objectives no longer needed in the hierarchy
+         */
+	    
+	    // get all objectives
+        Set<OWLNamedIndividual> current_objectives = reasoner.getInstances(objective, false).getFlattened();
+        // get best FDs for objectives
+        Set<OWLNamedIndividual> fds = new HashSet<OWLNamedIndividual>();
+        for ( OWLNamedIndividual o : current_objectives ) {	        		
+	        OWLNamedIndividual fd = obtainBestFunctionDesign(o);
+	        if ( fd == null ) {
+		        System.out.println("\nThere is no FunctionDesign realisable for objective: " + renderer.render(o) );
+	        	continue;
+	        }
+	        fds.add(fd);
+	        System.out.println("\nBest FunctionDesign: " + renderer.render(fd) );
+		}
 	    
 	    /**
 	     * OUTPUT components specification for RECONFIGURATION
+	     * TODO: address potential issue of overlapping cs in the fds
 	     */
         System.out.println("\nComponent Specifications from RECONFIGURATION REASONING:");           
 
         Set<OWLNamedIndividual> cspecs = new HashSet<OWLNamedIndividual>();
-        for (OWLNamedIndividual rol : reasoner.getObjectPropertyValues(fd, roles).getFlattened() ) {
-        	
-            for (OWLNamedIndividual c : reasoner.getObjectPropertyValues(rol, roleDef).getFlattened() ) {
-            	cspecs.add( c );
-                System.out.println(renderer.render(c));           
-            }
-
+        
+        for ( OWLNamedIndividual fd : fds ) {	 
+	        for (OWLNamedIndividual rol : reasoner.getObjectPropertyValues(fd, roles).getFlattened() ) {
+	        	
+	            for (OWLNamedIndividual c : reasoner.getObjectPropertyValues(rol, roleDef).getFlattened() ) {
+	            	cspecs.add( c );
+	                System.out.println(renderer.render(c));           
+	            }
+	
+	        }
         }
         
 	}
@@ -188,7 +241,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
 
         OWLDataPropertyAssertionAxiom axiom;
         for (OWLNamedIndividual ind : reasoner.getInstances(componentState, false).getFlattened()) {
-        	// componentState update, motor4 in error
+        	// UNEXMIN ROBOT19 paper : componentState update, motor4 in error
 			if (ind == factory.getOWLNamedIndividual(":motor4", pm)) 
 				axiom = factory.getOWLDataPropertyAssertionAxiom(c_status, ind, false);
 				
@@ -197,7 +250,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
 
 			//apply changes - add axioms
 			manager.applyChange(new AddAxiom(ontology, axiom));
-  		
+			reasoner.flush();
             // print values given to component statuses - does not work for the values added here ??
             for (OWLLiteral value : reasoner.getDataPropertyValues(ind, c_status)) {
                 System.out.println("Component " + renderer.render(ind) + " status= " + value.getLiteral());
@@ -230,11 +283,11 @@ public class MetacontrolReasoningTests_ABB_s1 {
                 
         for (OWLNamedIndividual fd : fds) {	
         	
-        	for ( OWLLiteral ind : reasoner.getDataPropertyValues(fd, realisability) ) {
+        	for ( OWLLiteral ind : reasoner.getDataPropertyValues(fd, fd_realisability) ) {
         		System.out.println("FD " + renderer.render(fd) + " realisability: " + ind.getLiteral());
         	}
         	// FILTER if FD realisability is NOT FALSE (TODO check SWRL are complete for this)
-        	if (  !reasoner.isEntailed( factory.getOWLDataPropertyAssertionAxiom(realisability, fd, false) ) ) {    
+        	if (  !reasoner.isEntailed( factory.getOWLDataPropertyAssertionAxiom(fd_realisability, fd, false) ) ) {    
         		
         		// FILTER if the FD error log does NOT contain the current objective
         		if ( !reasoner.getObjectPropertyValues(fd, fd_error_log).containsEntity(objective_ins) ) {
@@ -253,17 +306,20 @@ public class MetacontrolReasoningTests_ABB_s1 {
     	return best_fd;
     }
     
-    /**
-     * @author Martin Kuba makub@ics.muni.cz
-     */
-    private static void printIndented(Tree<OWLAxiom> node, String indent) {
-        OWLAxiom axiom = node.getUserObject();
-        System.out.println(indent + renderer.render(axiom));
-        if (!node.isLeaf()) {
-            for (Tree<OWLAxiom> child : node.getChildren()) {
-                printIndented(child, indent + "    ");
-            }
-        }
+
+    private static void SimpleTest(){
+	    String str_objective_tag = ":o_detect_ws1_tag";  // CHANGE TO TEST ANOTHER OBJECTIVE
+	    
+	    //get values of selected properties of the individual
+	    OWLNamedIndividual o_tag = factory.getOWLNamedIndividual(str_objective_tag, om);
+	    manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(o_status, o_tag, true));
+	    reasoner.flush();
+
+	    // print the status of that objective
+	    for (OWLLiteral ind : reasoner.getDataPropertyValues(o_tag, o_status)) {
+	        System.out.println("objective " + renderer.render(o_tag) + " status= " + ind.getLiteral());
+	    }
     }
+    
 
 }
