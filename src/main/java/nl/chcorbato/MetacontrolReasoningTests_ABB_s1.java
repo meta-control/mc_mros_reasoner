@@ -65,6 +65,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
     // tomasys classes
     static OWLClass componentState;
     static OWLClass componentClass;
+    static OWLClass binding;
     static OWLClass function;
     static OWLClass objective;
     static OWLClass functionDesign;
@@ -100,12 +101,13 @@ public class MetacontrolReasoningTests_ABB_s1 {
 		tm.setDefaultPrefix(TOMASYS_IRI + "#");// TODO Auto-generated constructor stub
 
 	    //get tomasys classes
-	    componentState	  = factory.getOWLClass("ComponentState",tm);         
-	    componentClass    = factory.getOWLClass("ComponentClass",tm);         
-	    function          = factory.getOWLClass("Function",tm);         
-	    objective         = factory.getOWLClass("Objective",tm);         
-	    functionDesign    = factory.getOWLClass(":functionDesign",tm);         
-	    functionGrounding = factory.getOWLClass(":functionGrounding",tm);
+	    componentState	  = factory.getOWLClass(":ComponentState",tm);         
+	    componentClass    = factory.getOWLClass(":ComponentClass",tm);
+	    binding    = factory.getOWLClass(":Binding",tm);         
+	    function          = factory.getOWLClass(":Function",tm);         
+	    objective         = factory.getOWLClass(":Objective",tm);         
+	    functionDesign    = factory.getOWLClass(":FunctionDesign",tm);         
+	    functionGrounding = factory.getOWLClass(":FunctionGrounding",tm);
 	    typeF             = factory.getOWLObjectProperty(":typeF",tm);
 	    solves            = factory.getOWLObjectProperty(":solves",tm);
 	    fd_error_log      = factory.getOWLObjectProperty(":fd_error_log",tm);
@@ -157,11 +159,9 @@ public class MetacontrolReasoningTests_ABB_s1 {
 		    	String str_camera = ":c_camera";
 		    	String str_c_camera = ":cc_camera";
 			    OWLNamedIndividual camera = factory.getOWLNamedIndividual(str_camera, om);
-			    OWLNamedIndividual c_camera = factory.getOWLNamedIndividual(str_c_camera, om);
 			    // camera in error
 			    manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(c_status, camera, false));
 			    // camera unavailable
-			    manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(cc_availability, c_camera, false));
 			    reasoner.flush();
 		    	break;
 		    
@@ -181,15 +181,59 @@ public class MetacontrolReasoningTests_ABB_s1 {
          */
 	    //KB is updated, SWRL are triggered
 	    reasoner.flush();
-      
+	    
+	    // PRINT system status
+	    
+	    // Print Components
+	    System.out.println("\nComponents:");
+        Set<OWLNamedIndividual> individuals = reasoner.getInstances(componentState, false).getFlattened();
+        for ( OWLNamedIndividual i : individuals ) {
+        	System.out.println(renderer.render(i) + reasoner.getDataPropertyValues(i, c_status) );
+        }   
+        
+	    // Print Bindings
+        System.out.println("\nBindings:");
+        individuals = reasoner.getInstances(binding, false).getFlattened();
+        for ( OWLNamedIndividual i : individuals ) {
+        	System.out.println(renderer.render(i) + reasoner.getDataPropertyValues(i, b_status) );
+        }   
+                
+	    // Print FGs
+	    System.out.println("\nFGs:");
+        individuals = reasoner.getInstances(functionGrounding, false).getFlattened();
+        for ( OWLNamedIndividual i : individuals ) {
+        	System.out.println(renderer.render(i) + reasoner.getDataPropertyValues(i, fg_status) );
+        }        
+        
+	    // Print Objectives
+	    System.out.println("\nObjectives:");
+        Set<OWLNamedIndividual> current_objectives = reasoner.getInstances(objective, false).getFlattened();
+        for ( OWLNamedIndividual i : current_objectives ) {
+        	System.out.println(renderer.render(i) + reasoner.getDataPropertyValues(i, o_status) );
+        }
+
+	    // Print ComponentClasses
+	    System.out.println("\nComponent Classes:");
+        individuals = reasoner.getInstances(componentClass, false).getFlattened();
+        for ( OWLNamedIndividual i : individuals ) {
+        	System.out.println(renderer.render(i) + reasoner.getDataPropertyValues(i, cc_availability) );
+        }
+        
+	    // Print FDs
+        individuals = reasoner.getInstances(functionDesign, false).getFlattened();
+	    System.out.println("\nFDs:");
+        for ( OWLNamedIndividual i : individuals ) {
+        	System.out.println(renderer.render(i) + reasoner.getDataPropertyValues(i, fd_realisability) );
+        }
+
+	    
 
         /** RECONFIGURATION REASONING
          * compute the best Function Design possible to address objectives in false status (aka in ERROR)
          * TODO: filter out objectives no longer needed in the hierarchy
          */
 	    
-	    // get all objectives
-        Set<OWLNamedIndividual> current_objectives = reasoner.getInstances(objective, false).getFlattened();
+
         // get best FDs for objectives
         Set<OWLNamedIndividual> fds = new HashSet<OWLNamedIndividual>();
         for ( OWLNamedIndividual o : current_objectives ) {	        		
@@ -206,7 +250,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	     * OUTPUT components specification for RECONFIGURATION
 	     * TODO: address potential issue of overlapping cs in the fds
 	     */
-        System.out.println("\nComponent Specifications from RECONFIGURATION REASONING:");           
+        System.out.println("\n== Component Specifications from RECONFIGURATION REASONING:==");           
 
         Set<OWLNamedIndividual> cspecs = new HashSet<OWLNamedIndividual>();
         
@@ -268,7 +312,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
      * @return besdt_fd the best FD available (fd_efficacy is the criteria)
      */
     private static OWLNamedIndividual obtainBestFunctionDesign(OWLNamedIndividual objective_ins) {
-    	
+    	System.out.println("\n== REASONING best available FD for objective_ins in error ==");
     	// obtain the typeF(unction) of the objective
         OWLNamedIndividual function_ins = reasoner.getObjectPropertyValues(objective_ins, typeF).getFlattened().iterator().next();
         
