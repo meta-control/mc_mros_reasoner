@@ -39,11 +39,11 @@ for i in list(tomasys.Binding.instances()) :
 
 print("\nFG Statuses:")
 for i in list(tomasys.FunctionGrounding.instances()) :
-    print(i, i.b_status)
+    print(i, i.fg_status)
 
 print("\nObjectives Statuses:")
 for i in list(tomasys.Objective.instances()) :
-    print(i, i.b_status)
+    print(i, i.o_status)
 
 print("\nCC availability:")
 for i in list(tomasys.ComponentClass.instances()) :
@@ -52,4 +52,4 @@ for i in list(tomasys.ComponentClass.instances()) :
 
 print("\nFD realisability:")
 for i in list(tomasys.FunctionDesign.instances()) :
-    print(i, i.b_status)
+    print(i, i.fd_realisability)
