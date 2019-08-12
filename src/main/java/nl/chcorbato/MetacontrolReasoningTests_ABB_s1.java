@@ -45,10 +45,14 @@ import uk.ac.manchester.cs.owl.explanation.ordering.Tree;
  */
 public class MetacontrolReasoningTests_ABB_s1 {
 
-	private static final File ONTOLOGY_APP_FILE = new File("/home/chcorbato/mros_ws/tomasys/abb_scenario1.owl");
+	private static final File ONTOLOGY_APP1_FILE = new File("/home/chcorbato/mros_ws/tomasys/abb_scenario1.owl");
+	private static final File ONTOLOGY_APP2_FILE = new File("/home/chcorbato/mros_ws/tomasys/abb_scenario2.owl");
+
 	private static final File TOMASYS_FILE = new File("/home/chcorbato/mros_ws/tomasys/tomasys.owl");
 
-	private static final String ONTOLOGY_APP_IRI = "http://abb_scenario1";
+	private static final String ONTOLOGY_APP1_IRI = "http://abb_scenario1";
+	private static final String ONTOLOGY_APP2_IRI = "http://abb_scenario2";
+
 	private static final String TOMASYS_IRI = "http://metacontrol.org/tomasys";
 	private static OWLObjectRenderer renderer = new DLSyntaxObjectRenderer();
 	
@@ -88,15 +92,40 @@ public class MetacontrolReasoningTests_ABB_s1 {
     static OWLDataProperty fg_status;
 	
 	public static void main(String[] args) throws OWLOntologyCreationException {
+	    
+		/**
+		 * TEST to run: 
+		 * 0..2 scenario1
+		 * 3..  scenario2
+		 */
+	    int test = -1;
+	    
+	    // parse arguments [1..n]
+	    try {
+		    test = Integer.parseInt(args[0]);	
+		} catch (Exception e) {
+			System.out.println("No test specified");
+		}
+		
+		// Load ontologies required (app + tomasys)
 		manager = OWLManager.createOWLOntologyManager();
 		tomasys = manager.loadOntologyFromOntologyDocument(TOMASYS_FILE); // load 1st tomasys so that the manager can resolve the import
-		ontology = manager.loadOntologyFromOntologyDocument(ONTOLOGY_APP_FILE);
+		
+		if( test < 3 ) // depending on the arg load the app ontology for scenario1 or scenario2
+			ontology = manager.loadOntologyFromOntologyDocument(ONTOLOGY_APP1_FILE);
+		else
+			ontology = manager.loadOntologyFromOntologyDocument(ONTOLOGY_APP2_FILE);
+
 
 	    reasonerFactory = PelletReasonerFactory.getInstance();
 	    reasoner = reasonerFactory.createReasoner(ontology, new SimpleConfiguration());
 	    factory = manager.getOWLDataFactory();
 	    om = manager.getOntologyFormat(ontology).asPrefixOWLOntologyFormat();
-		om.setDefaultPrefix(ONTOLOGY_APP_IRI + "#");// TODO Auto-generated constructor stub
+	    if( test < 3 )
+	    	om.setDefaultPrefix(ONTOLOGY_APP1_IRI + "#");// TODO Auto-generated constructor stub
+	    else
+	    	om.setDefaultPrefix(ONTOLOGY_APP2_IRI + "#");// TODO Auto-generated constructor stub
+
 	    tm = manager.getOntologyFormat(tomasys).asPrefixOWLOntologyFormat();
 		tm.setDefaultPrefix(TOMASYS_IRI + "#");// TODO Auto-generated constructor stub
 
@@ -129,15 +158,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	    /**
 	     * TEST to run
 	     */
-	    
-	    int test = -1;
-	    
-	    // parse arguments [1..n]
-	    try {
-		    test = Integer.parseInt(args[0]);	
-		} catch (Exception e) {
-			System.out.println("No test specified");
-		}
+
     
 	    switch ( test ) {
 	    
@@ -162,6 +183,16 @@ public class MetacontrolReasoningTests_ABB_s1 {
 			    // camera in error
 			    manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(c_status, camera, false));
 			    // camera unavailable
+			    reasoner.flush();
+		    	break;
+		    	
+		    case 3: // scenario 2 = camera in permanent error
+		    	System.out.println("\nscenario 2.a = Yumi config 2arms in ERROR");
+		    	String str_yumi = ":c_yumi";
+			    OWLNamedIndividual yumi = factory.getOWLNamedIndividual(str_yumi, om);
+			    // yumi in error
+			    manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(c_status, yumi, false));
+			    // yumi 2arms unavailable
 			    reasoner.flush();
 		    	break;
 		    
