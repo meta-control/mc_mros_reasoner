@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.change.CreateValuePartition;
 import org.semanticweb.owlapi.dlsyntax.renderer.DLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormat;
 import org.semanticweb.owlapi.io.OWLObjectRenderer;
@@ -29,6 +30,7 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import com.clarkparsia.owlapi.explanation.DefaultExplanationGenerator;
 import com.clarkparsia.owlapi.explanation.util.SilentExplanationProgressMonitor;
@@ -76,9 +78,14 @@ public class MetacontrolReasoningTests_ABB_s1 {
     static OWLClass functionGrounding;
     static OWLObjectProperty typeF;
     static OWLObjectProperty solves;
+    static OWLObjectProperty requires;
+    static OWLObjectProperty needs;
     static OWLObjectProperty fd_error_log;
     static OWLObjectProperty roles;
     static OWLObjectProperty roleDef;
+    static OWLObjectProperty binding_role;
+    static OWLObjectProperty binding_component;
+    static OWLObjectProperty hasBindings;
     static OWLDataProperty fd_realisability;
     static OWLDataProperty fd_efficacy;
     static OWLDataProperty o_status;
@@ -90,6 +97,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
     static OWLDataProperty cc_unique;
     static OWLDataProperty fg_performance;
     static OWLDataProperty fg_status;
+
 	
 	public static void main(String[] args) throws OWLOntologyCreationException {
 	    
@@ -139,9 +147,14 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	    functionGrounding = factory.getOWLClass(":FunctionGrounding",tm);
 	    typeF             = factory.getOWLObjectProperty(":typeF",tm);
 	    solves            = factory.getOWLObjectProperty(":solves",tm);
+	    requires		  = factory.getOWLObjectProperty(":requires",tm);
+	    needs			  = factory.getOWLObjectProperty(":needs",tm);
 	    fd_error_log      = factory.getOWLObjectProperty(":fd_error_log",tm);
 	    roles             = factory.getOWLObjectProperty(":roles",tm);
 	    roleDef           = factory.getOWLObjectProperty(":roleDef",tm);  
+	    binding_role      = factory.getOWLObjectProperty(":binding_role",tm); 
+	    binding_component = factory.getOWLObjectProperty(":binding_component",tm); 
+	    hasBindings 	  = factory.getOWLObjectProperty(":hasBindings",tm); 
 	    fd_realisability  = factory.getOWLDataProperty(":fd_realisability",tm);  
 	    fd_efficacy       = factory.getOWLDataProperty(":fd_efficacy",tm);  
 	    o_status          = factory.getOWLDataProperty(":o_status",tm);  
@@ -152,14 +165,11 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	    cc_availability   = factory.getOWLDataProperty(":cc_availability",tm);  
 	    cc_unique         = factory.getOWLDataProperty(":cc_unique",tm);  
 	    fg_performance    = factory.getOWLDataProperty(":fg_performance",tm);  
-	    fg_status         = factory.getOWLDataProperty(":fg_status",tm);  
-	                        
+	    fg_status         = factory.getOWLDataProperty(":fg_status",tm);  	                   
 
 	    /**
 	     * TEST to run
-	     */
-
-    
+	     */   
 	    switch ( test ) {
 	    
 		    case 0: 
@@ -264,17 +274,18 @@ public class MetacontrolReasoningTests_ABB_s1 {
          * TODO: filter out objectives no longer needed in the hierarchy
          */
 	    
+        // init objectives in error
+        Set<OWLNamedIndividual> objectives_in_error = new HashSet<OWLNamedIndividual>();
 
-        // get best FDs for objectives
-        Set<OWLNamedIndividual> fds = new HashSet<OWLNamedIndividual>();
-        for ( OWLNamedIndividual o : current_objectives ) {	        		
-	        OWLNamedIndividual fd = obtainBestFunctionDesign(o);
-	        if ( fd == null ) {
-		        System.out.println("\nThere is no FunctionDesign realisable for objective: " + renderer.render(o) );
-	        	continue;
-	        }
-	        fds.add(fd);
-	        System.out.println("\nBest FunctionDesign: " + renderer.render(fd) );
+        for ( OWLNamedIndividual i : current_objectives ) {
+        	if ( !reasoner.getDataPropertyValues(i, o_status).iterator().next().parseBoolean() );
+        	objectives_in_error.add(i);
+        }
+        
+        // Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
+        Set<OWLNamedIndividual> cspecs = new HashSet<OWLNamedIndividual>();
+        for ( OWLNamedIndividual o : objectives_in_error ) {	        		
+        	cspecs.addAll( groundObjective(o));      
 		}
 	    
 	    /**
@@ -282,21 +293,12 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	     * TODO: address potential issue of overlapping cs in the fds
 	     */
         System.out.println("\n== Component Specifications from RECONFIGURATION REASONING:==");           
-
-        Set<OWLNamedIndividual> cspecs = new HashSet<OWLNamedIndividual>();
-        
-        for ( OWLNamedIndividual fd : fds ) {	 
-	        for (OWLNamedIndividual rol : reasoner.getObjectPropertyValues(fd, roles).getFlattened() ) {
-	        	
-	            for (OWLNamedIndividual c : reasoner.getObjectPropertyValues(rol, roleDef).getFlattened() ) {
-	            	cspecs.add( c );
-	                System.out.println(renderer.render(c));           
-	            }
-	
-	        }
+        for ( OWLNamedIndividual cs : cspecs ) {
+        	System.out.println(renderer.render(cs) );
         }
-        
+                
 	}
+
 	
 	/**
 	 * Updates the status of the components in the system
@@ -336,6 +338,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
     	return ontology; 	
     
     }
+  
     
     /**
      * REASONING best available FD for objective_ins in error
@@ -380,6 +383,47 @@ public class MetacontrolReasoningTests_ABB_s1 {
         }//Close for
     	return best_fd;
     }
+   
+    
+    /**
+     * recursively ground a function design to solve an objective
+     */
+    private static Set<OWLNamedIndividual> groundObjective(OWLNamedIndividual o) {
+    	
+        final Set<OWLNamedIndividual> cspecs = new HashSet<OWLNamedIndividual>();
+
+        // obtain FD for Objective
+        OWLNamedIndividual fd = obtainBestFunctionDesign(o);
+        if ( fd == null ) {
+	        System.out.println("\nThere is no FunctionDesign realisable for objective: " + renderer.render(o) );
+        	return cspecs;
+        }
+        
+    	//ground fd into fg
+    	OWLNamedIndividual fg = createIndividualFromClass("fg_" + renderer.render(fd) , functionGrounding);
+    	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(solves, fg, o));
+      
+        for (OWLNamedIndividual rol : reasoner.getObjectPropertyValues(fd, roles).getFlattened() ) {  
+        	OWLNamedIndividual b = createIndividualFromClass("b_" + renderer.render(fd) , binding);	
+        	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(binding_role, b, rol));
+        	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(hasBindings, fg, b));
+        	// get comp specs to deploy
+        	OWLNamedIndividual cs = reasoner.getObjectPropertyValues(rol, roleDef).getFlattened().iterator().next();
+        	cspecs.add( cs );
+        	           
+        }
+               
+        // recursively call grounding for each required function
+        for (OWLNamedIndividual f : reasoner.getObjectPropertyValues(fd, requires).getFlattened() ) {
+	    	// instantiate objective from required function
+        	OWLNamedIndividual ob = createIndividualFromClass("o_" + renderer.render(f) , objective);
+	    	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(typeF, ob, f));
+	    	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(needs, ob, fg));
+	    	groundObjective(ob);        	
+        }
+        
+        return cspecs;
+    }
     
 
     private static void SimpleTest(){
@@ -395,6 +439,20 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	        System.out.println("objective " + renderer.render(o_tag) + " status= " + ind.getLiteral());
 	    }
     }
+    
+    
+    
+    /**
+     * Based on:
+     * CreateOntologyInCodeExample.java by Martin Kuba makub@ics.muni.cz
+     */
+    private static OWLNamedIndividual createIndividualFromClass(String name, OWLClass oclass) {
+        OWLNamedIndividual individual = factory.getOWLNamedIndividual(name, om);
+        manager.addAxiom(ontology, factory.getOWLDeclarationAxiom(individual));
+        manager.addAxiom(ontology, factory.getOWLClassAssertionAxiom(oclass, individual));
+        return individual;
+    }
+
     
 
 }
