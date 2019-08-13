@@ -34,6 +34,7 @@ import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import com.clarkparsia.owlapi.explanation.DefaultExplanationGenerator;
 import com.clarkparsia.owlapi.explanation.util.SilentExplanationProgressMonitor;
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
 import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
 
 import uk.ac.manchester.cs.owl.explanation.ordering.ExplanationOrderer;
@@ -63,7 +64,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
     static OWLOntology ontology;
     static OWLOntology tomasys;
     static OWLReasonerFactory reasonerFactory;
-    static OWLReasoner reasoner;
+    static PelletReasoner reasoner;
     static OWLDataFactory factory;
     static PrefixDocumentFormat om;
     static PrefixDocumentFormat tm;
@@ -78,6 +79,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
     static OWLClass functionGrounding;
     static OWLObjectProperty typeF;
     static OWLObjectProperty solves;
+    static OWLObjectProperty realises;
     static OWLObjectProperty requires;
     static OWLObjectProperty needs;
     static OWLObjectProperty fd_error_log;
@@ -124,18 +126,19 @@ public class MetacontrolReasoningTests_ABB_s1 {
 		else
 			ontology = manager.loadOntologyFromOntologyDocument(ONTOLOGY_APP2_FILE);
 
-
-	    reasonerFactory = PelletReasonerFactory.getInstance();
-	    reasoner = reasonerFactory.createReasoner(ontology, new SimpleConfiguration());
+		// create Pellet reasoner non buffered, so that modifications will be immediately visible in the reasoning results
+	    reasoner = PelletReasonerFactory.getInstance().createNonBufferingReasoner(ontology, new SimpleConfiguration());
+	    manager.addOntologyChangeListener( reasoner );
+	    
 	    factory = manager.getOWLDataFactory();
 	    om = manager.getOntologyFormat(ontology).asPrefixOWLOntologyFormat();
 	    if( test < 3 )
-	    	om.setDefaultPrefix(ONTOLOGY_APP1_IRI + "#");// TODO Auto-generated constructor stub
+	    	om.setDefaultPrefix(ONTOLOGY_APP1_IRI + "#");
 	    else
-	    	om.setDefaultPrefix(ONTOLOGY_APP2_IRI + "#");// TODO Auto-generated constructor stub
+	    	om.setDefaultPrefix(ONTOLOGY_APP2_IRI + "#");
 
 	    tm = manager.getOntologyFormat(tomasys).asPrefixOWLOntologyFormat();
-		tm.setDefaultPrefix(TOMASYS_IRI + "#");// TODO Auto-generated constructor stub
+		tm.setDefaultPrefix(TOMASYS_IRI + "#");
 
 	    //get tomasys classes
 	    componentState	  = factory.getOWLClass(":ComponentState",tm);         
@@ -147,6 +150,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	    functionGrounding = factory.getOWLClass(":FunctionGrounding",tm);
 	    typeF             = factory.getOWLObjectProperty(":typeF",tm);
 	    solves            = factory.getOWLObjectProperty(":solves",tm);
+	    realises            = factory.getOWLObjectProperty(":realises",tm);
 	    requires		  = factory.getOWLObjectProperty(":requires",tm);
 	    needs			  = factory.getOWLObjectProperty(":needs",tm);
 	    fd_error_log      = factory.getOWLObjectProperty(":fd_error_log",tm);
@@ -285,7 +289,7 @@ public class MetacontrolReasoningTests_ABB_s1 {
         // Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
         Set<OWLNamedIndividual> cspecs = new HashSet<OWLNamedIndividual>();
         for ( OWLNamedIndividual o : objectives_in_error ) {	        		
-        	cspecs.addAll( groundObjective(o));      
+        	groundObjective(o, cspecs);      
 		}
 	    
 	    /**
@@ -342,13 +346,12 @@ public class MetacontrolReasoningTests_ABB_s1 {
     
     /**
      * REASONING best available FD for objective_ins in error
-     * @param objective_ins the objective in error
+     * @param o the objective in error
      * @return besdt_fd the best FD available (fd_efficacy is the criteria)
      */
-    private static OWLNamedIndividual obtainBestFunctionDesign(OWLNamedIndividual objective_ins) {
-    	System.out.println("\n== REASONING best available FD for objective_ins in error ==");
+    private static OWLNamedIndividual obtainBestFunctionDesign(OWLNamedIndividual o) {
     	// obtain the typeF(unction) of the objective
-        OWLNamedIndividual function_ins = reasoner.getObjectPropertyValues(objective_ins, typeF).getFlattened().iterator().next();
+        OWLNamedIndividual f = reasoner.getObjectPropertyValues(o, typeF).getFlattened().iterator().next();
         
         // obtain available function designs for that function (using the inverse property)
         OWLObjectPropertyExpression inverse = factory.getOWLObjectInverseOf(solves);
@@ -357,18 +360,18 @@ public class MetacontrolReasoningTests_ABB_s1 {
         OWLNamedIndividual best_fd = null;
         
         // get FDs for F
-        Set<OWLNamedIndividual> fds = reasoner.getObjectPropertyValues(function_ins, inverse).getFlattened();
+        Set<OWLNamedIndividual> fds = reasoner.getObjectPropertyValues(f, inverse).getFlattened();
                 
         for (OWLNamedIndividual fd : fds) {	
         	
         	for ( OWLLiteral ind : reasoner.getDataPropertyValues(fd, fd_realisability) ) {
         		System.out.println("FD " + renderer.render(fd) + " realisability: " + ind.getLiteral());
         	}
-        	// FILTER if FD realisability is NOT FALSE (TODO check SWRL are complete for this)
+        	// FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
         	if (  !reasoner.isEntailed( factory.getOWLDataPropertyAssertionAxiom(fd_realisability, fd, false) ) ) {    
         		
         		// FILTER if the FD error log does NOT contain the current objective
-        		if ( !reasoner.getObjectPropertyValues(fd, fd_error_log).containsEntity(objective_ins) ) {
+        		if ( !reasoner.getObjectPropertyValues(fd, fd_error_log).containsEntity(o) ) {
 		        	for ( OWLLiteral conf : reasoner.getDataPropertyValues(fd, fd_efficacy) ) {
 		        		float value = Float.parseFloat(conf.getLiteral());
 		        		if (value > comp) {
@@ -378,30 +381,30 @@ public class MetacontrolReasoningTests_ABB_s1 {
 		        	}//Close for
         		}//Close if
         	}//Close if
-        	
-        	
+   	
         }//Close for
+    	System.out.println("\n\t~FunctionDesign: " + renderer.render(best_fd) + "\t resoned best for Objective: " + renderer.render(o));
+
     	return best_fd;
     }
    
     
     /**
-     * recursively ground a function design to solve an objective
+     * To solve the given Objective, recursively Grounds the required hierarchy of
+     * sub-Objectives and Function Groundings
      */
-    private static Set<OWLNamedIndividual> groundObjective(OWLNamedIndividual o) {
-    	
-        final Set<OWLNamedIndividual> cspecs = new HashSet<OWLNamedIndividual>();
-
+    private static Set<OWLNamedIndividual> groundObjective(OWLNamedIndividual o, Set<OWLNamedIndividual> cspecs) {
+    	System.out.println("\n=GROUNDING Objective: " + renderer.render(o) );
         // obtain FD for Objective
         OWLNamedIndividual fd = obtainBestFunctionDesign(o);
-        if ( fd == null ) {
-	        System.out.println("\nThere is no FunctionDesign realisable for objective: " + renderer.render(o) );
+        if ( fd == null ) { //TODO decide where and how to report this
+	        System.out.println("\nOPERATOR ATTENTION NEEDED: there is no FunctionDesign realisable for objective: " + renderer.render(o) );
         	return cspecs;
         }
         
     	//ground fd into fg
     	OWLNamedIndividual fg = createIndividualFromClass("fg_" + renderer.render(fd) , functionGrounding);
-    	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(solves, fg, o));
+    	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(realises, fg, o));
       
         for (OWLNamedIndividual rol : reasoner.getObjectPropertyValues(fd, roles).getFlattened() ) {  
         	OWLNamedIndividual b = createIndividualFromClass("b_" + renderer.render(fd) , binding);	
@@ -418,14 +421,16 @@ public class MetacontrolReasoningTests_ABB_s1 {
 	    	// instantiate objective from required function
         	OWLNamedIndividual ob = createIndividualFromClass("o_" + renderer.render(f) , objective);
 	    	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(typeF, ob, f));
-	    	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(needs, ob, fg));
-	    	groundObjective(ob);        	
+	    	manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(needs, fg, ob));
+	    	groundObjective(ob, cspecs); // recursivity!!       	
         }
         
         return cspecs;
     }
     
-
+	/**
+	 * Simple Test
+	 */
     private static void SimpleTest(){
 	    String str_objective_tag = ":o_detect_ws1_tag";  // CHANGE TO TEST ANOTHER OBJECTIVE
 	    
