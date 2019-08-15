@@ -5,7 +5,7 @@
   <description>Implements the meta-controller node for ROS1, including the reasoner</description>
   <maintainer email="c.h.corbato@tudelft.nl">Carlos Hernandez Corbato</maintainer>
 
-  <license>BSD</license>
+  <license>Apache</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
