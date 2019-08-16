@@ -43,10 +43,10 @@ def send_request (reconfiguration_request):
 
 spec2request = defaultdict(lambda: GraphManipulationMessage.REQUEST_MISSING, {
     "cs_yumi1" : GraphManipulationMessage.REQUEST_YUMI_CONFIG_1ARM,
-    "cs_displacement" : GraphManipulationMessage.REQUEST_DISPLACEMENT_NODE,
+    "cs_displacement_node" : GraphManipulationMessage.REQUEST_DISPLACEMENT_NODE,
     "cs_tag_calibration_node" : GraphManipulationMessage.REQUEST_TAG_CALIBRATION_NODE,
-    "cs_camera1" : GraphManipulationMessage.REQUEST_CAMERA_CONFIG1,
-    "cs_camera2" : GraphManipulationMessage.REQUEST_CAMERA_CONFIG2,
+    "cs_camera_1" : GraphManipulationMessage.REQUEST_CAMERA_CONFIG1,
+    "cs_camera_2" : GraphManipulationMessage.REQUEST_CAMERA_CONFIG2,
     "cs_tag_detector" : GraphManipulationMessage.REQUEST_TAG_DETECTOR,
     "safe_shutdown" : GraphManipulationMessage.REQUEST_SAFE_SHUTDOWN
 })
@@ -79,8 +79,8 @@ if __name__ == '__main__':
             GraphManipulationActionAction)
     graph_manipulation_client.wait_for_server()
 
-    request_reconfiguration (["cs_displacement", "cs_tag_calibration_node", 
-        "cs_camera1", "cs_camera2", "cs_tag_calibration_node",
+    request_reconfiguration (["cs_displacement_node", "cs_tag_calibration_node", 
+        "cs_camera_1", "cs_camera_2", "cs_tag_calibration_node",
         "cs_tag_detector"])
 
     rospy.spin()
