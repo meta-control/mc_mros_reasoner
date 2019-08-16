@@ -2,10 +2,14 @@
 
 import rospy
 
-from cheops_system_state_msgs.msg import SystemState
+import actionlib
 
+from cheops_system_state_msgs.msg import SystemState
+from cheops_graph_manipulation_msgs.msg import GraphManipulationActionAction
 
 sys_state=None
+graph_manipulation_client=None
+
 def callback(msg):
     global sys_state
     sys_state = msg
@@ -23,6 +27,10 @@ def timer_cb(event):
 
     # TODO: update reasoner facts, evaluate, retrieve action, publish
 
+def request_reconfiguration(component_specs):
+
+    return
+
 
 if __name__ == '__main__':
     rospy.init_node('mros1_reasoner')
@@ -30,5 +38,10 @@ if __name__ == '__main__':
     sub = rospy.Subscriber('system_state', SystemState, callback)
 
     timer = rospy.Timer(rospy.Duration(1.), timer_cb)
+
+    graph_manipulation_client = actionlib.SimpleActionClient(
+            'cheops_graph_manipulation_action_server', 
+            GraphManipulationActionAction)
+    graph_manipulation_client.wait_for_server()
 
     rospy.spin()
