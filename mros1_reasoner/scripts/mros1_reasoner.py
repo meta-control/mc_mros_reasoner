@@ -229,9 +229,4 @@ if __name__ == '__main__':
             'cheops_graph_manipulation_action_server',
             GraphManipulationActionAction)
     graph_manipulation_client.wait_for_server()
-
-    request_reconfiguration (["cs_displacement_node", "cs_tag_calibration_node",
-        "cs_camera_1", "cs_camera_2", "cs_tag_calibration_node",
-        "cs_tag_detector"])
-
     rospy.spin()
