@@ -15,7 +15,6 @@ from collections import defaultdict
 # Load tomasys and abb_scenario2 ontologies
 onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
 onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
-print(onto_path)
 # TODO back to relative paths adapting the launchfile
 tomasys = get_ontology("/home/chcorbato/abb_mros/src/mc_mdl_tomasys/tomasys.owl").load()
 onto = get_ontology("/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_scenario2.owl").load()
@@ -41,7 +40,6 @@ def obtainBestFunctionDesign(o):
                     best_fd = fd
                     aux = fd.fd_efficacy
     if ( best_fd == None ):
-        onto.search("c_camera")[0].c_status = False
         print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
     else:
@@ -57,7 +55,7 @@ def groundObjective(o, cspecs):
     fd = obtainBestFunctionDesign(o)
     if( fd == None ):
         print("*** Objective ", o,"cannot be realised ***")
-        return
+        return ["safe_shutdown"]
     fg = tomasys.FunctionGrounding("fg_" + fd.name)
     print("Roles: ",fd.roles)
     for r in fd.roles:
@@ -77,7 +75,8 @@ def groundObjective(o, cspecs):
 Initiatize the reasoner Kknowledge base: load ontology and asserts initial state
 '''
 def init_kb():
-
+    global onto
+    print("HEREEE")
     # Initial system state
     fd = onto.search(iri = "*fd_build_2arms")[0]
     f = onto.search(iri = "*f_build_pyramid")[0]
@@ -103,25 +102,30 @@ def callback(msg):
     global sys_state
     sys_state = msg
 
-    if system_state.yumi_status != 1:
-        onto.search("c_yumi")[0].c_status = False
-    if system_state.camera_status != 1:
-        onto.search("c_camera")[0].c_status = False
-    if system_state.tag_detector_status != 1:
-        f = onto.search("f_detect_tag_poses")[0]
+
+
+def timer_cb(event):
+    global sys_state
+    global onto
+
+    if not sys_state:
+        rospy.logwarn_throttle(1., 'Still waiting on system state ..')
+        return
+
+    if sys_state.yumi_status != 1:
+        c = onto.search(iri="*#c_yumi")[0]
+        c.c_status = False
+    if sys_state.camera_status != 1:
+        c = onto.search(iri="*c_camera")[0]
+        c.c_status = False
+    if sys_state.tag_detection_status != 1:
+        f = onto.search(iri="*f_detect_tag_poses")[0]
         for o in list(tomasys.Objective.instances() ):
             if (o.typeF == f):
                 o.c_status = False
 
-def timer_cb(event):
-    global sys_state
-
-    if not sys_state:
-        rospy.logwarn_throttle(1., 'Still waiting on system state ..')
-#        return
-
-    # rospy.loginfo_throttle(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
-    #     sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
+    rospy.loginfo_throttle(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
+        sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
 
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
@@ -187,8 +191,10 @@ if __name__ == '__main__':
     sub = rospy.Subscriber('system_state', SystemState, callback)
 
     init_kb()
+    #for testing YUMI in error
+    sys_state = SystemState(yumi_status = 99)
 
-    timer = rospy.Timer(rospy.Duration(1.), timer_cb)
+    timer = rospy.Timer(rospy.Duration(10.), timer_cb)
 
     graph_manipulation_client = actionlib.SimpleActionClient(
             'cheops_graph_manipulation_action_server',
