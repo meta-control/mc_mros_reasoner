@@ -12,7 +12,7 @@ from collections import defaultdict
 
 sys_state=None
 graph_manipulation_client=None
-last_configuration=["cs_blah","cs_bleh"] # TODO: put initial configuration here
+last_configuration=["cs_yumi_2"] 
 
 def callback(msg):
     global sys_state
