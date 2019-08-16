@@ -5,7 +5,9 @@ import rospy
 import actionlib
 
 from cheops_system_state_msgs.msg import SystemState
-from cheops_graph_manipulation_msgs.msg import GraphManipulationActionAction
+from cheops_graph_manipulation_msgs.msg \
+    import GraphManipulationActionAction,  GraphManipulationActionGoal, \
+    GraphManipulationMessage
 
 sys_state=None
 graph_manipulation_client=None
@@ -28,8 +30,14 @@ def timer_cb(event):
     # TODO: update reasoner facts, evaluate, retrieve action, publish
 
 def request_reconfiguration(component_specs):
-
-    return
+    goal = GraphManipulationActionGoal()
+    goal.request = 3
+    graph_manipulation_client.send_goal(goal)
+    graph_manipulation_client.wait_for_result()
+    result = graph_manipulation_client.get_result().result
+    if (result != GraphManipulationMessage.RECONFIGURATION_OK):
+        return False
+    return True
 
 
 if __name__ == '__main__':
