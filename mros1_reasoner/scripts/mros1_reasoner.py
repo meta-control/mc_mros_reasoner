@@ -115,14 +115,17 @@ def timer_cb(event):
     if sys_state.yumi_status != 1:
         c = onto.search(iri="*#c_yumi")[0]
         c.c_status = False
+        print("Yumi in ERROR")
     if sys_state.camera_status != 1:
+        print("Camera in ERROR")
         c = onto.search(iri="*c_camera")[0]
         c.c_status = False
     if sys_state.tag_detection_status != 1:
+        print("Tag not detected")
         f = onto.search(iri="*f_detect_tag_poses")[0]
-        for o in list(tomasys.Objective.instances() ):
-            if (o.typeF == f):
-                o.c_status = False
+        # for o in list(tomasys.Objective.instances() ):
+        #     if (o.typeF == f):
+        #         o.c_status = False
 
     rospy.loginfo_throttle(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
         sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
@@ -130,6 +133,32 @@ def timer_cb(event):
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
     sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
+
+    # PRINT system status
+    print("\nComponents Statuses:")
+    for i in list(tomasys.ComponentState.instances()) :
+        print(i, i.c_status)
+
+    print("\nBindings Statuses:")
+    for i in list(tomasys.Binding.instances()) :
+        print(i, i.b_status)
+
+    print("\nFG Statuses:")
+    for i in list(tomasys.FunctionGrounding.instances()) :
+        print(i, i.fg_status)
+
+    print("\nObjectives Statuses:")
+    for i in list(tomasys.Objective.instances()) :
+        print(i, i.o_status)
+
+    print("\nCC availability:")
+    for i in list(tomasys.ComponentClass.instances()) :
+        print(i, i.cc_availability)
+
+    print("\nFD realisability:")
+    for i in list(tomasys.FunctionDesign.instances()) :
+        print(i, i.fd_realisability)
+
 
     # evaluate and retrieve desired configuration
     # init objectives in error
@@ -147,6 +176,7 @@ def timer_cb(event):
     str_specs = []
     for cs in cspecs:
         str_specs.append(cs.name)
+    print("RESULT CONFIG: ", str_specs)
     request_reconfiguration(str_specs)
 
 
@@ -192,7 +222,7 @@ if __name__ == '__main__':
 
     init_kb()
     #for testing YUMI in error
-    sys_state = SystemState(yumi_status = 99)
+    sys_state = SystemState(yumi_status = 99, camera_status = 1, tag_detection_status = 1)
 
     timer = rospy.Timer(rospy.Duration(10.), timer_cb)
 
