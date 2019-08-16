@@ -18,7 +18,7 @@ README
      * @return besdt_fd the best FD available (fd_efficacy is the criteria)
 '''
 
-test = 2
+test = 3
 
 def obtainBestFunctionDesign(o):
     f = o.typeF
@@ -58,7 +58,7 @@ def groundObjective(o, cspecs):
     if( fd == None ):
         print("*** Objective ", o,"cannot be realised ***")
         return
-    fg = tomasys.FunctionGrounding("fg_")
+    fg = tomasys.FunctionGrounding("fg_" + fd.name)
     print("Roles: ",fd.roles)
     for r in fd.roles:
         b = tomasys.Binding("b_" + r.name)
@@ -68,7 +68,7 @@ def groundObjective(o, cspecs):
 
     for f in fd.requires:
         print("Requires: ", fd.requires)
-        ob = tomasys.Objective("o_")
+        ob = tomasys.Objective("o_" + f.name)
         ob.typeF = f
         fg.needs.append(ob)
         groundObjective(ob, cspecs)
@@ -153,16 +153,16 @@ elif test == 3:
     print("\nRunning TEST3: yumi 2 arms in ERROR\n")
 
     # Initial deployment
-    fd = onto.search(iri = "*fd_build_1arm")[0]
+    fd = onto.search(iri = "*fd_build_2arms")[0]
     f = onto.search(iri = "*f_build_pyramid")[0]
     yumi = onto.search(iri = "*#c_yumi")[0]
-    role_yumi1 = onto.search(iri = "*r_yumi1a")[0]
+    role_yumi2 = onto.search(iri = "*r_yumi2a")[0]
 
-    fg = tomasys.FunctionGrounding("fg_build1", namespace = onto)
+    fg = tomasys.FunctionGrounding("fg_build2", namespace = onto)
     o = tomasys.Objective("o_build_pyramid", namespace = onto)
     b = tomasys.Binding(namespace = onto)
     b.binding_component = yumi
-    b.binding_role = role_yumi1
+    b.binding_role = role_yumi2
     o.typeF = f
     fg.realises = o
     fg.typeFD = fd
