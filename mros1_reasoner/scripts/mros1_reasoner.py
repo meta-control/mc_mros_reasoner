@@ -221,7 +221,7 @@ if __name__ == '__main__':
 
     init_kb()
     #for testing YUMI in error
-    sys_state = SystemState(yumi_status = 99, camera_status = 1, tag_detection_status = 1)
+    # sys_state = SystemState(yumi_status = 99, camera_status = 1, tag_detection_status = 1)
 
     timer = rospy.Timer(rospy.Duration(10.), timer_cb)
 
