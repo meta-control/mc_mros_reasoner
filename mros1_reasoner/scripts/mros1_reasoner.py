@@ -12,9 +12,13 @@ from cheops_graph_manipulation_msgs.msg \
 
 from collections import defaultdict
 
-onto_path=[]
-tomasys = None
-onto = None
+# Load tomasys and abb_scenario2 ontologies
+onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
+onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
+print(onto_path)
+# TODO back to relative paths adapting the launchfile
+tomasys = get_ontology("/home/chcorbato/abb_mros/src/mc_mdl_tomasys/tomasys.owl").load()
+onto = get_ontology("/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_scenario2.owl").load()
 
 def obtainBestFunctionDesign(o):
     f = o.typeF
@@ -73,11 +77,7 @@ def groundObjective(o, cspecs):
 Initiatize the reasoner Kknowledge base: load ontology and asserts initial state
 '''
 def init_kb():
-    # Load tomasys and abb_scenario2 ontologies
-    onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
-    onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
-    tomasys = get_ontology("tomasys.owl").load()
-    onto = get_ontology("abb_scenario2.owl").load()
+
     # Initial system state
     fd = onto.search(iri = "*fd_build_2arms")[0]
     f = onto.search(iri = "*f_build_pyramid")[0]
@@ -118,10 +118,10 @@ def timer_cb(event):
 
     if not sys_state:
         rospy.logwarn_throttle(1., 'Still waiting on system state ..')
-        return
+#        return
 
-    rospy.loginfo_throttle(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
-        sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
+    # rospy.loginfo_throttle(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
+    #     sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
 
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
@@ -142,7 +142,8 @@ def timer_cb(event):
     # Retrieve action and publish from cspecs
     str_specs = []
     for cs in cspecs:
-        str_specs.append(cs[0].name)
+        str_specs.append(cs.name)
+    request_reconfiguration(str_specs)
 
 
 
@@ -184,6 +185,8 @@ if __name__ == '__main__':
     rospy.init_node('mros1_reasoner')
 
     sub = rospy.Subscriber('system_state', SystemState, callback)
+
+    init_kb()
 
     timer = rospy.Timer(rospy.Duration(1.), timer_cb)
 
