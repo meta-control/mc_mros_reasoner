@@ -36,7 +36,8 @@ def obtainBestFunctionDesign(o):
                 if fd.fd_efficacy > aux:
                     best_fd = fd
                     aux = fd.fd_efficacy
-    if ( best_fd == None ):        onto.search("c_camera")[0].c_status = False
+    if ( best_fd == None ):
+        onto.search("c_camera")[0].c_status = False
         print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
     else:
@@ -70,13 +71,13 @@ def groundObjective(o, cspecs):
 
 '''
 Initiatize the reasoner Kknowledge base: load ontology and asserts initial state
-''''
+'''
 def init_kb():
     # Load tomasys and abb_scenario2 ontologies
-    global onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
-    global onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
-    global tomasys = get_ontology("tomasys.owl").load()
-    global onto = get_ontology("abb_scenario2.owl").load()
+    onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
+    onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
+    tomasys = get_ontology("tomasys.owl").load()
+    onto = get_ontology("abb_scenario2.owl").load()
     # Initial system state
     fd = onto.search(iri = "*fd_build_2arms")[0]
     f = onto.search(iri = "*f_build_pyramid")[0]
