@@ -76,7 +76,6 @@ Initiatize the reasoner Kknowledge base: load ontology and asserts initial state
 '''
 def init_kb():
     global onto
-    print("HEREEE")
     # Initial system state
     fd = onto.search(iri = "*fd_build_2arms")[0]
     f = onto.search(iri = "*f_build_pyramid")[0]
