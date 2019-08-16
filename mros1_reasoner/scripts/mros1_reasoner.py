@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import rospy
-
 import actionlib
 
 from cheops_system_state_msgs.msg import SystemState
@@ -9,8 +8,11 @@ from cheops_graph_manipulation_msgs.msg \
     import GraphManipulationActionAction,  GraphManipulationActionGoal, \
     GraphManipulationMessage
 
+from collections import defaultdict
+
 sys_state=None
 graph_manipulation_client=None
+last_configuration=["cs_blah","cs_bleh"] # TODO: put initial configuration here
 
 def callback(msg):
     global sys_state
@@ -29,15 +31,40 @@ def timer_cb(event):
 
     # TODO: update reasoner facts, evaluate, retrieve action, publish
 
-def request_reconfiguration(component_specs):
+
+
+def send_request (reconfiguration_request):
     goal = GraphManipulationActionGoal()
-    goal.request = 3
+    goal.request = reconfiguration_request
     graph_manipulation_client.send_goal(goal)
     graph_manipulation_client.wait_for_result()
-    result = graph_manipulation_client.get_result().result
-    if (result != GraphManipulationMessage.RECONFIGURATION_OK):
-        return False
-    return True
+    return graph_manipulation_client.get_result().result
+
+
+spec2request = defaultdict(lambda: GraphManipulationMessage.REQUEST_MISSING, {
+    "cs_yumi1" : GraphManipulationMessage.REQUEST_YUMI_CONFIG_1ARM,
+    "cs_displacement" : GraphManipulationMessage.REQUEST_DISPLACEMENT_NODE,
+    "cs_tag_calibration_node" : GraphManipulationMessage.REQUEST_TAG_CALIBRATION_NODE,
+    "cs_camera1" : GraphManipulationMessage.REQUEST_CAMERA_CONFIG1,
+    "cs_camera2" : GraphManipulationMessage.REQUEST_CAMERA_CONFIG2,
+    "cs_tag_detector" : GraphManipulationMessage.REQUEST_TAG_DETECTOR,
+    "safe_shutdown" : GraphManipulationMessage.REQUEST_SAFE_SHUTDOWN
+})
+
+
+def request_reconfiguration(component_specs):
+    global last_configuration, spec2request
+    new_specs = filter(lambda cs: cs not in last_configuration, component_specs)
+    requests = map(lambda cs: spec2request[cs], new_specs)
+
+    for r in requests:
+        result = send_request(r)
+        if (result != GraphManipulationMessage.RECONFIGURATION_OK):
+            last_configuration = []
+            return result
+
+    last_configuration = component_specs
+    return GraphManipulationMessage.RECONFIGURATION_OK
 
 
 if __name__ == '__main__':
@@ -51,5 +78,9 @@ if __name__ == '__main__':
             'cheops_graph_manipulation_action_server', 
             GraphManipulationActionAction)
     graph_manipulation_client.wait_for_server()
+
+    request_reconfiguration (["cs_displacement", "cs_tag_calibration_node", 
+        "cs_camera1", "cs_camera2", "cs_tag_calibration_node",
+        "cs_tag_detector"])
 
     rospy.spin()
