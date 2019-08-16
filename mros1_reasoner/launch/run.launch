@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
 <launch>
-  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner.py" />
+  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner.py" output="screen"/>
 </launch>
