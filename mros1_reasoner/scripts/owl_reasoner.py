@@ -7,7 +7,8 @@ using Owlready2 to manipulate the ontology
 README
 - I created a python vrit env for this: $ pew new --python=python3 owlready2
 - installed owlready2 in my ws: $ pip install Owlready2
-- run this script by: $ python owlready_mros_reasoner.py
+- Make sure you are working in the Virtual environment: $ pew workon owlready2
+- run this script by: $ python owl_reasoner.py
 
 """
 
@@ -17,7 +18,7 @@ README
      * @return besdt_fd the best FD available (fd_efficacy is the criteria)
 '''
 
-test = 1
+test = 2
 
 def obtainBestFunctionDesign(o):
     f = o.typeF
@@ -32,6 +33,7 @@ def obtainBestFunctionDesign(o):
         # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
         if fd.fd_realisability:
             # FILTER if the FD error log does NOT contain the current objective
+            print("Fd: ", fd, "error_log: ", fd.fd_error_log)
             if not o in fd.fd_error_log:
                 if fd.fd_efficacy > aux:
                     best_fd = fd
@@ -69,17 +71,65 @@ onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
 tomasys = get_ontology("tomasys.owl").load()
 onto = get_ontology("abb_scenario2.owl").load()
 
-# UPDATE components statuses
 # TODO: replace using ROS instrospection
 
-if test == 1:
-    print("\nTest1 objective in error:")
-    for o in onto.search(iri = "*o_build_pyramid"):
-            o.o_status = False
+if test == 1: # Not working yet
+    print("\nRunning TEST1: objective to detect tag in ERROR\n")
+    # Initial deployment
+    fd = onto.search(iri = "*fd_detect_tag_poses_1")[0]
+    f = onto.search(iri = "*f_detect_tag_poses")[0]
+    camera = onto.search(iri = "*c_camera")[0]
+    tag_detector = onto.search(iri = "*#c_tag_detector")[0]
+    role_tag_detector = onto.search(iri = "*r_tag_detector_fd_detect_tag_poses_1")[0]
+    role_camera = onto.search(iri = "*r_camera_fd_detect_tag_poses_1")[0]
+
+    fg = tomasys.FunctionGrounding("fg_detect_tag_1", namespace = onto)
+    o = tomasys.Objective("o_detect_ws1_tag", namespace = onto)
+    b1 = tomasys.Binding(namespace = onto)
+    b2 = tomasys.Binding(namespace = onto)
+    b1.binding_component = camera
+    b1.binding_role = role_camera
+    b2.binding_component = tag_detector
+    b2.binding_role = role_tag_detector
+    o.typeF = f
+    fg.realises = o
+    fg.typeFD = fd
+    fg.hasBindings.append(b1)
+    fg.hasBindings.append(b2)
+
+    # UPDATE components statuses
+    print("\nTest1 objective in error: ", o)
+    o.o_status = False
+    onto.save(file = "tmp.owl", format = "rdfxml")
 
 elif test == 2:
+    print("\nRunning TEST2: camera in ERROR\n")
+
+    # Initial deployment
+    fd = onto.search(iri = "*fd_detect_tag_poses_1")[0]
+    f = onto.search(iri = "*f_detect_tag_poses")[0]
+    camera = onto.search(iri = "*c_camera")[0]
+    tag_detector = onto.search(iri = "*#c_tag_detector")[0]
+    role_tag_detector = onto.search(iri = "*r_tag_detector_fd_detect_tag_poses_1")[0]
+    role_camera = onto.search(iri = "*r_camera_fd_detect_tag_poses_1")[0]
+
+    fg = tomasys.FunctionGrounding("fg_detect_tag_1", namespace = onto)
+    o = tomasys.Objective("o_detect_ws1_tag", namespace = onto)
+    b1 = tomasys.Binding(namespace = onto)
+    b2 = tomasys.Binding(namespace = onto)
+    b1.binding_component = camera
+    b1.binding_role = role_camera
+    b2.binding_component = tag_detector
+    b2.binding_role = role_tag_detector
+    o.typeF = f
+    fg.realises = o
+    fg.typeFD = fd
+    fg.hasBindings.append(b1)
+    fg.hasBindings.append(b2)
+
+    # UPDATE components statuses
     for i in list(tomasys.ComponentState.instances()) :
-        if i.name == 'abb_scenario2.c_camera':
+        if i.name == "c_camera":
             i.c_status = False
         else:
             i.c_status = True
@@ -87,7 +137,7 @@ elif test == 2:
 
 elif test == 3:
     for i in list(tomasys.ComponentState.instances()) :
-        if i.name == 'abb_scenario2.c_yumi':
+        if i.name == "c_yumi":
             i.c_status = False
         else:
             i.c_status = True
@@ -102,7 +152,6 @@ for fd in list(tomasys.FunctionDesign.instances()) :
     fd.fd_realisability = True
 
 # REASON objective(s) in error
-# sync_reasoner()
 sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
 
 # PRINT system status
