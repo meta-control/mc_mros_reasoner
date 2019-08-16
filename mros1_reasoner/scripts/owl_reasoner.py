@@ -29,17 +29,23 @@ def obtainBestFunctionDesign(o):
             fds.append(fd)
     print("\nFunctionDesigns available for obj: ",fds)
     aux = 0
+    best_fd = None
     for fd in fds:
         # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
-        if fd.fd_realisability:
+        print("FD ", fd, fd.fd_realisability)
+        if fd.fd_realisability != False:
             # FILTER if the FD error log does NOT contain the current objective
             print("Fd: ", fd, "error_log: ", fd.fd_error_log)
             if not o in fd.fd_error_log:
                 if fd.fd_efficacy > aux:
                     best_fd = fd
                     aux = fd.fd_efficacy
-    print("\nBest FD available", best_fd)
-    return best_fd
+    if ( best_fd == None ):
+        print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
+        return None
+    else:
+        print("\nBest FD available", best_fd)
+        return best_fd
 
 
 '''
@@ -47,16 +53,21 @@ To solve the given Objective, recursively Grounds the required hierarchy of
 sub-Objectives and Function Groundings
 '''
 def groundObjective(o, cspecs):
+    print("=> Reasoner grounding objective: ", o)
     fd = obtainBestFunctionDesign(o)
+    if( fd == None ):
+        print("*** Objective ", o,"cannot be realised ***")
+        return
     fg = tomasys.FunctionGrounding("fg_")
-
+    print("Roles: ",fd.roles)
     for r in fd.roles:
-        b = tomasys.Binding("b_")
+        b = tomasys.Binding("b_" + r.name)
         b.binding_role = r
-        fg.has_bindings = b # TODO WORKING HERE
+        fg.has_bindings = b # TODO also ad the binding_component
         cspecs.append(r.roleDef)
 
     for f in fd.requires:
+        print("Requires: ", fd.requires)
         ob = tomasys.Objective("o_")
         ob.typeF = f
         fg.needs.append(ob)
@@ -73,7 +84,7 @@ onto = get_ontology("abb_scenario2.owl").load()
 
 # TODO: replace using ROS instrospection
 
-if test == 1: # Not working yet
+if test == 1:
     print("\nRunning TEST1: objective to detect tag in ERROR\n")
     # Initial deployment
     fd = onto.search(iri = "*fd_detect_tag_poses_1")[0]
@@ -108,7 +119,7 @@ elif test == 2:
     # Initial deployment
     fd = onto.search(iri = "*fd_detect_tag_poses_1")[0]
     f = onto.search(iri = "*f_detect_tag_poses")[0]
-    camera = onto.search(iri = "*c_camera")[0]
+    camera = onto.search(iri = "*#c_camera")[0]
     tag_detector = onto.search(iri = "*#c_tag_detector")[0]
     role_tag_detector = onto.search(iri = "*r_tag_detector_fd_detect_tag_poses_1")[0]
     role_camera = onto.search(iri = "*r_camera_fd_detect_tag_poses_1")[0]
@@ -129,31 +140,55 @@ elif test == 2:
 
     # UPDATE components statuses
     for i in list(tomasys.ComponentState.instances()) :
+        print(i)
         if i.name == "c_camera":
             i.c_status = False
         else:
             i.c_status = True
         print(i, " c_status= ", i.c_status)
+    onto.save(file = "tmp.owl", format = "rdfxml")
+
 
 elif test == 3:
+    print("\nRunning TEST3: yumi 2 arms in ERROR\n")
+
+    # Initial deployment
+    fd = onto.search(iri = "*fd_build_1arm")[0]
+    f = onto.search(iri = "*f_build_pyramid")[0]
+    yumi = onto.search(iri = "*#c_yumi")[0]
+    role_yumi1 = onto.search(iri = "*r_yumi1a")[0]
+
+    fg = tomasys.FunctionGrounding("fg_build1", namespace = onto)
+    o = tomasys.Objective("o_build_pyramid", namespace = onto)
+    b = tomasys.Binding(namespace = onto)
+    b.binding_component = yumi
+    b.binding_role = role_yumi1
+    o.typeF = f
+    fg.realises = o
+    fg.typeFD = fd
+    fg.hasBindings.append(b)
+
+    # UPDATE components statuses
     for i in list(tomasys.ComponentState.instances()) :
         if i.name == "c_yumi":
             i.c_status = False
         else:
             i.c_status = True
         print(i, " c_status= ", i.c_status)
+    onto.save(file = "tmp.owl", format = "rdfxml")
+
 else:
      print("\nRunning default metacontrol reasoning using monitoring input")
 
 
 # world closure
-# - FDs are all realisable unless negated later - TODO does not seem to be the case!!
-for fd in list(tomasys.FunctionDesign.instances()) :
-    fd.fd_realisability = True
+# - FDs are all realisable unless negated later - TODO this causes ontology inconsistency, probably we hsould remove
+# for fd in list(tomasys.FunctionDesign.instances()) :
+#     fd.fd_realisability = True
 
 # REASON objective(s) in error
 sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
-
+# Not working yet
 # PRINT system status
 print("\nComponents Statuses:")
 for i in list(tomasys.ComponentState.instances()) :
