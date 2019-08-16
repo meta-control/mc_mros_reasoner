@@ -14,7 +14,6 @@
 
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-
-  <export></export>
+  <exec_depend>cheops_system_state_msgs</exec_depend>
 
 </package>
