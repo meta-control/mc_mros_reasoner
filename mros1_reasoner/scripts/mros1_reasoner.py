@@ -12,14 +12,24 @@ from cheops_graph_manipulation_msgs.msg \
 
 from collections import defaultdict
 
-# Load tomasys and abb_scenario2 ontologies
-onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
-onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
-# TODO back to relative paths adapting the launchfile
-tomasys = get_ontology("/home/chcorbato/abb_mros/src/mc_mdl_tomasys/tomasys.owl").load()
-onto = get_ontology("/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_scenario2.owl").load()
+import argparse
+
+from init_models import *
+
+tomasys=None
+onto=None
+
+# Load ontologies
+def initOntology(file):
+    #TODO obtain the ontology paths in a reusable portable way
+    onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
+    onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
+    global tomasys, onto
+    tomasys = get_ontology("/home/chcorbato/abb_mros/src/mc_mdl_tomasys/tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file
+    onto = get_ontology(file).load()
 
 def obtainBestFunctionDesign(o):
+    global tomasys, onto
     f = o.typeF
     # get fds for Function F
     fds = []
@@ -51,6 +61,7 @@ To solve the given Objective, recursively Grounds the required hierarchy of
 sub-Objectives and Function Groundings
 '''
 def groundObjective(o, cspecs):
+    global tomasys, onto
     print("=> Reasoner grounding objective: ", o)
     fd = obtainBestFunctionDesign(o)
     if( fd == None ):
@@ -70,28 +81,6 @@ def groundObjective(o, cspecs):
         fg.needs.append(ob)
         groundObjective(ob, cspecs)
     return cspecs
-
-'''
-Initiatize the reasoner Kknowledge base: load ontology and asserts initial state
-'''
-def init_kb():
-    global onto
-    # Initial system state
-    fd = onto.search(iri = "*fd_build_2arms")[0]
-    f = onto.search(iri = "*f_build_pyramid")[0]
-    yumi = onto.search(iri = "*#c_yumi")[0]
-    role_yumi2 = onto.search(iri = "*r_yumi2a")[0]
-
-    fg = tomasys.FunctionGrounding("fg_build2", namespace = onto)
-    o = tomasys.Objective("o_build_pyramid", namespace = onto)
-    b = tomasys.Binding(namespace = onto)
-    b.binding_component = yumi
-    b.binding_role = role_yumi2
-    o.typeF = f
-    fg.realises = o
-    fg.typeFD = fd
-    fg.hasBindings.append(b)
-
 
 sys_state=None
 graph_manipulation_client=None
@@ -217,13 +206,29 @@ def request_reconfiguration(component_specs):
 
 
 if __name__ == '__main__':
+    # parse input arguments
+    # parser = argparse.ArgumentParser(description="Starts metacontrol reasoning on the running ROS system using a .owl file and a initialization script .py to initialize the Knowledge Base")
+    # parser.add_argument('ontology_file', metavar='o', type=str, default='/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_scenario2.owl', help="path to the owl file with the application model for the KB")
+    # args = parser.parse_args()
+    # onto_file = args.ontology_file
+    onto_file = "/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_scenario2b.owl"
     rospy.init_node('mros1_reasoner')
 
     sub = rospy.Subscriber('system_state', SystemState, callback)
 
-    init_kb()
+    initOntology(onto_file)
+    rospy.loginfo("Loaded ontology: " + onto_file)
+    # init appropriate appropriate model TODO use ros params to define ontology files?
+    if ("2a" in onto_file):
+        init_abb_2a(onto, tomasys)
+    elif ("2b" in onto_file):
+        init_abb_2b(onto, tomasys)
+    else:
+        init_abb_2a(onto, tomasys)
+
     #for testing YUMI in error
-    # sys_state = SystemState(yumi_status = 99, camera_status = 1, tag_detection_status = 1)
+    sys_state = SystemState(yumi_status = 99, camera_status = 1, tag_detection_status = 1) # yumi error
+    # sys_state = SystemState(yumi_status = 1, camera_status = 99, tag_detection_status = 1) # camera error
 
     timer = rospy.Timer(rospy.Duration(10.), timer_cb)
 
