@@ -212,7 +212,7 @@ if __name__ == '__main__':
     # parser.add_argument('ontology_file', metavar='o', type=str, default='/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_scenario2.owl', help="path to the owl file with the application model for the KB")
     # args = parser.parse_args()
     # onto_file = args.ontology_file
-    onto_file = "/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_scenario2b.owl"
+    onto_file = "/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_dualarm_mm_complete.owl"
     rospy.init_node('mros1_reasoner')
 
     sub = rospy.Subscriber('system_state', SystemState, callback)
