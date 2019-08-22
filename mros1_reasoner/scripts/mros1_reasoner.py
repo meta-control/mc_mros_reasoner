@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+import rospkg
 from owlready2 import *
 
 import actionlib
@@ -19,13 +20,15 @@ from init_models import *
 tomasys=None
 onto=None
 
+# get an instance of RosPack with the default search paths
+rospack = rospkg.RosPack()
+
 # Load ontologies
 def loadOntology(file):
-    #TODO obtain the ontology paths in a reusable portable way
-    onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
-    onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
+    onto_path.append(rospack.get_path('mc_mdl_tomasys')+'/') # local folder to search for ontologies
+    onto_path.append(rospack.get_path('mc_mdl_abb')+'/') # local folder to search for ontologies
     global tomasys, onto
-    tomasys = get_ontology("/home/chcorbato/abb_mros/src/mc_mdl_tomasys/tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file
+    tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file
     onto = get_ontology(file).load()
 
 def obtainBestFunctionDesign(o):
@@ -207,12 +210,8 @@ def request_reconfiguration(component_specs):
 
 
 if __name__ == '__main__':
-    # parse input arguments
-    # parser = argparse.ArgumentParser(description="Starts metacontrol reasoning on the running ROS system using a .owl file and a initialization script .py to initialize the Knowledge Base")
-    # parser.add_argument('ontology_file', metavar='o', type=str, default='/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_scenario2.owl', help="path to the owl file with the application model for the KB")
-    # args = parser.parse_args()
-    # onto_file = args.ontology_file
-    onto_file = "/home/chcorbato/abb_mros/src/mc_mdl_abb/abb_dualarm_mm_complete.owl"
+    
+    onto_file = "abb_dualarm_mm_complete.owl" # TODO make a ROS parameter?
     rospy.init_node('mros1_reasoner')
 
     sub = rospy.Subscriber('system_state', SystemState, callback)

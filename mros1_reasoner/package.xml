@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>mros1_reasoner</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>Implements the meta-controller node for ROS1, including the reasoner</description>
+  <author>Carlos Hernandez Corbato (TU Delft Robotics Institute)</author>
   <maintainer email="c.h.corbato@tudelft.nl">Carlos Hernandez Corbato</maintainer>
 
   <license>Apache</license>
@@ -16,5 +17,7 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>cheops_system_state_msgs</exec_depend>
   <exec_depend>cheops_graph_manipulation_msgs</exec_depend>
+  <exec_depend>mc_mdl_tomasys</exec_depend>
+  <exec_depend>mc_mdl_abb</exec_depend>
 
 </package>
