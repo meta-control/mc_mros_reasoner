@@ -36,15 +36,15 @@ def obtainBestFunctionDesign(o):
     for fd in list(tomasys.FunctionDesign.instances()):
         if fd.solves == f:
             fds.append(fd)
-    print("\nFunctionDesigns available for obj: ",fds)
+    print("\nFunctionDesigns available for obj ", o.name, ": ",fds)
     aux = 0
     best_fd = None
     for fd in fds:
         # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
-        print("FD ", fd, fd.fd_realisability)
+        print("FD ", fd.name, fd.fd_realisability)
         if fd.fd_realisability != False:
             # FILTER if the FD error log does NOT contain the current objective
-            print("Fd: ", fd, "error_log: ", fd.fd_error_log)
+            print("Fd: ", fd.name, "error_log: ", fd.fd_error_log)
             if not o in fd.fd_error_log:
                 if fd.fd_efficacy > aux:
                     best_fd = fd
@@ -53,7 +53,7 @@ def obtainBestFunctionDesign(o):
         print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
     else:
-        print("\nBest FD available", best_fd)
+        print("\nBest FD available", best_fd.name)
         return best_fd
 
 '''
@@ -65,7 +65,7 @@ def groundObjective(o, cspecs):
     print("=> Reasoner grounding objective: ", o)
     fd = obtainBestFunctionDesign(o)
     if( fd == None ):
-        print("*** Objective ", o,"cannot be realised ***")
+        print("*** Objective ", o.name,"cannot be realised ***")
         return ["safe_shutdown"]
     fg = tomasys.FunctionGrounding("fg_" + fd.name)
     print("Roles: ",fd.roles)
@@ -112,9 +112,9 @@ def timer_cb(event):
     if sys_state.tag_detection_status != 1:
         print("Tag not detected")
         f = onto.search_one(iri="*f_detect_tag_poses")
-        # for o in list(tomasys.Objective.instances() ):
-        #     if (o.typeF == f):
-        #         o.c_status = False
+        for o in list(tomasys.Objective.instances() ):
+            if (o.typeF == f):
+                o.o_status = False
 
     rospy.loginfo_throttle(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
         sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
@@ -224,7 +224,7 @@ if __name__ == '__main__':
 
 
     #for testing YUMI in error
-    sys_state = SystemState(yumi_status = 1, camera_status = 99, tag_detection_status = 1) # yumi error
+    sys_state = SystemState(yumi_status = 1, camera_status = 1, tag_detection_status = 99) # no tag detected
     # sys_state = SystemState(yumi_status = 1, camera_status = 99, tag_detection_status = 1) # camera error
 
     timer = rospy.Timer(rospy.Duration(10.), timer_cb)
