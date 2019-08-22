@@ -15,7 +15,12 @@ catkin b
 - We also advice you to create a separate workspace for "everything else", and only keep the reasoner package in the `abb_metacontrol_ws` workspace.
 - **IMP Note:** For `abb_metacontrol_ws` you cannot use apt or rosdep install .. (as that will try to use apt and it will install the regular Kinetic Python 2 packages, which are invisible to `abb_metacontrol_ws`)
 - For the non-Python 3 workspace and its packages you can use apt and `rosdep install ..`
-
+- Since `mros1_reasoner` depends on `cheops_system_state_msgs`, you will need [workspace overlaying](http://wiki.ros.org/catkin/Tutorials/workspace_overlaying) to run `mros1_reasoner`. You can do the following:
+```
+source abb_cheops_ws/cheops/devel/setup.bash
+cd abb_metacontrol_ws
+catkin b
+```
 
 
 ### Known issues
