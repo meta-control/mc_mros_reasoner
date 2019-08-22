@@ -2,7 +2,21 @@
 A meta-controller implementation for ROS1
 
 ## Installation
-First you need to have a ROS Kinetic version with Python3 support, for example following these [instructions](https://answers.ros.org/question/237613/how-to-define-ros-kinetic-to-use-python3-instead-of-python27/?answer=331009#post-id-331009)
+- First you need to have a ROS Kinetic version with Python3 support, for example following these [instructions](https://answers.ros.org/question/237613/how-to-define-ros-kinetic-to-use-python3-instead-of-python27/?answer=331009#post-id-331009)
+- **Note:** For regular usage you'll need to make sure to have the virtual environment activated, or things will break.
+- We recommend you now create a workspace only for `mros1_reasoner` (and any other packages requiring Python3 in your project), using [workspace overlaying](http://wiki.ros.org/catkin/Tutorials/workspace_overlaying), for example:
+```
+mkdir -p abb_metacontrol_ws/src
+cd abb_metacontrol_ws
+catkin init
+catkin config --extend $HOME/ros_kinetic_py3/devel
+catkin b
+```
+- We also advice you to create a separate workspace for "everything else", and only keep the reasoner package in the `abb_metacontrol_ws` workspace.
+- **IMP Note:** For `abb_metacontrol_ws` you cannot use apt or rosdep install .. (as that will try to use apt and it will install the regular Kinetic Python 2 packages, which are invisible to `abb_metacontrol_ws`)
+- For the non-Python 3 workspace and its packages you can use apt and `rosdep install ..`
+
+
 
 ### Known issues
 If you run into an issue with:
