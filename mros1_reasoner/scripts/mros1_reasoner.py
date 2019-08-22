@@ -96,6 +96,7 @@ def timer_cb(event):
     global sys_state
     global onto
 
+    # Update components statuses - TODO: update objective status too
     if not sys_state:
         rospy.logwarn_throttle(1., 'Still waiting on system state ..')
         return
