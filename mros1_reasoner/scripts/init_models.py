@@ -1,7 +1,7 @@
 '''
-Initiatize the reasoner Kknowledge base: load ontology and asserts initial state
+Different methods to initiatize the reasoner Knowledge base: load ontology and asserts initial state
 '''
-def init_abb_2a(onto, tomasys):
+def init_abb_2a(onto, tomasys): # use with abb_scenario2.owl model
     # Initial system state
     yumi = onto.search_one(iri = "*#c_yumi")
 
@@ -12,7 +12,8 @@ def init_abb_2a(onto, tomasys):
             realises = o,
             hasBindings = [tomasys.Binding(namespace = onto, binding_component = yumi, binding_role = onto.search_one(iri = "*r_yumi2a"))])
 
-def init_abb_2b(onto, tomasys):
+
+def init_abb_2b(onto, tomasys): # use with abb_dualarm_mm_complete.owl model
     # Initial system state
     yumi = onto.search_one(iri = "*#c_yumi")
     camera = onto.search_one(iri = "*#c_camera")
