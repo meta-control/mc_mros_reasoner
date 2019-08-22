@@ -20,7 +20,7 @@ tomasys=None
 onto=None
 
 # Load ontologies
-def initOntology(file):
+def loadOntology(file):
     #TODO obtain the ontology paths in a reusable portable way
     onto_path.append("../../../mc_mdl_tomasys/") # local folder to search for ontologies
     onto_path.append("../../../mc_mdl_abb/") # local folder to search for ontologies
@@ -102,16 +102,16 @@ def timer_cb(event):
         return
 
     if sys_state.yumi_status != 1:
-        c = onto.search(iri="*#c_yumi")[0]
+        c = onto.search_one(iri="*#c_yumi")
         c.c_status = False
         print("Yumi in ERROR")
     if sys_state.camera_status != 1:
         print("Camera in ERROR")
-        c = onto.search(iri="*c_camera")[0]
+        c = onto.search_one(iri="*c_camera")
         c.c_status = False
     if sys_state.tag_detection_status != 1:
         print("Tag not detected")
-        f = onto.search(iri="*f_detect_tag_poses")[0]
+        f = onto.search_one(iri="*f_detect_tag_poses")
         # for o in list(tomasys.Objective.instances() ):
         #     if (o.typeF == f):
         #         o.c_status = False
@@ -126,27 +126,27 @@ def timer_cb(event):
     # PRINT system status
     print("\nComponents Statuses:")
     for i in list(tomasys.ComponentState.instances()) :
-        print(i, i.c_status)
+        print(i.name, i.c_status)
 
     print("\nBindings Statuses:")
     for i in list(tomasys.Binding.instances()) :
-        print(i, i.b_status)
+        print(i.name, i.b_status)
 
     print("\nFG Statuses:")
     for i in list(tomasys.FunctionGrounding.instances()) :
-        print(i, i.fg_status)
+        print(i.name, i.fg_status)
 
     print("\nObjectives Statuses:")
     for i in list(tomasys.Objective.instances()) :
-        print(i, i.o_status)
+        print(i.name, i.o_status)
 
     print("\nCC availability:")
     for i in list(tomasys.ComponentClass.instances()) :
-        print(i, i.cc_availability)
+        print(i.name, i.cc_availability)
 
     print("\nFD realisability:")
     for i in list(tomasys.FunctionDesign.instances()) :
-        print(i, i.fd_realisability)
+        print(i.name, i.fd_realisability)
 
 
     # evaluate and retrieve desired configuration
@@ -217,18 +217,14 @@ if __name__ == '__main__':
 
     sub = rospy.Subscriber('system_state', SystemState, callback)
 
-    initOntology(onto_file)
+    loadOntology(onto_file)
     rospy.loginfo("Loaded ontology: " + onto_file)
-    # init appropriate appropriate model TODO use ros params to define ontology files?
-    if ("2a" in onto_file):
-        init_abb_2a(onto, tomasys)
-    elif ("2b" in onto_file):
-        init_abb_2b(onto, tomasys)
-    else:
-        init_abb_2a(onto, tomasys)
+    # init specific application model using the corresponding init sript
+    init_abb_2b(onto, tomasys)
+
 
     #for testing YUMI in error
-    sys_state = SystemState(yumi_status = 99, camera_status = 1, tag_detection_status = 1) # yumi error
+    sys_state = SystemState(yumi_status = 1, camera_status = 99, tag_detection_status = 1) # yumi error
     # sys_state = SystemState(yumi_status = 1, camera_status = 99, tag_detection_status = 1) # camera error
 
     timer = rospy.Timer(rospy.Duration(10.), timer_cb)
