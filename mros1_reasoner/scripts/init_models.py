@@ -41,5 +41,5 @@ def init_abb_2b(onto, tomasys): # use with abb_dualarm_mm_complete.owl model
             hasBindings = [tomasys.Binding(namespace = onto, binding_component = camera, binding_role = onto.search_one(iri = "*r_camera_fd_detect_tag_poses_1")),
                            tomasys.Binding(namespace = onto, binding_component = tag_detector, binding_role = onto.search_one(iri = "*r_tag_detector_fd_detect_tag_poses_1"))
                             ])
-    print('save ontology')
-    onto.save(file = "tmp_debug.owl", format = "rdfxml") # For debugging InConsistent ontology errors, save the ontology before reasoning
+    # print('save ontology')
+    # onto.save(file = "tmp_debug.owl", format = "rdfxml") # For debugging InConsistent ontology errors, save the ontology before reasoning
