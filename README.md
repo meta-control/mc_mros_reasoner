@@ -36,9 +36,10 @@ $ sudo apt clean && sudo apt update
 ```
 
 ## Execution
-Activate your virtual environment, source your ws and launch the reasoner:
+Activate your virtual environment, source your ws (**remember**, you may need ws overlay, so first the ws that contains cheops, then the one that contains mros1_resoner) and launch the reasoner:
 ```
 $ source venv3.5_ros/bin/activate
-$ source $YOUR_WS/devel/setup.bash
+$ source $YOUR_CHEOPS_WS/devel/setup.bash
+$ source $YOUR_METACONTROL_WS/devel/setup.bash
 $ roslaunch mros1_reasoner run.launch
 ```
