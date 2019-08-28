@@ -19,6 +19,7 @@ from init_models import *
 
 tomasys=None
 onto=None
+mock=True
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
@@ -176,11 +177,15 @@ def timer_cb(event):
 
 
 def send_request (reconfiguration_request):
+    global mock
     goal = GraphManipulationActionGoal()
     goal.request = reconfiguration_request
     graph_manipulation_client.send_goal(goal)
-    graph_manipulation_client.wait_for_result()
-    return graph_manipulation_client.get_result().result
+    if mock != True:
+        graph_manipulation_client.wait_for_result()
+        return graph_manipulation_client.get_result().result
+    else:
+        return GraphManipulationMessage.RECONFIGURATION_OK
 
 
 spec2request = defaultdict(lambda: GraphManipulationMessage.REQUEST_MISSING, {
