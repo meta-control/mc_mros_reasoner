@@ -25,7 +25,7 @@ def init_abb_2b(onto, tomasys): # use with abb_dualarm_mm_complete.owl model
 
     # Function Groundings and Objectives
     o2 = tomasys.Objective("o_tag_localization", namespace = onto, typeF=onto.search_one(iri = "*f_locate_robot_tag") )
-    fg = tomasys.FunctionGrounding("fg_build2", namespace = onto, typeFD= onto.search_one(iri = "*fd_build_2arms"),
+    fg = tomasys.FunctionGrounding("fg_build_2arms", namespace = onto, typeFD= onto.search_one(iri = "*fd_build_2arms"),
             realises = o,
             needs = [o2],
             hasBindings = [tomasys.Binding(namespace = onto, binding_component = yumi, binding_role = onto.search_one(iri = "*r_yumi2a"))])
