@@ -210,7 +210,7 @@ def request_reconfiguration(component_specs):
 
 
 if __name__ == '__main__':
-    
+
     onto_file = "abb_dualarm_mm_complete.owl" # TODO make a ROS parameter?
     rospy.init_node('mros1_reasoner')
 
@@ -221,9 +221,8 @@ if __name__ == '__main__':
     # init specific application model using the corresponding init sript
     init_abb_2b(onto, tomasys)
 
-
     #for testing YUMI in error
-    sys_state = SystemState(yumi_status = 1, camera_status = 1, tag_detection_status = 99) # no tag detected
+    # sys_state = SystemState(yumi_status = 1, camera_status = 1, tag_detection_status = 99) # no tag detected
     # sys_state = SystemState(yumi_status = 1, camera_status = 99, tag_detection_status = 1) # camera error
 
     timer = rospy.Timer(rospy.Duration(10.), timer_cb)
