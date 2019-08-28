@@ -225,7 +225,7 @@ if __name__ == '__main__':
     # sys_state = SystemState(yumi_status = 1, camera_status = 1, tag_detection_status = 99) # no tag detected
     # sys_state = SystemState(yumi_status = 1, camera_status = 99, tag_detection_status = 1) # camera error
 
-    timer = rospy.Timer(rospy.Duration(10.), timer_cb)
+    timer = rospy.Timer(rospy.Duration(3.), timer_cb)
 
     graph_manipulation_client = actionlib.SimpleActionClient(
             'cheops_graph_manipulation_action_server',
