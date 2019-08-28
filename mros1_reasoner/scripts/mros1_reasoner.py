@@ -98,7 +98,7 @@ def callback(msg):
 def timer_cb(event):
     global sys_state
     global onto
-
+    rospy.loginfo_throttle(1., 'Entered timer_cb for metacontrol reasoning')
     # Update components statuses - TODO: update objective status too
     if not sys_state:
         rospy.logwarn_throttle(1., 'Still waiting on system state ..')
@@ -195,11 +195,13 @@ spec2request = defaultdict(lambda: GraphManipulationMessage.REQUEST_MISSING, {
 
 
 def request_reconfiguration(component_specs):
+    rospy.logwarn_throttle(1., 'Reconfiguration requested ..')
     global last_configuration, spec2request
     new_specs = filter(lambda cs: cs not in last_configuration, component_specs)
     requests = map(lambda cs: spec2request[cs], new_specs)
 
     for r in requests:
+        rospy.logwarn_throttle(1., 'Requesting reconfig: {}'.format(r))
         result = send_request(r)
         if (result != GraphManipulationMessage.RECONFIGURATION_OK):
             last_configuration = []
