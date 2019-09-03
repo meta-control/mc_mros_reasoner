@@ -15,7 +15,7 @@ catkin b
 - We also advice you to create a separate workspace for "everything else", and only keep the reasoner package in the `abb_metacontrol_ws` workspace.
 - **IMP Note:** For `abb_metacontrol_ws` you cannot use apt or rosdep install .. (as that will try to use apt and it will install the regular Kinetic Python 2 packages, which are invisible to `abb_metacontrol_ws`)
 - For the non-Python 3 workspace and its packages you can use apt and `rosdep install ..`
-- Since `mros1_reasoner` depends on `cheops_system_state_msgs`, you will need to copy the `cheops_system_state_msgs` package (and just that package) into the Python 3 workspace (ie: `abb_metacontrol_ws`), so it now exists in both the Python 2 as well as the Python 3 workspaces.
+- Since `mros1_reasoner` depends on `cheops_system_state_msgs` and `cheops_graph_manipulation_msgs`, you will need to copy these packages into the Python 3 workspace (ie: `abb_metacontrol_ws`), so they now exists in both the Python 2 as well as the Python 3 workspaces.
 
 ### Known issues
 If you run into an issue with:
@@ -33,6 +33,18 @@ $ sudo apt clean && sudo apt update
 Activate your virtual environment, source your ws and launch the reasoner:
 ```
 $ source venv3.5_ros/bin/activate
-$ source $YOUR_WS/devel/setup.bash
+$ source $YOUR_MROS1_REASONER/WS/devel/setup.bash
 $ roslaunch mros1_reasoner run.launch
+```
+
+## Testing
+The `mros1_reasoner` can be tested with the cheops_mock_diagnostics. In another terminal run:
+```
+$ source $YOUR_CHEOPS_WS/devel/setup.bash
+$ roslaunch mros1_reasoner run.launch
+```
+
+and then you can simulate failures in some components of the system by running for example (in yet another terminal):
+```
+$ rosservice call /mock_camera/is_in_error "data: true"
 ```
