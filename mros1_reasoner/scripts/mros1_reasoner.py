@@ -118,7 +118,7 @@ def timer_cb(event):
         f = onto.search_one(iri="*f_detect_tag_poses")
         for o in list(tomasys.Objective.instances() ):
             if (o.typeF == f):
-                o.o_status = False
+                o.o_status = "INTERNAL_ERROR"
 
     rospy.loginfo_throttle(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
         sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
