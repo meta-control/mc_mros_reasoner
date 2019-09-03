@@ -80,8 +80,10 @@ def groundObjective(o, cspecs):
         cspecs.append(r.roleDef)
     for f in fd.requires:
         print("Requires: ", fd.requires)
-        ob = tomasys.Objective("o_" + f.name)
-        ob.typeF = f
+        ob = onto.search_one(typeF = f) # first search if the objective already exists # TODO check that the existing objective also fulfills the req of the FD
+        if o == None:   # if it does not exist yet, create
+            ob = tomasys.Objective("o_" + f.name)
+            ob.typeF = f
         fg.needs.append(ob)
         groundObjective(ob, cspecs)
     return cspecs
