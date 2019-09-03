@@ -157,9 +157,9 @@ def timer_cb(event):
     # init objectives in error
     objectives_in_error = []
     for o in list(tomasys.Objective.instances() ):
-        if o.o_status == False:
-            objectives_in_error.append(o)
     print("\nObjectives in error:", objectives_in_error)
+        if o.o_status == "INTERNAL_ERROR":
+            objectives_internal_error.append(o)
     # Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
     cspecs = []
     for o in objectives_in_error:
