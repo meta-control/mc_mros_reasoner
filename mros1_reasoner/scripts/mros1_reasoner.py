@@ -40,15 +40,15 @@ def obtainBestFunctionDesign(o):
     for fd in list(tomasys.FunctionDesign.instances()):
         if fd.solves == f:
             fds.append(fd)
-    print("\nFunctionDesigns available for obj ", o.name, ": ",fds)
+    print("\nFunctionDesigns available for obj ", o.name, ": ", [fd.name for fd in fds])
     aux = 0
     best_fd = None
     for fd in fds:
         # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
-        print("FD ", fd.name, fd.fd_realisability)
+        print("Realisability ", fd.name, fd.fd_realisability)
         if fd.fd_realisability != False:
             # FILTER if the FD error log does NOT contain the current objective
-            print("Fd: ", fd.name, "error_log: ", fd.fd_error_log)
+            print(fd.name, "error_log: ", [i.name for i in fd.fd_error_log])
             if not o in fd.fd_error_log:
                 if fd.fd_efficacy > aux:
                     best_fd = fd
@@ -72,7 +72,7 @@ def groundObjective(o, cspecs):
         print("*** Objective ", o.name,"cannot be realised ***")
         return ["safe_shutdown"]
     fg = tomasys.FunctionGrounding("fg_" + fd.name)
-    print("Roles: ",fd.roles)
+    print("Roles: ",[r.name for r in fd.roles])
     for r in fd.roles:
         b = tomasys.Binding("b_" + r.name)
         b.binding_role = r
