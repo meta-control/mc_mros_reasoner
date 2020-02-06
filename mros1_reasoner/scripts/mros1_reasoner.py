@@ -1,5 +1,15 @@
 #!/usr/bin/env python
+"""
+author: c.h.corbato@tudelft.nl
+using Owlready2 to manipulate the ontology
 
+README
+- I created a python vrit env for this: $ pew new --python=python3 owlready2
+- installed owlready2 in my ws: $ pip install Owlready2
+- Make sure you are working in the Virtual environment: $ pew workon owlready2
+- run this script by: $ python owl_reasoner.py
+
+"""
 import rospy
 import rospkg
 from owlready2 import *
@@ -17,9 +27,10 @@ import argparse
 
 from init_models import *
 
-tomasys=None
-onto=None
-mock=True
+# Initialize global variables
+tomasys = None    # owl file with the tomasys ontology
+onto = None       # owl file with the application model as individuals of tomasys classes
+mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected t the real system
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
