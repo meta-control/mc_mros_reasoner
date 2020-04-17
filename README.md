@@ -6,7 +6,7 @@ A meta-controller implementation for ROS1
 _Notes:_
   - For me it worked with `Melodic` and `python3.6-venv`
   - I created `$HOME/rospy3_melodic` for the ROS Melodic version with Python3 support
-  -
+
 - **Note:** For regular usage you'll need to make sure to have the virtual environment activated, or things will break.
 - you need to install owlready2:
 ```
@@ -16,6 +16,10 @@ pip3 install owlready2
 ```
 mkdir -p abb_metacontrol_ws/src
 cd abb_metacontrol_ws
+```
+- Do not forget to source your ROS Melodic workspace before building your `MROS1_REASONER_WS`
+```
+source $HOME/rospy3_melodic/devel/setup.bash
 catkin init
 catkin config --extend $HOME/ros_kinetic_py3/devel
 catkin b
@@ -41,7 +45,7 @@ $ sudo apt clean && sudo apt update
 Activate your virtual environment, source your ws and launch the reasoner:
 ```
 $ source venv3.5_ros/bin/activate
-$ source $YOUR_MROS1_REASONER/WS/devel/setup.bash
+$ source $YOUR_MROS1_REASONER_WS/devel/setup.bash
 $ roslaunch mros1_reasoner run.launch
 ```
 
