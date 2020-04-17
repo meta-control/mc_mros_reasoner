@@ -2,8 +2,16 @@
 A meta-controller implementation for ROS1
 
 ## Installation
-- First you need to have a ROS Kinetic version with Python3 support, for example following these [instructions](https://answers.ros.org/question/237613/how-to-define-ros-kinetic-to-use-python3-instead-of-python27/?answer=331009#post-id-331009)
+- First you need to have a ROS Melodic version with Python3 support, for example following these [instructions](https://answers.ros.org/question/237613/how-to-define-ros-kinetic-to-use-python3-instead-of-python27/?answer=331009#post-id-331009)
+_Notes:_
+  - For me it worked with `Melodic` and `python3.6-venv`
+  - I created `$HOME/rospy3_melodic` for the ROS Melodic version with Python3 support
+  -
 - **Note:** For regular usage you'll need to make sure to have the virtual environment activated, or things will break.
+- you need to install owlready2:
+```
+pip3 install owlready2
+```
 - We recommend you now create a workspace only for `mros1_reasoner` (and any other packages requiring Python3 in your project), using [workspace overlaying](http://wiki.ros.org/catkin/Tutorials/workspace_overlaying), for example:
 ```
 mkdir -p abb_metacontrol_ws/src
