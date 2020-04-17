@@ -28,8 +28,8 @@ import argparse
 from init_models import *
 
 # Initialize global variables
-tomasys = None    # owl file with the tomasys ontology
-onto = None       # owl file with the application model as individuals of tomasys classes
+tomasys = None    # owl model with the tomasys ontology
+onto = None       # owl model with the application model as individuals of tomasys classes
 mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected t the real system
 
 # get an instance of RosPack with the default search paths
