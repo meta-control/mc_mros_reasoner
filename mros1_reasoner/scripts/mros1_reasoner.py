@@ -233,12 +233,10 @@ def request_reconfiguration(component_specs):
 
 
 if __name__ == '__main__':
-
-    onto_file = "abb_dualarm_mm_complete.owl" # TODO make a ROS parameter?
     rospy.init_node('mros1_reasoner')
 
     sub = rospy.Subscriber('system_state', SystemState, callback)
-
+    onto_file = rospy.get_param('/onto_file')
     loadOntology(onto_file)
     rospy.loginfo("Loaded ontology: " + onto_file)
     # init specific application model using the corresponding init sript
