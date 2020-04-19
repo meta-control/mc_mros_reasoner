@@ -31,32 +31,32 @@ catkin b
 
 ### Known issues
 If you run into an issue with:
-`$ sudo apt install python3-venv libpython3-dev python-catkin-tools`
+`sudo apt install python3-venv libpython3-dev python-catkin-tools`
 try the following:
 ```
-$ sudo apt clean
-$ sudo apt update
-$ sudo apt-key del 421C365BD9FF1F717815A3895523BAEEB01FA116
-$ sudo -E apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-$ sudo apt clean && sudo apt update
+sudo apt clean
+sudo apt update
+sudo apt-key del 421C365BD9FF1F717815A3895523BAEEB01FA116
+sudo -E apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+sudo apt clean && sudo apt update
 ```
 
 ## Execution
 Activate your virtual environment, source your ws and launch the reasoner:
 ```
-$ source venv3.5_ros/bin/activate
-$ source $YOUR_MROS1_REASONER_WS/devel/setup.bash
-$ roslaunch mros1_reasoner run.launch
+source venv3.5_ros/bin/activate
+source $YOUR_MROS1_REASONER_WS/devel/setup.bash
+roslaunch mros1_reasoner run.launch
 ```
 
 ## Testing
 The `mros1_reasoner` can be tested with the cheops_mock_diagnostics. In another terminal run:
 ```
-$ source $YOUR_CHEOPS_WS/devel/setup.bash
-$ roslaunch mros1_reasoner run.launch
+source $YOUR_CHEOPS_WS/devel/setup.bash
+roslaunch cheops_mock_diagnostics mock_metacontrol_monitoring_input.launch
 ```
 
 and then you can simulate failures in some components of the system by running for example (in yet another terminal):
 ```
-$ rosservice call /mock_camera/is_in_error "data: true"
+rosservice call /mock_camera/is_in_error "data: true"
 ```
