@@ -240,7 +240,14 @@ if __name__ == '__main__':
     loadOntology(onto_file)
     rospy.loginfo("Loaded ontology: " + onto_file)
     # init specific application model using the corresponding init sript
-    init_abb_2b(onto, tomasys)
+    if onto_file == "abb_scenario2.owl" :
+        init_abb_2a(onto, tomasys)
+    elif onto_file == "abb_dualarm_mm_complete.owl":
+        init_abb_2b(onto, tomasys)
+    elif onto_file == "abb_scenario3.owl":
+        init_abb_3(onto, tomasys)
+    else:
+        print("Unknown ontology file: ", onto_file)
 
     #for testing YUMI in error
     # sys_state = SystemState(yumi_status = 1, camera_status = 1, tag_detection_status = 99) # no tag detected
