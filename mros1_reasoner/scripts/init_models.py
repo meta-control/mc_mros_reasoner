@@ -50,7 +50,7 @@ def init_abb_3(onto, tomasys): # use with abb_scenario3.owl model
     o.o_nfr_energy = 2.0
 
     # # Function Groundings and Objectives
-    fg = tomasys.FunctionGrounding("fg_nav_fast", namespace = onto, typeFD= onto.search_one(iri = "*fd_navigate_fast"))
+    fg = tomasys.FunctionGrounding("fg_nav_fast", namespace = onto, typeFD= onto.search_one(iri = "*fd_navigate_fast"), solvesO=o)
 
     print('save ontology')
     onto.save(file = "tmp_debug.owl", format = "rdfxml") # For debugging InConsistent ontology errors, save the ontology before reasoning
