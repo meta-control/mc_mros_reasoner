@@ -51,7 +51,7 @@ def obtainBestFunctionDesign(o):
     # get fds for Function F
     fds = []
     for fd in list(tomasys.FunctionDesign.instances()):
-        if fd.solves == f:
+        if fd.solvesF == f:
             fds.append(fd)
     print("\nFunctionDesigns available for obj ", o.name, ": ", [fd.name for fd in fds])
     aux = 0
