@@ -46,7 +46,7 @@ def init_abb_3(onto, tomasys): # use with abb_scenario3.owl model
     # Initial system state
 
     #Root objectives
-    o = tomasys.Objective("o_navigate", namespace = onto, typeF=onto.search_one(iri = "*f_navigate") )
+    o = tomasys.Objective("o_navigateA", namespace = onto, typeF=onto.search_one(iri = "*f_navigate") )
     o.o_nfr_energy = 2.0
 
     # # Function Groundings and Objectives
