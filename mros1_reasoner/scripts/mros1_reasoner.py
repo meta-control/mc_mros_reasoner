@@ -16,6 +16,8 @@ from owlready2 import *
 
 import actionlib
 
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+
 from cheops_system_state_msgs.msg import SystemState
 from cheops_graph_manipulation_msgs.msg \
     import GraphManipulationActionAction,  GraphManipulationActionGoal, \
@@ -102,24 +104,12 @@ def groundObjective(o, cspecs):
 
     return cspecs
 
-sys_state=None
 graph_manipulation_client=None
 last_configuration=["cs_yumi_2"]
 
-def callback(msg):
-    global sys_state
+def callbackSystemState(msg):
     sys_state = msg
-
-
-
-def timer_cb(event):
-    global sys_state
     global onto
-    rospy.loginfo_throttle(1., 'Entered timer_cb for metacontrol reasoning')
-    # Update components statuses - TODO: update objective status too
-    if not sys_state:
-        rospy.logwarn_throttle(1., 'Still waiting on system state ..')
-        return
 
     if sys_state.yumi_status != 1:
         c = onto.search_one(iri="*#c_yumi")
@@ -136,8 +126,29 @@ def timer_cb(event):
             if (o.typeF == f):
                 o.o_status = "INTERNAL_ERROR"
 
-    rospy.loginfo_throttle(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
+    rospy.loginfo(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
         sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
+
+
+def callbackDiagnostics(msg):
+    global onto
+    for diagnostic_status in msg.status:
+        if diagnostic_status.message == "binding error":
+            updateBinding(msg)
+        if diagnostic_status.message == "QA_status":
+            updateQA(msg)
+
+def updateBinding(msg):
+    print("binding error received")
+
+def updateQA(msg):
+    print("QA value received")
+
+
+def timer_cb(event):
+    global onto
+    rospy.loginfo_throttle(1., 'Entered timer_cb for metacontrol reasoning')
+    # Update components statuses - TODO: update objective status too
 
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
@@ -191,7 +202,6 @@ def timer_cb(event):
         request_reconfiguration(str_specs)
 
 
-
 def send_request (reconfiguration_request):
     global mock
     goal = GraphManipulationActionGoal()
@@ -235,7 +245,9 @@ def request_reconfiguration(component_specs):
 if __name__ == '__main__':
     rospy.init_node('mros1_reasoner')
 
-    sub = rospy.Subscriber('system_state', SystemState, callback)
+    sub_system_state = rospy.Subscriber('system_state', SystemState, callbackSystemState)
+    sub_diagnostics  = rospy.Subscriber('/metacontrol_diagnostics', DiagnosticArray, callbackDiagnostics)
+
     onto_file = rospy.get_param('/onto_file')
     loadOntology(onto_file)
     rospy.loginfo("Loaded ontology: " + onto_file)
