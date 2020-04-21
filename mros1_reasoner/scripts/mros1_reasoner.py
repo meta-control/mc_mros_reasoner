@@ -134,16 +134,21 @@ def callbackDiagnostics(msg):
     global onto
     for diagnostic_status in msg.status:
         if diagnostic_status.message == "binding error":
-            updateBinding(msg)
+            updateBinding(diagnostic_status)
         if diagnostic_status.message == "QA_status":
-            updateQA(msg)
+            updateQA(diagnostic_status)
 
 def updateBinding(msg):
     print("binding error received")
 
-def updateQA(msg):
-    print("QA value received")
-
+def updateQA(diagnostic_status):
+    #find the FG that solves the Objective with the same name that the one in the QA message
+    fg = onto.search_one(solvesO=onto.search_one(iri="*"+ diagnostic_status.name))
+    print("received QA about: ", fg.name)
+    if diagnostic_status.values[0].value == "a":
+        fg.fg_qa_energy = 2.5
+    else:
+        fg.fg_qa_energy = diagnostic_status.values[0].value
 
 def timer_cb(event):
     global onto
@@ -165,11 +170,11 @@ def timer_cb(event):
 
     print("\nFG Statuses:")
     for i in list(tomasys.FunctionGrounding.instances()) :
-        print(i.name, i.fg_status)
+        print(i.name, i.fg_status, i.fg_qa_energy)
 
     print("\nObjectives Statuses:")
     for i in list(tomasys.Objective.instances()) :
-        print(i.name, i.o_status)
+        print(i.name, i.o_status, i.o_nfr_energy)
 
     print("\nCC availability:")
     for i in list(tomasys.ComponentClass.instances()) :
