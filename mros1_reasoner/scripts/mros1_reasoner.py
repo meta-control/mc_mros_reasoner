@@ -57,7 +57,7 @@ def obtainBestFunctionDesign(o):
         if fd.solvesF == f:
             fds.append(fd)
     print("\nFunctionDesigns available for obj ", o.name, ": ", [fd.name for fd in fds])
-    aux = 0
+    aux = 0.0
     best_fd = None
     for fd in fds:
         # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
@@ -67,6 +67,7 @@ def obtainBestFunctionDesign(o):
             # that is the FD error log does NOT contain the current objective
             print(fd.name, "error_log: ", [i.name for i in fd.fd_error_log])
             if not o in fd.fd_error_log:
+                print(fd.fd_qa_tradeoff)
                 if fd.fd_qa_tradeoff > aux:
                     best_fd = fd
                     aux = fd.fd_qa_tradeoff
@@ -216,9 +217,9 @@ def timer_cb(event):
     for i in list(tomasys.ComponentClass.instances()) :
         print(i.name, i.cc_availability)
 
-    print("\nFD realisability:")
+    print("\nFDs information:\n NAME \t \t REALISABILITY \t PERF \t ENERGY \t SAFETY \t TRADE-OFF")
     for i in list(tomasys.FunctionDesign.instances()) :
-        print(i.name, i.fd_realisability)
+        print(i.name, "\t", i.fd_realisability, "\t", i.fd_qa_performance, "\t", i.fd_qa_energy, "\t", i.fd_qa_safety, "\t", i.fd_qa_tradeoff)
 
 
     # evaluate and retrieve desired configuration
