@@ -37,7 +37,7 @@ mock = True       # whether we are running a mock system (True), so reasoning ha
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
 
-# Load ontologies
+# Load ontologies: application model and tomasys
 def loadOntology(file):
     onto_path.append(rospack.get_path('mc_mdl_tomasys')+'/') # local folder to search for ontologies
     onto_path.append(rospack.get_path('mc_mdl_abb')+'/') # local folder to search for ontologies
