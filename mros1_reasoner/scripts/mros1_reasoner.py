@@ -45,6 +45,9 @@ def loadOntology(file):
     tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file
     onto = get_ontology(file).load()
 
+'''
+returns the FD that is estimated to maximize QA trade-off for a given objective o
+'''
 def obtainBestFunctionDesign(o):
     global tomasys, onto
     f = o.typeF
@@ -60,7 +63,40 @@ def obtainBestFunctionDesign(o):
         # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
         print("Realisability ", fd.name, fd.fd_realisability)
         if fd.fd_realisability != False:
-            # FILTER if the FD error log does NOT contain the current objective
+            # FILTER if this objective has already been attempted by the FD
+            # that is the FD error log does NOT contain the current objective
+            print(fd.name, "error_log: ", [i.name for i in fd.fd_error_log])
+            if not o in fd.fd_error_log:
+                if fd.fd_qa_tradeoff > aux:
+                    best_fd = fd
+                    aux = fd.fd_qa_tradeoff
+    if ( best_fd == None ):
+        print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
+        return None
+    else:
+        print("\nBest FD available", best_fd.name)
+        return best_fd
+
+'''
+returns the FD that has the best efficacy for a given objective o
+'''
+def obtainBestEfficacyFunctionDesign(o):
+    global tomasys, onto
+    f = o.typeF
+    # get fds for Function F
+    fds = []
+    for fd in list(tomasys.FunctionDesign.instances()):
+        if fd.solvesF == f:
+            fds.append(fd)
+    print("\nFunctionDesigns available for obj ", o.name, ": ", [fd.name for fd in fds])
+    aux = 0
+    best_fd = None
+    for fd in fds:
+        # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
+        print("Realisability ", fd.name, fd.fd_realisability)
+        if fd.fd_realisability != False:
+            # FILTER if this objective has already been attempted by the FD
+            # that is the FD error log does NOT contain the current objective
             print(fd.name, "error_log: ", [i.name for i in fd.fd_error_log])
             if not o in fd.fd_error_log:
                 if fd.fd_efficacy > aux:
