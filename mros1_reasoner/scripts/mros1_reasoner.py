@@ -23,9 +23,12 @@ from cheops_graph_manipulation_msgs.msg \
     import GraphManipulationActionAction,  GraphManipulationActionGoal, \
     GraphManipulationMessage
 
+from metacontrol_sim.msg import MvpReconfigurationAction, MvpReconfigurationActionGoal
+
 from collections import defaultdict
 
 import argparse
+from decimal import Decimal
 
 from init_models import *
 
@@ -139,7 +142,7 @@ def groundObjective(o, cspecs):
         else:
             fg.needs.append(ob)
 
-    return cspecs
+    return fg
 
 graph_manipulation_client=None
 last_configuration=["cs_yumi_2"]
@@ -172,20 +175,24 @@ def callbackDiagnostics(msg):
     for diagnostic_status in msg.status:
         if diagnostic_status.message == "binding error":
             updateBinding(diagnostic_status)
-        if diagnostic_status.message == "QA_status":
+        if diagnostic_status.message == "QA status":
             updateQA(diagnostic_status)
 
 def updateBinding(msg):
     print("binding error received")
 
 def updateQA(diagnostic_status):
+    global onto
     #find the FG that solves the Objective with the same name that the one in the QA message
-    fg = onto.search_one(solvesO=onto.search_one(iri="*"+ diagnostic_status.name))
-    print("received QA about: ", fg.name)
-    if diagnostic_status.values[0].value == "a":
-        fg.fg_qa_energy = 2.5
+    fg = onto.search_one(solvesO=onto.search_one(iri="*" + "o_navigateA")) #TODO
+    if fg == None:
+        print("ERROR: FG not found")
+        return
+    print("received QA about: ", fg)
+    if diagnostic_status.values[0].key == "energy":
+        fg.fg_qa_energy = float(diagnostic_status.values[0].value)
     else:
-        fg.fg_qa_energy = diagnostic_status.values[0].value
+        print('Unsupported QA type different than _energy_') 
 
 def timer_cb(event):
     global onto
@@ -231,8 +238,9 @@ def timer_cb(event):
     print("\nObjectives in error:", [o.name for o in objectives_internal_error] )
     # Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
     cspecs = []
+    fg = None #resulting fg of reconfiguration
     for o in objectives_internal_error:
-        groundObjective(o, cspecs)
+        fg = groundObjective(o, cspecs)
 
     # Retrieve action and publish from cspecs
     str_specs = []
@@ -240,8 +248,13 @@ def timer_cb(event):
         str_specs.append(cs.name)
     print("RESULT CONFIG: ", str_specs)
 
+    # to request cheops reconfiguration
     if len(str_specs) != 0:
         request_reconfiguration(str_specs)
+
+    # to request mvp new configuration
+    if fg != None:
+        request_configuration(fg)
 
 
 def send_request (reconfiguration_request):
@@ -283,12 +296,24 @@ def request_reconfiguration(component_specs):
     last_configuration = component_specs
     return GraphManipulationMessage.RECONFIGURATION_OK
 
+# for MVP with QAs
+def request_configuration(fg):
+    rospy.logwarn_throttle(1., 'New Configuration requested: {}'.format(fg))
+
+    goal = MvpReconfigurationGoal()
+    goal.request = reconfiguration_request
+    rosgraph_manipulator_client.send_goal(goal)
+    rosgraph_manipulator_client.wait_for_result()
+    result = rosgraph_manipulator_client.get_result().result
+    print('Result: ', result)
+    return result
+
 
 if __name__ == '__main__':
     rospy.init_node('mros1_reasoner')
 
     sub_system_state = rospy.Subscriber('system_state', SystemState, callbackSystemState)
-    sub_diagnostics  = rospy.Subscriber('/metacontrol_diagnostics', DiagnosticArray, callbackDiagnostics)
+    sub_diagnostics  = rospy.Subscriber('/diagnostics', DiagnosticArray, callbackDiagnostics)
 
     onto_file = rospy.get_param('/onto_file')
     loadOntology(onto_file)
@@ -313,4 +338,9 @@ if __name__ == '__main__':
             'cheops_graph_manipulation_action_server',
             GraphManipulationActionAction)
     graph_manipulation_client.wait_for_server()
+
+    rosgraph_manipulator_client = actionlib.SimpleActionClient(
+        'rosgraph_manipulator_action_server',
+        MvpReconfigurationAction)
+    rosgraph_manipulator_client.wait_for_server()
     rospy.spin()
