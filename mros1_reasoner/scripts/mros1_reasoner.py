@@ -71,7 +71,7 @@ def obtainBestFunctionDesign(o):
             print(fd.name, "error_log: ", [i.name for i in fd.fd_error_log])
             if not o in fd.fd_error_log:
                 print(fd.fd_qa_tradeoff)
-                if fd.fd_qa_tradeoff > aux:
+                if fd.fd_qa_tradeoff > aux:  # TODO TypeError: '>' not supported between instances of 'IndividualValueList' and 'float'
                     best_fd = fd
                     aux = fd.fd_qa_tradeoff
     if ( best_fd == None ):
@@ -201,7 +201,12 @@ def timer_cb(event):
 
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
-    sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
+    try:
+        sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
+    except owlready2.base.OwlReadyInconsistentOntologyError as err:
+        print("Reasoning error: {0}".format(err))
+        onto.save(file="error.owl", format="rdfxml")
+
 
     # PRINT system status
     print("\nComponents Statuses:")
