@@ -17,6 +17,7 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>cheops_system_state_msgs</exec_depend>
   <exec_depend>cheops_graph_manipulation_msgs</exec_depend>
+  <exec_depend>metacontrol_sim</exec_depend>
   <exec_depend>mc_mdl_tomasys</exec_depend>
   <exec_depend>mc_mdl_abb</exec_depend>
 
