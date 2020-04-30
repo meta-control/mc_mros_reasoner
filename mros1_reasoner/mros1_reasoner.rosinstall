@@ -1,0 +1,18 @@
+- git:
+    local-name: mros1_reasoner
+    uri: https://github.com/rosin-project/mros1_reasoner.git
+    version: mvp
+- svn:
+    local-name: cheops_graph_manipulation_msgs
+    uri: https://github.com/rosin-project/cheops/trunk/cheops_graph_manipulation_msgs
+- svn:
+    local-name: cheops_system_state_msgs
+    uri: https://github.com/rosin-project/cheops/trunk/cheops_system_state_msgs
+- git:
+    local-name: mc_mdl_tomasys
+    uri: https://github.com/rosin-project/mc_mdl_tomasys.git
+    version: mvp
+- git:
+    local-name: mc_mdl_abb
+    uri: https://github.com/rosin-project/mc_mdl_abb.git
+    version: mvp

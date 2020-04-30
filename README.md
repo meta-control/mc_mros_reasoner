@@ -2,32 +2,56 @@
 A meta-controller implementation for ROS1
 
 ## Installation
+
+### Previous steps
+
 - First you need to have a ROS Melodic version with Python3 support, for example following these [instructions](https://answers.ros.org/question/237613/how-to-define-ros-kinetic-to-use-python3-instead-of-python27/?answer=331009#post-id-331009)
 _Notes:_
   - For me it worked with `Melodic` and `python3.6-venv`
   - I created `$HOME/rospy3_melodic` for the ROS Melodic version with Python3 support
 
 - **Note:** For regular usage you'll need to make sure to have the virtual environment activated, or things will break.
+
 - you need to install owlready2:
 ```
 pip3 install owlready2
 ```
+- You also need a `java jre` you can install it with:
+```
+sudo apt-get install openjdk-11-jre
+```
+### Create reasoner_ws
+
 - We recommend you now create a workspace only for `mros1_reasoner` (and any other packages requiring Python3 in your project), using [workspace overlaying](http://wiki.ros.org/catkin/Tutorials/workspace_overlaying), for example:
 ```
-mkdir -p abb_metacontrol_ws/src
-cd abb_metacontrol_ws
+mkdir -p ~/mros1_reasoner_ws/src
+cd mros1_reasoner_ws
 ```
-- Do not forget to source your ROS Melodic workspace before building your `MROS1_REASONER_WS`
+
+### Get mros1_reasoner and dependencies using wstool
+
+- You need to copy the `mros1_reasoner` and its dependencies into the Python 3 reasoner workspace (ie: `mros1_reasoner_ws`), so they now exists in both the Python 2 as well as the Python 3 workspaces.
+
+```
+$ cd ~/mros1_reasoner_ws
+$ wstool init src https://raw.githubusercontent.com/rosin-project/mros1_reasoner/mvp/mros1_reasoner.rosinstall
+```
+
+- **IMP Note:** For `mros1_reasoner_ws` you cannot use apt or rosdep install .. (as that will try to use apt and it will install the regular Melodic Python 2 packages, which are invisible to `mros1_reasoner_ws`)
+- For the non-Python 3 workspace and its packages you can use apt and `rosdep install ..`
+
+## Build the code
+
+- Once you have the workspace setup, you can build the workspace
+- Do not forget to source your Python3 ROS Melodic workspace before building your `mros1_reasoner_ws`
 ```
 source $HOME/rospy3_melodic/devel/setup.bash
 catkin init
-catkin config --extend $HOME/ros_kinetic_py3/devel
+catkin config --extend $HOME/rospy3_melodic/devel
 catkin b
 ```
-- We also advice you to create a separate workspace for "everything else", and only keep the reasoner package in the `abb_metacontrol_ws` workspace.
-- **IMP Note:** For `abb_metacontrol_ws` you cannot use apt or rosdep install .. (as that will try to use apt and it will install the regular Kinetic Python 2 packages, which are invisible to `abb_metacontrol_ws`)
-- For the non-Python 3 workspace and its packages you can use apt and `rosdep install ..`
-- Since `mros1_reasoner` depends on `cheops_system_state_msgs` and `cheops_graph_manipulation_msgs`, you will need to copy these packages into the Python 3 workspace (ie: `abb_metacontrol_ws`), so they now exists in both the Python 2 as well as the Python 3 workspaces.
+- We also advice you to create a separate workspace for "everything else", and only keep the reasoner package in the `mros1_reasoner_ws` workspace.
+
 
 ### Known issues
 If you run into an issue with:
@@ -45,7 +69,7 @@ sudo apt clean && sudo apt update
 Activate your virtual environment, source your ws and launch the reasoner:
 ```
 source venv3.5_ros/bin/activate
-source $YOUR_MROS1_REASONER_WS/devel/setup.bash
+source mros1_reasoner_ws/devel/setup.bash
 roslaunch mros1_reasoner run.launch
 ```
 
