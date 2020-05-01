@@ -114,8 +114,19 @@ def obtainBestEfficacyFunctionDesign(o):
         print("\nBest FD available", best_fd.name)
         return best_fd
 
+# MVP: select FD to reconfigure to fic Objective in ERROR
+def selectFD(o):
+    global tomasys, onto
+    print("=> Reasoner searches FD for objective: ", o.name)
+    fd = obtainBestFunctionDesign(o)
+    if(fd == None):
+        print("*** Objective ", o.name, "cannot be realised ***")
+        return ["safe_shutdown"]
+    else:
+        return fd
+
 '''
-To solve the given Objective, recursively Grounds the required hierarchy of
+CHEOPS To solve the given Objective, recursively Grounds the required hierarchy of
 sub-Objectives and Function Groundings
 '''
 def groundObjective(o, cspecs):
@@ -199,11 +210,40 @@ def updateQA(diagnostic_status):
     else:
         print('Unsupported QA type different than _energy_') 
 
+def print_ontology_status():
+    global onto
+    print("\nComponents Statuses:")
+    for i in list(tomasys.ComponentState.instances()):
+        print(i.name, i.c_status)
+
+    print("\nBindings Statuses:")
+    for i in list(tomasys.Binding.instances()):
+        print(i.name, i.b_status)
+
+    print("\nFG Statuses:")
+    for i in list(tomasys.FunctionGrounding.instances()):
+        print(i.name, i.fg_status, i.fg_qa_energy)
+
+    print("\nObjectives Statuses:")
+    for i in list(tomasys.Objective.instances()):
+        print(i.name, i.o_status, i.o_nfr_energy)
+
+    print("\nCC availability:")
+    for i in list(tomasys.ComponentClass.instances()):
+        print(i.name, i.cc_availability)
+
+    print("\nFDs information:\n NAME \t \t REALISABILITY \t PERF \t ENERGY \t SAFETY \t TRADE-OFF")
+    for i in list(tomasys.FunctionDesign.instances()):
+        print(i.name, "\t", i.fd_realisability, "\t", i.fd_qa_performance,
+              "\t", i.fd_qa_energy, "\t", i.fd_qa_safety, "\t", i.fd_qa_tradeoff)
+
+
+
 def timer_cb(event):
     global onto
     rospy.loginfo_throttle(1., 'Entered timer_cb for metacontrol reasoning')
-    # Update components statuses - TODO: update objective status too
-
+    
+    # EXEC REASONING to update ontology with inferences
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
     try:
@@ -212,58 +252,61 @@ def timer_cb(event):
         print("Reasoning error: {0}".format(err))
         onto.save(file="error.owl", format="rdfxml")
 
-
     # PRINT system status
-    print("\nComponents Statuses:")
-    for i in list(tomasys.ComponentState.instances()) :
-        print(i.name, i.c_status)
-
-    print("\nBindings Statuses:")
-    for i in list(tomasys.Binding.instances()) :
-        print(i.name, i.b_status)
-
-    print("\nFG Statuses:")
-    for i in list(tomasys.FunctionGrounding.instances()) :
-        print(i.name, i.fg_status, i.fg_qa_energy)
-
-    print("\nObjectives Statuses:")
-    for i in list(tomasys.Objective.instances()) :
-        print(i.name, i.o_status, i.o_nfr_energy)
-
-    print("\nCC availability:")
-    for i in list(tomasys.ComponentClass.instances()) :
-        print(i.name, i.cc_availability)
-
-    print("\nFDs information:\n NAME \t \t REALISABILITY \t PERF \t ENERGY \t SAFETY \t TRADE-OFF")
-    for i in list(tomasys.FunctionDesign.instances()) :
-        print(i.name, "\t", i.fd_realisability, "\t", i.fd_qa_performance, "\t", i.fd_qa_energy, "\t", i.fd_qa_safety, "\t", i.fd_qa_tradeoff)
-
-
-    # evaluate and retrieve desired configuration
+    print_ontology_status()
+    
+    # EVALUATE and retrieve desired configuration (MAPE - Analysis)
     # init objectives in error
     objectives_internal_error = []
     for o in list(tomasys.Objective.instances() ):
         if o.o_status == "INTERNAL_ERROR":
             objectives_internal_error.append(o)
     print("\nObjectives in error:", [o.name for o in objectives_internal_error] )
-    # Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
-    cspecs = []
-    fg = None #resulting fg of reconfiguration
-    for o in objectives_internal_error:
-        fg = groundObjective(o, cspecs)
 
-    # CHEOPS Retrieve action and publish from cspecs
-    str_specs = []
-    for cs in cspecs:
-        str_specs.append(cs.name)
-    print("RESULT CONFIG: ", str_specs)
-    # CHEOPS to request cheops reconfiguration
-    if len(str_specs) != 0:
-        request_reconfiguration(str_specs)
+    # ADAPT MAPE -Plan & Execute
 
-    # MVP to request  new configuration
-    if fg != None:
-        request_configuration(fg)
+    # CHEOPS
+    if len(objectives_internal_error) > 1:
+        # CHEOPS Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
+        cspecs = []
+        for o in objectives_internal_error:
+            groundObjective(o, cspecs)
+
+        str_specs = [cs.name for cs in cspecs]
+        print("RESULT CONFIG: ", str_specs)
+        if len(str_specs) != 0:
+            request_reconfiguration()  # CHEOPS request reconfiguration by sending cspecs names
+    
+    # MVP (TODO fix when CHEOPS also only 1)
+    elif len(objectives_internal_error) == 1 :
+        fd = selectFD(objectives_internal_error[0])
+        # MVP to request new configuration
+        if fd != ["safe_shutdown"]:
+            result = request_configuration(fd)
+
+            # Adaptation feedback: 
+            if result == 1: # reconfiguration executed ok
+                print("== RECONFIGURATION SUCCEEDED ==")
+                # update the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
+                fg = onto.search_one(
+                    solvesO=objectives_internal_error[0])
+                destroy_entity(fg)
+                fg = tomasys.FunctionGrounding(
+                    "fg_new", namespace=onto, typeFD=fd, solvesO=objectives_internal_error[0])
+
+
+            elif result == -1:
+                print("== RECONFIGURATION UNKNOWN ==")
+            else:
+                print("== RECONFIGURATION FAILED ==")
+
+        else:
+            print("No FD found to solve Objective, requesting shutdown not available")
+
+    #TODO
+    else:
+        print("-- NO ADAPTATION NEEDED --")
+
 
 # Cheops send reconfiguration goal
 def send_request (reconfiguration_request):
@@ -305,12 +348,12 @@ def request_reconfiguration(component_specs):
     last_configuration = component_specs
     return GraphManipulationMessage.RECONFIGURATION_OK
 
-# for MVP with QAs
-def request_configuration(fg):
-    rospy.logwarn_throttle(1., 'New Configuration requested: {}'.format(fg.name))
+# for MVP with QAs - request the FD.name to reconfigure to
+def request_configuration(fd):
+    rospy.logwarn_throttle(1., 'New Configuration requested: {}'.format(fd.name))
 
     goal = MvpReconfigurationGoal()
-    goal.desired_configuration_name = fg.name
+    goal.desired_configuration_name = fd.name
     rosgraph_manipulator_client.send_goal(goal)
     rosgraph_manipulator_client.wait_for_result()
     result = rosgraph_manipulator_client.get_result().result
