@@ -184,7 +184,7 @@ def updateBinding(msg):
 def updateQA(diagnostic_status):
     global onto
     #find the FG that solves the Objective with the same name that the one in the QA message
-    fg = onto.search_one(solvesO=onto.search_one(iri="*" + "o_navigateA")) #TODO
+    fg = onto.search_one(solvesO=onto.search_one(iri="*" + "o_navigateA")) #TODO read objective from diagnostic_status
     if fg == None:
         print("ERROR: FG not found")
         return
@@ -247,17 +247,16 @@ def timer_cb(event):
     for o in objectives_internal_error:
         fg = groundObjective(o, cspecs)
 
-    # Retrieve action and publish from cspecs
+    # CHEOPS Retrieve action and publish from cspecs
     str_specs = []
     for cs in cspecs:
         str_specs.append(cs.name)
     print("RESULT CONFIG: ", str_specs)
-
-    # to request cheops reconfiguration
+    # CHEOPS to request cheops reconfiguration
     if len(str_specs) != 0:
         request_reconfiguration(str_specs)
 
-    # to request mvp new configuration
+    # MVP to request  new configuration
     if fg != None:
         request_configuration(fg)
 
