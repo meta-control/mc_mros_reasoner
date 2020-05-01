@@ -69,10 +69,11 @@ def obtainBestFunctionDesign(o):
             # that is the FD error log does NOT contain the current objective
             print(fd.name, "error_log: ", [i.name for i in fd.fd_error_log])
             if not o in fd.fd_error_log:
-                print(fd.fd_qa_tradeoff)
-                if fd.fd_qa_tradeoff > aux:  # TODO TypeError: '>' not supported between instances of 'IndividualValueList' and 'float'
+                # print(fd.fd_qa_tradeoff)
+                # select based on higher QA (TODO trade-off)
+                if fd.fd_qa_energy > aux:  # TODO TypeError: '>' not supported between instances of 'IndividualValueList' and 'float'
                     best_fd = fd
-                    aux = fd.fd_qa_tradeoff
+                    aux = fd.fd_qa_energy
     if ( best_fd == None ):
         print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
@@ -330,6 +331,8 @@ if __name__ == '__main__':
         init_abb_2a(onto, tomasys)
     elif onto_file == "abb_dualarm_mm_complete.owl":
         init_abb_2b(onto, tomasys)
+    elif onto_file == "mvp.owl":
+        init_mvp(onto, tomasys)
     elif onto_file == "abb_scenario3.owl":
         init_abb_3(onto, tomasys)
     else:
