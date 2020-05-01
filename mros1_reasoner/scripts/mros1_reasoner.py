@@ -56,27 +56,32 @@ def obtainBestFunctionDesign(o):
         if fd.solvesF == f:
             fds.append(fd)
     print("\nFunctionDesigns available for obj ", o.name, ": ", [fd.name for fd in fds])
-    aux = 0.0
-    best_fd = None
-    for fd in fds:
-        # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
-        print("Realisability ", fd.name, fd.fd_realisability)
-        if fd.fd_realisability != False:
-            # FILTER if this objective has already been attempted by the FD
-            # that is the FD error log does NOT contain the current objective
-            print(fd.name, "error_log: ", [i.name for i in fd.fd_error_log])
-            if not o in fd.fd_error_log:
-                # print(fd.fd_qa_tradeoff)
-                # select based on higher QA (TODO trade-off)
-                if fd.fd_qa_energy > aux:  # TODO TypeError: '>' not supported between instances of 'IndividualValueList' and 'float'
-                    best_fd = fd
-                    aux = fd.fd_qa_energy
-    if ( best_fd == None ):
-        print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
-        return None
-    else:
+    print("Objective NFR ENERGY: ", o.o_nfr_energy)
+    
+    # fiter fds to only those available
+    # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
+    realisable_fds = [fd for fd in fds if fd.fd_realisability != False]
+    fds_for_obj = [fd for fd in realisable_fds if (
+        not o in fd.fd_error_log) and (o.o_nfr_energy < fd.fd_qa_energy)]
+    
+    if fds_for_obj != None:
+        aux = o.o_nfr_energy
+        best_fd = fds_for_obj[0]
+        for fd in fds:        
+            print(fd.name, "realisability: ", fd.fd_realisability,
+                  "\t ENERGY: ", fd.fd_qa_energy)
+            # get best FD based on higher QA (TODO trade-off)
+            if fd.fd_qa_energy < aux:  # TODO TypeError: '>' not supported between instances of 'IndividualValueList' and 'float'
+                best_fd = fd
+                aux = fd.fd_qa_energy
+        
         print("\nBest FD available", best_fd.name)
         return best_fd
+    else:
+        print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
+        return None
+
+    
 
 
 # Cheops metacontrol PLAN: returns the FD that has the best efficacy for a given objective o
