@@ -48,9 +48,8 @@ def loadOntology(file):
     tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file
     onto = get_ontology(file).load()
 
-'''
-returns the FD that is estimated to maximize QA trade-off for a given objective o
-'''
+
+# MVP metacontrol PLAN: returns the FD that is estimated to maximize QA (TODO trade-off) for a given objective o
 def obtainBestFunctionDesign(o):
     global tomasys, onto
     f = o.typeF
@@ -81,9 +80,8 @@ def obtainBestFunctionDesign(o):
         print("\nBest FD available", best_fd.name)
         return best_fd
 
-'''
-returns the FD that has the best efficacy for a given objective o
-'''
+
+# Cheops metacontrol PLAN: returns the FD that has the best efficacy for a given objective o
 def obtainBestEfficacyFunctionDesign(o):
     global tomasys, onto
     f = o.typeF
@@ -147,6 +145,7 @@ def groundObjective(o, cspecs):
 graph_manipulation_client=None
 last_configuration=["cs_yumi_2"]
 
+# Cheops monitoring received
 def callbackSystemState(msg):
     sys_state = msg
     global onto
@@ -169,18 +168,21 @@ def callbackSystemState(msg):
     rospy.loginfo(1., 'camera: {}, tag_detect: {}, yumi: {}'.format(
         sys_state.camera_status, sys_state.tag_detection_status, sys_state.yumi_status))
 
-
+# MVP: callback for diagnostic msg received from QA Observer
 def callbackDiagnostics(msg):
     global onto
     for diagnostic_status in msg.status:
+        # 2 types of diagnostics considered: about bindings in error (TODO not implemented yet) or about QAs
         if diagnostic_status.message == "binding error":
             updateBinding(diagnostic_status)
         if diagnostic_status.message == "QA status":
             updateQA(diagnostic_status)
 
 def updateBinding(msg):
+    # TODO handle reporting of a fg.binding in error
     print("binding error received")
 
+# MVP update QA value based on incoming diagnostic
 def updateQA(diagnostic_status):
     global onto
     #find the FG that solves the Objective with the same name that the one in the QA message
@@ -261,7 +263,7 @@ def timer_cb(event):
     if fg != None:
         request_configuration(fg)
 
-
+# Cheops send reconfiguration goal
 def send_request (reconfiguration_request):
     global mock
     goal = GraphManipulationActionGoal()
@@ -273,7 +275,7 @@ def send_request (reconfiguration_request):
     else:
         return GraphManipulationMessage.RECONFIGURATION_OK
 
-
+# for cheops
 spec2request = defaultdict(lambda: GraphManipulationMessage.REQUEST_MISSING, {
     "cs_yumi1" : GraphManipulationMessage.REQUEST_YUMI_CONFIG_1ARM,
     "cs_displacement_node" : GraphManipulationMessage.REQUEST_DISPLACEMENT_NODE,
@@ -284,7 +286,7 @@ spec2request = defaultdict(lambda: GraphManipulationMessage.REQUEST_MISSING, {
     "safe_shutdown" : GraphManipulationMessage.REQUEST_SAFE_SHUTDOWN
 })
 
-
+# cheops reconfiguration
 def request_reconfiguration(component_specs):
     rospy.logwarn_throttle(1., 'Reconfiguration requested ..')
     global last_configuration, spec2request
