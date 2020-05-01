@@ -344,10 +344,11 @@ if __name__ == '__main__':
     graph_manipulation_client = actionlib.SimpleActionClient(
             'cheops_graph_manipulation_action_server',
             GraphManipulationActionAction)
-    graph_manipulation_client.wait_for_server()
+    # graph_manipulation_client.wait_for_server()
 
     rosgraph_manipulator_client = actionlib.SimpleActionClient(
         'rosgraph_manipulator_action_server',
         MvpReconfigurationAction)
-    rosgraph_manipulator_client.wait_for_server()
+    # rosgraph_manipulator_client.wait_for_server()
+
     rospy.spin()
