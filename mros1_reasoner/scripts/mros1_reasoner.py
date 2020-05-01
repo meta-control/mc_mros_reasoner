@@ -315,11 +315,7 @@ def request_configuration(fg):
 
 
 if __name__ == '__main__':
-    rospy.init_node('mros1_reasoner')
-
-    sub_system_state = rospy.Subscriber('system_state', SystemState, callbackSystemState)
-    sub_diagnostics  = rospy.Subscriber('/diagnostics', DiagnosticArray, callbackDiagnostics)
-
+    # load ontology
     onto_file = rospy.get_param('/onto_file')
     loadOntology(onto_file)
     rospy.loginfo("Loaded ontology: " + onto_file)
@@ -334,6 +330,11 @@ if __name__ == '__main__':
         init_abb_3(onto, tomasys)
     else:
         print("Unknown ontology file: ", onto_file)
+
+    # Start rosnode stuff
+    rospy.init_node('mros1_reasoner')
+    sub_system_state = rospy.Subscriber('system_state', SystemState, callbackSystemState)
+    sub_diagnostics = rospy.Subscriber('/diagnostics', DiagnosticArray, callbackDiagnostics)
 
     #for testing YUMI in error
     # sys_state = SystemState(yumi_status = 1, camera_status = 1, tag_detection_status = 99) # no tag detected
