@@ -196,6 +196,11 @@ def updateBinding(msg):
     # TODO handle reporting of a fg.binding in error
     print("binding error received")
 
+# To reset the inferences that no longer hold due to adaptation
+def resetOntologyStatuses():
+    for o in list(tomasys.Objective.instances()):
+        o.o_status = None
+
 # MVP update QA value based on incoming diagnostic
 def updateQA(diagnostic_status):
     global onto
@@ -293,7 +298,7 @@ def timer_cb(event):
                 destroy_entity(fg)
                 fg = tomasys.FunctionGrounding(
                     "fg_new", namespace=onto, typeFD=fd, solvesO=objectives_internal_error[0])
-
+                resetOntologyStatuses()
 
             elif result == -1:
                 print("== RECONFIGURATION UNKNOWN ==")
