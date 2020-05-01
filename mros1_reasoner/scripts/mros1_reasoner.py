@@ -18,12 +18,9 @@ import actionlib
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
-from cheops_system_state_msgs.msg import SystemState
-from cheops_graph_manipulation_msgs.msg \
-    import GraphManipulationActionAction,  GraphManipulationActionGoal, \
-    GraphManipulationMessage
-
-from metacontrol_sim.msg import MvpReconfigurationAction, MvpReconfigurationActionGoal
+from metacontrol_msgs.msg import MvpReconfigurationAction, MvpReconfigurationGoal, \
+                                GraphManipulationActionAction,  GraphManipulationActionGoal, \
+                                GraphManipulationMessage, SystemState
 
 from collections import defaultdict
 
