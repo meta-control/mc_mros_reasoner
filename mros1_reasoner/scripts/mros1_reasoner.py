@@ -302,10 +302,10 @@ def request_reconfiguration(component_specs):
 
 # for MVP with QAs
 def request_configuration(fg):
-    rospy.logwarn_throttle(1., 'New Configuration requested: {}'.format(fg))
+    rospy.logwarn_throttle(1., 'New Configuration requested: {}'.format(fg.name))
 
     goal = MvpReconfigurationGoal()
-    goal.request = reconfiguration_request
+    goal.desired_configuration_name = fg.name
     rosgraph_manipulator_client.send_goal(goal)
     rosgraph_manipulator_client.wait_for_result()
     result = rosgraph_manipulator_client.get_result().result
