@@ -34,7 +34,7 @@ cd mros1_reasoner_ws
 
 ```
 $ cd ~/mros1_reasoner_ws
-$ wstool init src https://raw.githubusercontent.com/rosin-project/mros1_reasoner/mvp/mros1_reasoner.rosinstall
+$ wstool init src https://raw.githubusercontent.com/rosin-project/mros1_reasoner/mvp/mros1_reasoner/mros1_reasoner.rosinstall
 ```
 
 - **IMP Note:** For `mros1_reasoner_ws` you cannot use apt or rosdep install .. (as that will try to use apt and it will install the regular Melodic Python 2 packages, which are invisible to `mros1_reasoner_ws`)
