@@ -44,12 +44,15 @@ def init_abb_2b(onto, tomasys): # use with abb_dualarm_mm_complete.owl model
 
 
 def init_mvp(onto, tomasys):  # use with mvp.owl model
+    # NFRs on QAs
+    nfr_energy = tomasys.QAvalue("nfr_safety", namespace=onto, isQAtype=onto.search_one(
+        iri="*energy"), hasValue=1.5)
+
     # Initial system state
 
     #Root objectives
     o = tomasys.Objective("o_navigateA", namespace=onto,
-                          typeF=onto.search_one(iri="*f_navigate"))
-    o.o_nfr_energy = 1.4
+                          typeF=onto.search_one(iri="*f_navigate"), hasNFR=[nfr_energy])
 
     # # Function Groundings and Objectives
     fg = tomasys.FunctionGrounding("fg_nav_fast", namespace=onto, typeFD=onto.search_one(

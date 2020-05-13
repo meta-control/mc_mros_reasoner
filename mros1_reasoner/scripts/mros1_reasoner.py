@@ -61,19 +61,20 @@ def obtainBestFunctionDesign(o):
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
     realisable_fds = [fd for fd in fds if fd.fd_realisability != False]
-    fds_for_obj = [fd for fd in realisable_fds if (
-        not o in fd.fd_error_log) and (o.o_nfr_energy < fd.fd_qa_energy)]
+    # discard FDs already grounded for this objective when objective in error
+    suitable_fds= [fd for fd in fds if (not o in fd.fd_error_log)]
+    # discard those FD that will not meet objective NFRs
+    fds_for_obj = meetNFRs(o, suitable_fds)
     
+    # get best FD based on higher Utility/trade-off of QAs
     if fds_for_obj != None:
-        aux = o.o_nfr_energy
+        aux = 0
         best_fd = fds_for_obj[0]
         for fd in fds:        
-            print(fd.name, "realisability: ", fd.fd_realisability,
-                  "\t ENERGY: ", fd.fd_qa_energy)
-            # get best FD based on higher QA (TODO trade-off)
-            if fd.fd_qa_energy < aux:  # TODO TypeError: '>' not supported between instances of 'IndividualValueList' and 'float'
+            u = utility(fd)
+            if  u > aux:  # TODO TypeError: '>' not supported between instances of 'IndividualValueList' and 'float'
                 best_fd = fd
-                aux = fd.fd_qa_energy
+                aux = u
         
         print("\nBest FD available", best_fd.name)
         return best_fd
@@ -81,7 +82,24 @@ def obtainBestFunctionDesign(o):
         print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
 
-    
+def meetNFRs(o, fds):
+    filtered = []
+    for fd in fds:
+        print("Objective NFRs: ", o.hasNFR)
+        for nfr in o.hasNFR:
+            [qa for qa in fd.hasQAestimation if qa.isQAtype==nfr.isQAtype]               
+            if qa == None:
+                print("WARNING FD has no expected value for this QA")
+            else:
+                if qa.hasValue > nfr.hasValue:
+                    filtered.append(fd)
+
+    return filtered
+
+# MVP: compute expected utility based on QA trade-off, the criteria to chose FDs/configurations
+def utility(fd):
+    # TODO
+    return 1
 
 
 # Cheops metacontrol PLAN: returns the FD that has the best efficacy for a given objective o
@@ -114,7 +132,7 @@ def obtainBestEfficacyFunctionDesign(o):
         print("\nBest FD available", best_fd.name)
         return best_fd
 
-# MVP: select FD to reconfigure to fic Objective in ERROR
+# MVP: select FD to reconfigure to fix Objective in ERROR
 def selectFD(o):
     global tomasys, onto
     print("=> Reasoner searches FD for objective: ", o.name)
@@ -211,7 +229,8 @@ def updateQA(diagnostic_status):
         return
     print("received QA about: ", fg)
     if diagnostic_status.values[0].key == "energy":
-        fg.fg_qa_energy = float(diagnostic_status.values[0].value)
+        fg.hasQAvalue.append( tomasys.QAvalue("obs1_energy", namespace=onto, isQAtype=onto.search_one(
+            iri="*energy"), hasValue=diagnostic_status.values[0].value))
     else:
         print('Unsupported QA type different than _energy_') 
 
@@ -227,20 +246,20 @@ def print_ontology_status():
 
     print("\nFG Statuses:")
     for i in list(tomasys.FunctionGrounding.instances()):
-        print(i.name, i.fg_status, i.fg_qa_energy)
+        print(i.name, i.fg_status, [(qa.isQAtype, qa.hasValue) for qa in i.hasQAvalue])
 
     print("\nObjectives Statuses:")
     for i in list(tomasys.Objective.instances()):
-        print(i.name, i.o_status, i.o_nfr_energy)
+        print(i.name, i.o_status, [(nfr.isQAtype, nfr.hasValue) for nfr in i.hasNFR])
 
     print("\nCC availability:")
     for i in list(tomasys.ComponentClass.instances()):
         print(i.name, i.cc_availability)
 
-    print("\nFDs information:\n NAME \t \t REALISABILITY \t PERF \t ENERGY \t SAFETY \t TRADE-OFF")
+    print("\nFDs information:\n NAME \t")
     for i in list(tomasys.FunctionDesign.instances()):
-        print(i.name, "\t", i.fd_realisability, "\t", i.fd_qa_performance,
-              "\t", i.fd_qa_energy, "\t", i.fd_qa_safety, "\t", i.fd_qa_tradeoff)
+        print(i.name, "\t", i.fd_realisability, "\t", [
+              (qa.isQAtype, qa.hasValue) for qa in i.hasQAestimation])
 
 
 
