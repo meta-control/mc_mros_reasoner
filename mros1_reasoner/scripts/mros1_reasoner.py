@@ -220,8 +220,11 @@ def resetOntologyStatuses():
         o.o_status = None
 
 # MVP update QA value based on incoming diagnostic
+counter=0
 def updateQA(diagnostic_status):
     global onto
+    global counter
+    counter += 1
     #find the FG that solves the Objective with the same name that the one in the QA message
     fg = onto.search_one(solvesO=onto.search_one(iri="*" + "o_navigateA")) #TODO read objective from diagnostic_status
     if fg == None:
@@ -229,7 +232,7 @@ def updateQA(diagnostic_status):
         return
     print("received QA about: ", fg)
     if diagnostic_status.values[0].key == "energy":
-        fg.hasQAvalue.append( tomasys.QAvalue("obs1_energy", namespace=onto, isQAtype=onto.search_one(
+        fg.hasQAvalue.append( tomasys.QAvalue("obs_energy_{}".format(counter), namespace=onto, isQAtype=onto.search_one(
             iri="*energy"), hasValue=diagnostic_status.values[0].value))
     else:
         print('Unsupported QA type different than _energy_') 
@@ -246,7 +249,7 @@ def print_ontology_status():
 
     print("\nFG Statuses:")
     for i in list(tomasys.FunctionGrounding.instances()):
-        print(i.name, i.fg_status, [(qa.isQAtype, qa.hasValue) for qa in i.hasQAvalue])
+        print(i.name,"\t", i.fg_status, "\t", [ (qa.name, qa.hasValue) for qa in i.hasQAvalue])
 
     print("\nObjectives Statuses:")
     for i in list(tomasys.Objective.instances()):
