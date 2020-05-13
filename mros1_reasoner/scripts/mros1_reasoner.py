@@ -55,28 +55,31 @@ def obtainBestFunctionDesign(o):
     for fd in list(tomasys.FunctionDesign.instances()):
         if fd.solvesF == f:
             fds.append(fd)
-    print("\nFunctionDesigns available for obj ", o.name, ": ", [fd.name for fd in fds])
-    print("Objective NFR ENERGY: ", o.o_nfr_energy)
+    print("== FunctionDesigns available for obj: ", [fd.name for fd in fds])
+    print("Objective NFR ENERGY: ", o.hasNFR)
     
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
     realisable_fds = [fd for fd in fds if fd.fd_realisability != False]
+    print("== FunctionDesigns REALISABLE for obj: ", [fd.name for fd in realisable_fds])
     # discard FDs already grounded for this objective when objective in error
     suitable_fds= [fd for fd in fds if (not o in fd.fd_error_log)]
+    print("== FunctionDesigns suitable NOT IN ERROR LOG: ", [fd.name for fd in suitable_fds])
     # discard those FD that will not meet objective NFRs
     fds_for_obj = meetNFRs(o, suitable_fds)
-    
+    print("== FunctionDesigns also meeting NFRs: ", [fd.name for fd in fds_for_obj])
+
     # get best FD based on higher Utility/trade-off of QAs
-    if fds_for_obj != None:
+    if fds_for_obj != []:
         aux = 0
         best_fd = fds_for_obj[0]
-        for fd in fds:        
+        for fd in fds_for_obj:
             u = utility(fd)
-            if  u > aux:  # TODO TypeError: '>' not supported between instances of 'IndividualValueList' and 'float'
+            if  u > aux: 
                 best_fd = fd
                 aux = u
         
-        print("\nBest FD available", best_fd.name)
+        print("> Best FD available", best_fd.name)
         return best_fd
     else:
         print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
@@ -84,15 +87,21 @@ def obtainBestFunctionDesign(o):
 
 def meetNFRs(o, fds):
     filtered = []
+    print("== Checking FDs for Objective with NFRs type: ", o.hasNFR[0].isQAtype.name, "and value: ", o.hasNFR[0].hasValue)
     for fd in fds:
-        print("Objective NFRs: ", o.hasNFR)
         for nfr in o.hasNFR:
-            [qa for qa in fd.hasQAestimation if qa.isQAtype==nfr.isQAtype]               
-            if qa == None:
-                print("WARNING FD has no expected value for this QA")
+            qas = [qa for qa in fd.hasQAestimation if qa.isQAtype==nfr.isQAtype]               
+            if qas == []:
+                print("\t WARNING FD has no expected value for this QA")
             else:
-                if qa.hasValue > nfr.hasValue:
-                    filtered.append(fd)
+                if nfr.isQAtype.name == 'energy':
+                    if qas[0].hasValue < nfr.hasValue: # specific semantics for energy
+                        filtered.append(fd)
+                if nfr.isQAtype.name == 'safety':
+                    if qas[0].hasValue > nfr.hasValue:  # specific semantics for energy
+                        filtered.append(fd)
+    if filtered == []:
+        print("#### WARNING: no FDs meetf NFRs")
 
     return filtered
 
@@ -233,7 +242,7 @@ def updateQA(diagnostic_status):
     print("received QA about: ", fg)
     if diagnostic_status.values[0].key == "energy":
         fg.hasQAvalue.append( tomasys.QAvalue("obs_energy_{}".format(counter), namespace=onto, isQAtype=onto.search_one(
-            iri="*energy"), hasValue=diagnostic_status.values[0].value))
+            iri="*energy"), hasValue=float(diagnostic_status.values[0].value)))
     else:
         print('Unsupported QA type different than _energy_') 
 
