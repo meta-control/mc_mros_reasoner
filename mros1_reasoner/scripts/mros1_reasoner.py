@@ -133,6 +133,7 @@ def callbackDiagnostics(msg):
         if diagnostic_status.message == "binding error":
             updateBinding(diagnostic_status)
         if diagnostic_status.message == "QA status":
+            rospy.loginfo('received QA observation')
             updateQA(diagnostic_status)
 
 def updateBinding(msg):
@@ -147,20 +148,34 @@ def resetOntologyStatuses():
 # MVP update QA value based on incoming diagnostic
 counter=0
 def updateQA(diagnostic_status):
-    global onto
     global counter
     counter += 1
     #find the FG that solves the Objective with the same name that the one in the QA message
-    fg = onto.search_one(solvesO=onto.search_one(iri="*" + "o_navigateA")) #TODO read objective from diagnostic_status
+    # TODO read objective from diagnostic_status
+    fg = next((fg for fg in tomasys.FunctionGrounding.instances() if fg.name == "fg_" + grounded_configuration), None)
+
     if fg == None:
         print("ERROR: FG not found")
         return
-    print("received QA about: ", fg)
-    if diagnostic_status.values[0].key == "energy":
-        fg.hasQAvalue.append( tomasys.QAvalue("obs_energy_{}".format(counter), namespace=onto, isQAtype=onto.search_one(
-            iri="*energy"), hasValue=float(diagnostic_status.values[0].value)))
+    qa_type = onto.search_one(iri="*{}".format(diagnostic_status.values[0].key))
+    if qa_type != None:
+        print("received QA about: ", fg, "\tTYPE: ", diagnostic_status.values[0].key)
+        updateValueQA(fg, qa_type, float(diagnostic_status.values[0].value))
     else:
-        print('Unsupported QA type different than _energy_') 
+        print("Unsupported QA about: ", fg, "\tTYPE: ",
+              diagnostic_status.values[0].key)
+
+def updateValueQA(fg, qa_type, value):
+    qas = fg.hasQAvalue
+    for qa in qas:
+        if qa.isQAtype==qa_type:
+            qas.remove(qa)
+    fg.hasQAvalue = qas
+    print(fg, fg.hasQAvalue)
+    qav = tomasys.QAvalue("obs_{0}_{1}".format(qa_type,
+                                         counter), namespace=onto, hasValue=value)
+    fg.hasQAvalue.append(qav)
+    print(fg, fg.hasQAvalue)
 
 def print_ontology_status():
     global onto
