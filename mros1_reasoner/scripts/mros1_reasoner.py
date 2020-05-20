@@ -33,6 +33,7 @@ from init_models import *
 tomasys = None    # owl model with the tomasys ontology
 onto = None       # owl model with the application model as individuals of tomasys classes
 mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected t the real system
+grounded_configuration = None
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
@@ -132,6 +133,7 @@ def callbackDiagnostics(msg):
         if diagnostic_status.message == "binding error":
             updateBinding(diagnostic_status)
         if diagnostic_status.message == "QA status":
+            rospy.loginfo('received QA observation')
             updateQA(diagnostic_status)
 
 def updateBinding(msg):
@@ -146,20 +148,34 @@ def resetOntologyStatuses():
 # MVP update QA value based on incoming diagnostic
 counter=0
 def updateQA(diagnostic_status):
-    global onto
     global counter
     counter += 1
     #find the FG that solves the Objective with the same name that the one in the QA message
-    fg = onto.search_one(solvesO=onto.search_one(iri="*" + "o_navigateA")) #TODO read objective from diagnostic_status
+    # TODO read objective from diagnostic_status
+    fg = next((fg for fg in tomasys.FunctionGrounding.instances() if fg.name == "fg_" + grounded_configuration), None)
+
     if fg == None:
         print("ERROR: FG not found")
         return
-    print("received QA about: ", fg)
-    if diagnostic_status.values[0].key == "energy":
-        fg.hasQAvalue.append( tomasys.QAvalue("obs_energy_{}".format(counter), namespace=onto, isQAtype=onto.search_one(
-            iri="*energy"), hasValue=float(diagnostic_status.values[0].value)))
+    qa_type = onto.search_one(iri="*{}".format(diagnostic_status.values[0].key))
+    if qa_type != None:
+        print("received QA about: ", fg, "\tTYPE: ", diagnostic_status.values[0].key)
+        updateValueQA(fg, qa_type, float(diagnostic_status.values[0].value))
     else:
-        print('Unsupported QA type different than _energy_') 
+        print("Unsupported QA about: ", fg, "\tTYPE: ",
+              diagnostic_status.values[0].key)
+
+def updateValueQA(fg, qa_type, value):
+    qas = fg.hasQAvalue
+    for qa in qas:
+        if qa.isQAtype==qa_type:
+            qas.remove(qa)
+    fg.hasQAvalue = qas
+    print(fg, fg.hasQAvalue)
+    qav = tomasys.QAvalue("obs_{0}_{1}".format(qa_type,
+                                         counter), namespace=onto, hasValue=value)
+    fg.hasQAvalue.append(qav)
+    print(fg, fg.hasQAvalue)
 
 def print_ontology_status():
     global onto
@@ -175,9 +191,9 @@ def print_ontology_status():
     for i in list(tomasys.FunctionGrounding.instances()):
         print(i.name,"\t", i.fg_status, "\t", [ (qa.name, qa.hasValue) for qa in i.hasQAvalue])
 
-    print("\nObjectives Statuses:")
+    print("\nOBJECTIVE\t|  STATUS\t|  NFRs")
     for i in list(tomasys.Objective.instances()):
-        print(i.name, i.o_status, [(nfr.isQAtype, nfr.hasValue) for nfr in i.hasNFR])
+        print(i.name,"\t|  ", i.o_status, "\t|  ", [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR])
 
     print("\nCC availability:")
     for i in list(tomasys.ComponentClass.instances()):
@@ -277,17 +293,11 @@ if __name__ == '__main__':
     onto_file = rospy.get_param('/onto_file')
     loadOntology(onto_file)
     rospy.loginfo("Loaded ontology: " + onto_file)
-    # init specific application model using the corresponding init sript
-    if onto_file == "abb_scenario2.owl" :
-        init_abb_2a(onto, tomasys)
-    elif onto_file == "abb_dualarm_mm_complete.owl":
-        init_abb_2b(onto, tomasys)
-    elif onto_file == "mvp.owl":
-        init_mvp(onto, tomasys)
-    elif onto_file == "abb_scenario3.owl":
-        init_abb_3(onto, tomasys)
-    else:
-        print("Unknown ontology file: ", onto_file)
+
+    # initialize the system configuration (FG or grounded FD)
+    grounded_configuration = rospy.get_param('/desired_configuration', 'standard')
+    # initialize KB with the ontology
+    initKB(onto, tomasys, grounded_configuration)
 
     # Start rosnode stuff
     rospy.init_node('mros1_reasoner')
