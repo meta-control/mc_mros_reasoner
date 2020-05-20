@@ -1,6 +1,9 @@
 '''
 Different methods to initiatize the reasoner Knowledge base: load ontology and asserts initial state
 '''
+
+# more generic initialize method for the KB, initializes using the domain ontology file and ros params that contain the specification of the initially grounded hierarchy (objectives, NFRs and FGs)
+
 def init_abb_2a(onto, tomasys): # use with abb_scenario2.owl model
     # Initial system state
     yumi = onto.search_one(iri = "*#c_yumi")
@@ -75,3 +78,27 @@ def init_abb_3(onto, tomasys): # use with abb_scenario3.owl model
 
     print('save ontology')
     onto.save(file = "tmp_debug.owl", format = "rdfxml") # For debugging InConsistent ontology errors, save the ontology before reasoning
+
+def initKB(onto, tomasys, config_name = "standard"):
+    ## TODO read objective and NFRs from param, or offer a (metacontrol) action server for the task manager
+    # NFRs on QAs
+    nfr_energy = tomasys.QAvalue("nfr_energy", namespace=onto, isQAtype=onto.search_one(
+        iri="*energy"), hasValue=0.8)  # TODO read from global ROS param
+
+    nfr_safety = tomasys.QAvalue("nfr_safety", namespace=onto, isQAtype=onto.search_one(
+        iri="*safety"), hasValue=0.8)  # TODO read from global ROS param
+
+    #Root objectives
+    o = tomasys.Objective("o_navigateA", namespace=onto,
+                          typeF=onto.search_one(iri="*f_navigate"))
+    o.hasNFR.append(nfr_energy)
+    o.hasNFR.append(nfr_safety)
+
+    # # Function Groundings and Objectives
+    fg = tomasys.FunctionGrounding("fg_{}".format(config_name), namespace=onto, typeFD=onto.search_one(iri="*{}".format(config_name), solvesO=o))
+
+    print('save ontology')
+    # For debugging InConsistent ontology errors, save the ontology before reasoning
+    onto.save(file="tmp_debug.owl", format="rdfxml")
+
+

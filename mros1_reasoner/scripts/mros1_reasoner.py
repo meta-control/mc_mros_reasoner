@@ -33,6 +33,7 @@ from init_models import *
 tomasys = None    # owl model with the tomasys ontology
 onto = None       # owl model with the application model as individuals of tomasys classes
 mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected t the real system
+grounded_configuration = None
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
@@ -277,17 +278,11 @@ if __name__ == '__main__':
     onto_file = rospy.get_param('/onto_file')
     loadOntology(onto_file)
     rospy.loginfo("Loaded ontology: " + onto_file)
-    # init specific application model using the corresponding init sript
-    if onto_file == "abb_scenario2.owl" :
-        init_abb_2a(onto, tomasys)
-    elif onto_file == "abb_dualarm_mm_complete.owl":
-        init_abb_2b(onto, tomasys)
-    elif onto_file == "mvp.owl":
-        init_mvp(onto, tomasys)
-    elif onto_file == "abb_scenario3.owl":
-        init_abb_3(onto, tomasys)
-    else:
-        print("Unknown ontology file: ", onto_file)
+
+    # initialize the system configuration (FG or grounded FD)
+    grounded_configuration = rospy.get_param('/desired_configuration', 'standard')
+    # initialize KB with the ontology
+    initKB(onto, tomasys, grounded_configuration)
 
     # Start rosnode stuff
     rospy.init_node('mros1_reasoner')
