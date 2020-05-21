@@ -91,16 +91,18 @@ def meetNFRs(o, fds):
     print("== Checking FDs for Objective with NFRs type: ", o.hasNFR[0].isQAtype.name, "and value: ", o.hasNFR[0].hasValue)
     for fd in fds:
         for nfr in o.hasNFR:
-            qas = [qa for qa in fd.hasQAestimation if qa.isQAtype==nfr.isQAtype]               
+            qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
             if qas == []:
                 print("\t WARNING FD has no expected value for this QA")
             else:
                 if nfr.isQAtype.name == 'energy':
                     if qas[0].hasValue < nfr.hasValue: # specific semantics for energy
                         filtered.append(fd)
-                if nfr.isQAtype.name == 'safety':
+                elif nfr.isQAtype.name == 'safety':
                     if qas[0].hasValue > nfr.hasValue:  # specific semantics for energy
                         filtered.append(fd)
+                else:
+                    print("No known criteria for FD selection for that QA")
     if filtered == []:
         print("#### WARNING: no FDs meetf NFRs")
 
