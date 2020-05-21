@@ -95,7 +95,7 @@ def initKB(onto, tomasys, config_name = "standard"):
     o.hasNFR.append(nfr_safety)
 
     # # Function Groundings and Objectives
-    fg = tomasys.FunctionGrounding("fg_{}".format(config_name), namespace=onto, typeFD=onto.search_one(iri="*{}".format(config_name), solvesO=o))
+    fg = tomasys.FunctionGrounding("fg_{}".format(config_name), namespace=onto, typeFD=onto.search_one(iri="*{}".format(config_name)), solvesO=o)
 
     print('save ontology')
     # For debugging InConsistent ontology errors, save the ontology before reasoning
