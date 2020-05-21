@@ -17,7 +17,7 @@ from pyparsing import ParseResults
 
 from owlready2 import *
 
-onto_file ='ros_navigation.owl'
+onto_file ='ros_navigation.owl' # TODO: define as param which domain ontology to load
 
 ros_root = rospkg.get_ros_root()
 r = rospkg.RosPack()
