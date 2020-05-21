@@ -159,10 +159,11 @@ def updateQA(diagnostic_status):
         return
     qa_type = onto.search_one(iri="*{}".format(diagnostic_status.values[0].key))
     if qa_type != None:
-        print("received QA about: ", fg.name, "\tTYPE: ", qa_type.name)
-        updateValueQA(fg, qa_type, float(diagnostic_status.values[0].value))
+        value = float(diagnostic_status.values[0].value)
+        rospy.loginfo("QA value received!\tTYPE: {0}\tVALUE: {1}".format(qa_type.name, value))
+        updateValueQA(fg, qa_type, value)
     else:
-        print("Unsupported QA about: ", fg, "\tTYPE: ",
+        print("Unsupported QA TYPE received: ",
               diagnostic_status.values[0].key)
 
 def updateValueQA(fg, qa_type, value):
@@ -173,9 +174,7 @@ def updateValueQA(fg, qa_type, value):
                                                ), namespace=onto, isQAtype=qa_type, hasValue=value)
         fg.hasQAvalue.append(qav)
     else: 
-        print('EXISTING QA VALUES:  ', qas)
         for qa in qas:
-            print('existing value type :', qa.isQAtype, 'received type: ', qa_type)
             if qa.isQAtype == qa_type:
                 qa.hasValue = value
                 return
