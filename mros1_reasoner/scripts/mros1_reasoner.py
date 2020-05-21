@@ -159,7 +159,7 @@ def updateQA(diagnostic_status):
         return
     qa_type = onto.search_one(iri="*{}".format(diagnostic_status.values[0].key))
     if qa_type != None:
-        print("received QA about: ", fg, "\tTYPE: ", diagnostic_status.values[0].key)
+        print("received QA about: ", fg.name, "\tTYPE: ", qa_type.name)
         updateValueQA(fg, qa_type, float(diagnostic_status.values[0].value))
     else:
         print("Unsupported QA about: ", fg, "\tTYPE: ",
@@ -167,15 +167,22 @@ def updateQA(diagnostic_status):
 
 def updateValueQA(fg, qa_type, value):
     qas = fg.hasQAvalue
-    for qa in qas:
-        if qa.isQAtype==qa_type:
-            qas.remove(qa)
-    fg.hasQAvalue = qas
-    print(fg, fg.hasQAvalue)
-    qav = tomasys.QAvalue("obs_{0}_{1}".format(qa_type,
-                                         counter), namespace=onto, hasValue=value)
-    fg.hasQAvalue.append(qav)
-    print(fg, fg.hasQAvalue)
+
+    if qas == []: # for the first qa value received
+        qav = tomasys.QAvalue("obs_{}".format(qa_type.name
+                                               ), namespace=onto, isQAtype=qa_type, hasValue=value)
+        fg.hasQAvalue.append(qav)
+    else: 
+        print('EXISTING QA VALUES:  ', qas)
+        for qa in qas:
+            print('existing value type :', qa.isQAtype, 'received type: ', qa_type)
+            if qa.isQAtype == qa_type:
+                qa.hasValue = value
+                return
+        # case it is a new QA type value
+        qav = tomasys.QAvalue("obs_{}".format(qa_type.name
+                                         ), isQAtype=qa_type, namespace=onto, hasValue=value)
+        fg.hasQAvalue.append(qav)
 
 def print_ontology_status():
     global onto
@@ -208,16 +215,18 @@ def print_ontology_status():
 
 def timer_cb(event):
     global onto
-    rospy.loginfo_throttle(1., 'Entered timer_cb for metacontrol reasoning')
+    rospy.loginfo('Entered timer_cb for metacontrol reasoning')
     
     # EXEC REASONING to update ontology with inferences
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
+    rospy.loginfo('  >> Started MAPE-K ** Analysis (ontological reasoning) **')
     try:
         sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
     except owlready2.base.OwlReadyInconsistentOntologyError as err:
         print("Reasoning error: {0}".format(err))
         onto.save(file="error.owl", format="rdfxml")
+    rospy.loginfo('     >> Finished ontological reasoning)')
 
     # PRINT system status
     print_ontology_status()
@@ -229,9 +238,10 @@ def timer_cb(event):
         if o.o_status == "INTERNAL_ERROR":
             objectives_internal_error.append(o)
     print("\nObjectives in error:", [o.name for o in objectives_internal_error] )
+    rospy.loginfo('  >> Finished MAPE-K ** ANALYSIS **')
 
     # ADAPT MAPE -Plan & Execute
-
+    rospy.loginfo('  >> Started MAPE-K ** PLAN adaptation **')
     # CHEOPS
     if len(objectives_internal_error) > 1:
         # CHEOPS Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
@@ -247,10 +257,12 @@ def timer_cb(event):
     # MVP (TODO fix when CHEOPS also only 1)
     elif len(objectives_internal_error) == 1 :
         fd = selectFD(objectives_internal_error[0])
+        rospy.loginfo('  >> Finished MAPE-K ** Plan adaptation **')
         # MVP to request new configuration
         if fd != ["safe_shutdown"]:
+            rospy.loginfo('  >> Started MAPE-K ** EXECUTION **')
             result = request_configuration(fd)
-
+            rospy.loginfo('  >> Finished MAPE-K ** EXECUTION **')
             # Adaptation feedback: 
             if result == 1: # reconfiguration executed ok
                 print("== RECONFIGURATION SUCCEEDED ==")
@@ -261,18 +273,23 @@ def timer_cb(event):
                 fg = tomasys.FunctionGrounding(
                     "fg_new", namespace=onto, typeFD=fd, solvesO=objectives_internal_error[0])
                 resetOntologyStatuses()
+                rospy.loginfo('Exited timer_cb for metacontrol reasoning')
 
             elif result == -1:
                 print("== RECONFIGURATION UNKNOWN ==")
+                rospy.loginfo('Exited timer_cb for metacontrol reasoning')
             else:
                 print("== RECONFIGURATION FAILED ==")
+                rospy.loginfo('Exited timer_cb for metacontrol reasoning')
 
         else:
+            rospy.loginfo('Exited timer_cb for metacontrol reasoning')
             print("No FD found to solve Objective, requesting shutdown not available")
 
     #TODO
     else:
         print("-- NO ADAPTATION NEEDED --")
+        rospy.loginfo('Exited timer_cb for metacontrol reasoning')
 
 
 # for MVP with QAs - request the FD.name to reconfigure to
@@ -303,7 +320,7 @@ if __name__ == '__main__':
     rospy.init_node('mros1_reasoner')
     sub_diagnostics = rospy.Subscriber('/diagnostics', DiagnosticArray, callbackDiagnostics)
 
-    timer = rospy.Timer(rospy.Duration(3.), timer_cb)
+    timer = rospy.Timer(rospy.Duration(2.), timer_cb)
 
     rosgraph_manipulator_client = actionlib.SimpleActionClient(
         'rosgraph_manipulator_action_server',
