@@ -83,7 +83,7 @@ def initKB(onto, tomasys, config_name = "standard"):
     ## TODO read objective and NFRs from param, or offer a (metacontrol) action server for the task manager
     # NFRs on QAs
     nfr_energy = tomasys.QAvalue("nfr_energy", namespace=onto, isQAtype=onto.search_one(
-        iri="*energy"), hasValue=0.8)  # TODO read from global ROS param
+        iri="*energy"), hasValue=0.15)  # TODO read from global ROS param
 
     nfr_safety = tomasys.QAvalue("nfr_safety", namespace=onto, isQAtype=onto.search_one(
         iri="*safety"), hasValue=0.8)  # TODO read from global ROS param
