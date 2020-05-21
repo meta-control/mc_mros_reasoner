@@ -193,9 +193,10 @@ def print_ontology_status():
     for i in list(tomasys.Binding.instances()):
         print(i.name, i.b_status)
 
-    print("\nFG Statuses:")
+    print("\nFGs:")
     for i in list(tomasys.FunctionGrounding.instances()):
-        print(i.name,"\t", i.fg_status, "\t", [ (qa.name, qa.hasValue) for qa in i.hasQAvalue])
+        print(i.name, "\tobjective: ", i.solvesO, "\tstatus: ", i.fg_status, "\tFD: ",
+              i.typeFD, "\tQAvalues: ", [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue])
 
     print("\nOBJECTIVE\t|  STATUS\t|  NFRs")
     for i in list(tomasys.Objective.instances()):
