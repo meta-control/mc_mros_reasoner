@@ -31,38 +31,47 @@ def loadOntology(file):
     tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file
     onto = get_ontology(file).load()
 
-import os
+import os, sys
 if __name__ == '__main__':
     loadOntology(onto_file)
     rospy.loginfo("Loaded domain ontology: " + onto_file)
 
+    # TODO: hardcoded here that all FDs from .rossystem files solve F navigate
+    f_navigate = onto.search_one(iri="*f_navigate")
+
+    if f_navigate == None:
+        print("The domain ontology provided does not contain a Function f_navigate")
+        sys.exit(0)
+
     # code to load RosModel and parse it
     my_path = os.path.abspath(os.path.dirname(__file__))
-    path = os.path.join(
-        "/home/chcorbato/rosin_paper_ws/src/rosin-experiments/metacontrol_models_experiment/MoveBaseConfigurations/f2_v3_r3.rossystem")
-    print(path)
-    parser = ModelParser(path)
-    print(parser.parse().dump())
+    base_path = os.path.join(my_path, "../MoveBaseConfigurations/")
 
-    model = parser.parse()
-    sys_name = model.system_name[0]
-    safety_attr = model.global_parameters[0]
-    energy_attr = model.global_parameters[1]
-    print(sys_name)
-    print(safety_attr.param_name[0])
-    print(energy_attr.param_name[0])
-    print(safety_attr.param_value[0])
-    print(energy_attr.param_value[0])
+    for i in [1, 2, 3]:
+        for j in [1, 2, 3]:
+            for k in [1, 2, 3]:
+                file_name = "f{0}_v{1}_r{2}".format(
+                    i, j, k) + ".rossystem"
+                file_path = os.path.join(base_path, file_name)
+                parser = ModelParser(file_path)
+                # print(parser.parse().dump())
+                model = parser.parse()
+                sys_name = model.system_name[0]
+                safety_attr = model.global_parameters[0]
+                energy_attr = model.global_parameters[1]
+                # print(sys_name)
+                # print(safety_attr.param_name[0])
+                # print(energy_attr.param_name[0])
+                # print(safety_attr.param_value[0])
+                # print(energy_attr.param_value[0])
 
-    # for each RosSystem:
-    # - create a FunctionDesign
-    fd = tomasys.FunctionDesign(sys_name, namespace=onto)
-    # - create a QualityAttribute expected value for the FunctionDesign with the type indicated by the name of the param in the RosSystem and the value of the param (e.g. 0.5)
-    # example:
-    qa = tomasys.QAvalue(energy_attr.param_name[0],
-                         namespace=onto, isQAtype=onto.search_one(iri="*energy"), hasValue=energy_attr.param_value[0])
-    fd.hasQAestimation.append(qa)
-    # END example
+                # create a FunctionDesign
+                fd = tomasys.FunctionDesign(sys_name, namespace=onto, solvesF=f_navigate)
+                # create a QualityAttribute expected value for the FunctionDesign with the type indicated by the name of the param in the RosSystem and the value of the param (e.g. 0.5)
+                for qa_param in model.global_parameters:
+                    qa = tomasys.QAvalue("{0}_{1}".format(qa_param.param_name[0], sys_name),
+                                         namespace=onto, isQAtype=onto.search_one(iri="*energy"), hasValue=qa_param.param_value[0])
+                    fd.hasQAestimation.append(qa)
 
     # save the ontology to a file
     onto.save(file="rosmodel.owl", format="rdfxml")
