@@ -36,11 +36,10 @@ if __name__ == '__main__':
     loadOntology(onto_file)
     rospy.loginfo("Loaded domain ontology: " + onto_file)
 
-
     # code to load RosModel and parse it
     my_path = os.path.abspath(os.path.dirname(__file__))
     path = os.path.join(
-        my_path, "../resources/f2_v3_r3.rossystem")
+        "/home/chcorbato/rosin_paper_ws/src/rosin-experiments/metacontrol_models_experiment/MoveBaseConfigurations/f2_v3_r3.rossystem")
     print(path)
     parser = ModelParser(path)
     print(parser.parse().dump())
@@ -60,9 +59,9 @@ if __name__ == '__main__':
     fd = tomasys.FunctionDesign(sys_name, namespace=onto)
     # - create a QualityAttribute expected value for the FunctionDesign with the type indicated by the name of the param in the RosSystem and the value of the param (e.g. 0.5)
     # example:
-    qa = tomasys.QAValue(energy_attr.param_name[0],
+    qa = tomasys.QAvalue(energy_attr.param_name[0],
                          namespace=onto, isQAtype=onto.search_one(iri="*energy"), hasValue=energy_attr.param_value[0])
-    fd.hasQAEstimation = [qa]
+    fd.hasQAestimation.append(qa)
     # END example
 
     # save the ontology to a file
