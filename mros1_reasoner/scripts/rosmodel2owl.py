@@ -17,6 +17,7 @@ from pyparsing import ParseResults
 
 from owlready2 import *
 
+# File that contains the Domain model ontology
 onto_file ='ros_navigation.owl' # TODO: define as param which domain ontology to load
 
 ros_root = rospkg.get_ros_root()
@@ -44,15 +45,15 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # code to load RosModel and parse it
-    my_path = os.path.abspath(os.path.dirname(__file__))
-    base_path = os.path.join(my_path, "../MoveBaseConfigurations/")
-
+    # my_path = os.path.abspath(os.path.dirname(__file__))
+    # base_path = os.path.join(my_path, "../MoveBaseConfigurations/")
+    base_path = os.path.abspath("/home/chcorbato/rosin_paper_ws/src/metacontrol_move_base_configurations")
     for i in [1, 2, 3]:
         for j in [1, 2, 3]:
             for k in [1, 2, 3]:
-                file_name = "f{0}_v{1}_r{2}".format(
-                    i, j, k) + ".rossystem"
-                file_path = os.path.join(base_path, file_name)
+                config_name = "f{0}_v{1}_r{2}".format(i, j, k)
+                file_name = config_name + ".rossystem"
+                file_path = os.path.join(base_path, config_name, file_name)
                 parser = ModelParser(file_path)
                 # print(parser.parse().dump())
                 model = parser.parse()
@@ -74,5 +75,5 @@ if __name__ == '__main__':
                     fd.hasQAestimation.append(qa)
 
     # save the ontology to a file
-    onto.save(file="rosmodel.owl", format="rdfxml")
+    onto.save(file="kb.owl", format="rdfxml")
 
