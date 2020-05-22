@@ -70,8 +70,9 @@ if __name__ == '__main__':
                 fd = tomasys.FunctionDesign(sys_name, namespace=onto, solvesF=f_navigate)
                 # create a QualityAttribute expected value for the FunctionDesign with the type indicated by the name of the param in the RosSystem and the value of the param (e.g. 0.5)
                 for qa_param in model.global_parameters:
+                    qa_string = qa_param.param_name[0].replace('qa_', '')
                     qa = tomasys.QAvalue("{0}_{1}".format(qa_param.param_name[0], sys_name),
-                                         namespace=onto, isQAtype=onto.search_one(iri="*energy"), hasValue=qa_param.param_value[0])
+                                         namespace=onto, isQAtype=onto.search_one(iri="*"+qa_string), hasValue=qa_param.param_value[0])
                     fd.hasQAestimation.append(qa)
 
     # save the ontology to a file
