@@ -152,8 +152,7 @@ counter=0
 def updateQA(diagnostic_status):
     global counter
     counter += 1
-    #find the FG that solves the Objective with the same name that the one in the QA message
-    # TODO read objective from diagnostic_status
+    # TODO find the FG that solves the Objective with the same name that the one in the QA message (in diagnostic_status.name)
     fg = next((fg for fg in tomasys.FunctionGrounding.instances() if fg.name == "fg_" + grounded_configuration), None)
 
     if fg == None:
