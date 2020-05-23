@@ -29,6 +29,8 @@ from decimal import Decimal
 
 from init_models import *
 
+from threading import Lock
+
 # Initialize global variables
 tomasys = None    # owl model with the tomasys ontology
 onto = None       # owl model with the application model as individuals of tomasys classes
@@ -37,6 +39,9 @@ grounded_configuration = None
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
+
+# Lock to ensure safety of tQAvalues
+lock = Lock()
 
 # Load ontologies: application model and tomasys
 def loadOntology(file):
@@ -166,10 +171,10 @@ def updateQA(diagnostic_status):
     if qa_type != None:
         value = float(diagnostic_status.values[0].value)
         rospy.loginfo("QA value received!\tTYPE: {0}\tVALUE: {1}".format(qa_type.name, value))
-        updateValueQA(fg, qa_type, value)
+        with lock:
+            updateValueQA(fg, qa_type, value)
     else:
-        rospy.logwarn("Unsupported QA TYPE received: ",
-              diagnostic_status.values[0].key)
+        rospy.logwarn("Unsupported QA TYPE received: %s ", str(diagnostic_status.values[0].key))
 
 def updateValueQA(fg, qa_type, value):
     qas = fg.hasQAvalue
@@ -220,17 +225,19 @@ def print_ontology_status():
 
 def timer_cb(event):
     global onto
+    global grounded_configuration
     rospy.loginfo('Entered timer_cb for metacontrol reasoning')
 
     # EXEC REASONING to update ontology with inferences
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
     rospy.loginfo('  >> Started MAPE-K ** Analysis (ontological reasoning) **')
-    try:
-        sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
-    except owlready2.base.OwlReadyInconsistentOntologyError as err:
-        rospy.logerr("Reasoning error: {0}".format(err))
-        onto.save(file="error.owl", format="rdfxml")
+    with lock:
+        try:
+                sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
+        except owlready2.base.OwlReadyInconsistentOntologyError as err:
+            rospy.logerr("Reasoning error: %s", str(err))
+            onto.save(file="error.owl", format="rdfxml")
     rospy.loginfo('     >> Finished ontological reasoning)')
 
     # PRINT system status
@@ -271,6 +278,8 @@ def timer_cb(event):
             # Adaptation feedback:
             if result == 1: # reconfiguration executed ok
                 rospy.logerr("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
+                ## Set new grounded_configuration
+                grounded_configuration = str(fd.name)
                 # update the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
                 fg = onto.search_one(
                     solvesO=objectives_internal_error[0])
