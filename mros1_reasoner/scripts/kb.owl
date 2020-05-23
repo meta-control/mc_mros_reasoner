@@ -108,7 +108,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v1_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.34</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.79</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f1_v1_r2">
@@ -134,7 +134,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v1_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.53</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.67</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f1_v1_r3">
@@ -160,7 +160,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v1_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1.63</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f1_v2_r1">
@@ -186,7 +186,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v2_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.09</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.94</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f1_v2_r2">
@@ -212,7 +212,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v2_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.26</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.84</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f1_v2_r3">
@@ -238,7 +238,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v2_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.38</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.77</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f1_v3_r1">
@@ -264,7 +264,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v3_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1.0</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f1_v3_r2">
@@ -290,7 +290,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v3_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.25</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.84</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f1_v3_r3">
@@ -316,7 +316,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f1_v3_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.18</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.89</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v1_r1">
@@ -342,7 +342,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v1_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.75</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v1_r2">
@@ -368,7 +368,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v1_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.42</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.74</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v1_r3">
@@ -394,7 +394,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v1_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.53</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.67</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v2_r1">
@@ -420,7 +420,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v2_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.11</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.94</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v2_r2">
@@ -446,7 +446,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v2_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.32</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.81</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v2_r3">
@@ -472,7 +472,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v2_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.23</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.86</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v3_r1">
@@ -498,7 +498,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v3_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.09</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.95</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v3_r2">
@@ -524,7 +524,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v3_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.07</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.96</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f2_v3_r3">
@@ -550,7 +550,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f2_v3_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.16</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.9</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v1_r1">
@@ -576,7 +576,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v1_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1.0</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.39</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v1_r2">
@@ -602,7 +602,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v1_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.42</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.74</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v1_r3">
@@ -628,7 +628,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v1_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.63</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.61</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v2_r1">
@@ -654,7 +654,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v2_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.13</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.92</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v2_r2">
@@ -680,7 +680,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v2_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.21</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.87</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v2_r3">
@@ -706,7 +706,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v2_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.28</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.83</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v3_r1">
@@ -732,7 +732,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v3_r1">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.01</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.99</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v3_r2">
@@ -758,7 +758,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v3_r2">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.08</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.95</toma:hasValue>
 </toma:QAvalue>
 
 <toma:FunctionDesign rdf:about="#f3_v3_r3">
@@ -784,7 +784,7 @@
 <toma:QAvalue rdf:about="#qa_performance_f3_v3_r3">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <toma:isQAtype rdf:resource="#performance"/>
-  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.18</toma:hasValue>
+  <toma:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.89</toma:hasValue>
 </toma:QAvalue>
 
 <swrl:Imp>
