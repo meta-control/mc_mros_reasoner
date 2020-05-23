@@ -243,6 +243,7 @@ def timer_cb(event):
     rospy.loginfo('  >> Started MAPE-K ** Analysis (ontological reasoning) **')
     with lock:
         try:
+            with onto:
                 sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
         except owlready2.base.OwlReadyInconsistentOntologyError as err:
             rospy.logerr("Reasoning error: %s", str(err))
