@@ -77,14 +77,17 @@ if __name__ == '__main__':
                     
                     # create a QualityAttribute expected value for the FunctionDesign with the type indicated by the name of the param in the RosSystem and the value of the param (e.g. 0.5)
                     # value is read from CSV file instead of rossystem file
-                    row = next(csv_reader)  # get next row in CSV
+                    row = next(csv_reader)  # get next row in CSV                    
                     for qa_param in model.global_parameters:
                         qa_string = qa_param.param_name[0].replace('qa_', '')
                         value = float(row[qa_string])
                         qa = tomasys.QAvalue("{0}_{1}".format(qa_param.param_name[0], sys_name), namespace=onto, isQAtype=onto.search_one(iri="*"+qa_string), hasValue=value)
                         fd.hasQAestimation.append(qa)
-                        print('\t', value)
-                    print(fd)
+                    
+                    # add QA performance from csv even if not in rossystem model.global_parameters
+                    value = float(row['performance'])
+                    qa = tomasys.QAvalue("{0}_{1}".format('qa_performance', sys_name),     namespace=onto, isQAtype=onto.search_one(iri="*performance"), hasValue=value)
+                    fd.hasQAestimation.append(qa)
 
     # save the ontology to a file
     onto.save(file="kb.owl", format="rdfxml")
