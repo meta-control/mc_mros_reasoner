@@ -1,6 +1,7 @@
 '''
 Different methods to initiatize the reasoner Knowledge base: load ontology and asserts initial state
 '''
+import rospy
 
 # more generic initialize method for the KB, initializes using the domain ontology file and ros params that contain the specification of the initially grounded hierarchy (objectives, NFRs and FGs)
 
@@ -80,13 +81,24 @@ def init_abb_3(onto, tomasys): # use with abb_scenario3.owl model
     onto.save(file = "tmp_debug.owl", format = "rdfxml") # For debugging InConsistent ontology errors, save the ontology before reasoning
 
 def initKB(onto, tomasys, config_name = "standard"):
-    ## TODO read objective and NFRs from param, or offer a (metacontrol) action server for the task manager
-    # NFRs on QAs
+    if not rospy.has_param('/nfr_energy'):
+        rospy.logwarn(
+            'No value in rosparam server for /nfr_energy, setting it to 0.5')
+        rospy.set_param('/nfr_energy', 0.5)
+        
+    if not rospy.has_param('/nfr_safety'):
+        rospy.logwarn(
+            'No value in rosparam server for /nfr_energy, setting it to 0.8')
+        rospy.set_param('/nfr_safety', 0.8)
+        
+    nfr_energy_value = float(rospy.get_param('/nfr_energy'))
+    nfr_safety_value = float(rospy.get_param('/nfr_safety'))
+
     nfr_energy = tomasys.QAvalue("nfr_energy", namespace=onto, isQAtype=onto.search_one(
-        iri="*energy"), hasValue=0.5)  # TODO read from global ROS param
+        iri="*energy"), hasValue=nfr_energy_value)
 
     nfr_safety = tomasys.QAvalue("nfr_safety", namespace=onto, isQAtype=onto.search_one(
-        iri="*safety"), hasValue=0.5)  # TODO read from global ROS param
+        iri="*safety"), hasValue=nfr_safety_value)
 
     #Root objectives
     o = tomasys.Objective("o_navigateA", namespace=onto,
