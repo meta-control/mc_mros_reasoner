@@ -168,7 +168,7 @@ def updateQA(diagnostic_status):
         rospy.loginfo("QA value received!\tTYPE: {0}\tVALUE: {1}".format(qa_type.name, value))
         updateValueQA(fg, qa_type, value)
     else:
-        print("Unsupported QA TYPE received: ",
+        rospy.logwarn("Unsupported QA TYPE received: ",
               diagnostic_status.values[0].key)
 
 def updateValueQA(fg, qa_type, value):
@@ -276,7 +276,7 @@ def timer_cb(event):
                     solvesO=objectives_internal_error[0])
                 destroy_entity(fg)
                 fg = tomasys.FunctionGrounding(
-                    "fg_new", namespace=onto, typeFD=fd, solvesO=objectives_internal_error[0])
+                    "fg_"+fd.name.replace('fd_', ''), namespace=onto, typeFD=fd, solvesO=objectives_internal_error[0])
                 resetOntologyStatuses()
 
             elif result == -1:
