@@ -111,8 +111,11 @@ def meetNFRs(o, fds):
 
 # MVP: compute expected utility based on QA trade-off, the criteria to chose FDs/configurations
 def utility(fd):
-    # TODO
-    return 1
+    # utility is equal to the expected time performance
+    utility = [
+        qa.hasValue for qa in fd.hasQAestimation if qa.isQAtype.name == 'performance']
+    print("FD performance: ", utility[0])
+    return utility[0]
 
 
 
