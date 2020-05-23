@@ -57,8 +57,8 @@ def obtainBestFunctionDesign(o):
     for fd in list(tomasys.FunctionDesign.instances()):
         if fd.solvesF == f:
             fds.append(fd)
-    print("== FunctionDesigns available for obj: ", [fd.name for fd in fds])
-    print("Objective NFR ENERGY: ", o.hasNFR)
+    rospy.loginfo("== FunctionDesigns available for obj: ", [fd.name for fd in fds])
+    rospy.loginfo("Objective NFR ENERGY: ", o.hasNFR)
     
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
@@ -81,20 +81,20 @@ def obtainBestFunctionDesign(o):
                 best_fd = fd
                 aux = u
         
-        print("> Best FD available", best_fd.name)
+        rospy.loginfo("> Best FD available", best_fd.name)
         return best_fd
     else:
-        print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
+        rospy.logerr("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
 
 def meetNFRs(o, fds):
     filtered = []
-    print("== Checking FDs for Objective with NFRs type: ", o.hasNFR[0].isQAtype.name, "and value: ", o.hasNFR[0].hasValue)
+    rospy.loginfo("== Checking FDs for Objective with NFRs type: ", o.hasNFR[0].isQAtype.name, "and value: ", o.hasNFR[0].hasValue)
     for fd in fds:
         for nfr in o.hasNFR:
             qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
             if qas == []:
-                print("\t WARNING FD has no expected value for this QA")
+                rospy.logwarn("FD has no expected value for this QA")
             else:
                 if nfr.isQAtype.name == 'energy':
                     if qas[0].hasValue < nfr.hasValue: # specific semantics for energy
@@ -103,9 +103,9 @@ def meetNFRs(o, fds):
                     if qas[0].hasValue > nfr.hasValue:  # specific semantics for energy
                         filtered.append(fd)
                 else:
-                    print("No known criteria for FD selection for that QA")
+                    rospy.logwarn("No known criteria for FD selection for that QA")
     if filtered == []:
-        print("#### WARNING: no FDs meetf NFRs")
+        rospy.logwarn("No FDs meetf NFRs")
 
     return filtered
 
@@ -190,13 +190,13 @@ def updateValueQA(fg, qa_type, value):
 
 def print_ontology_status():
     global onto
-    print("\nComponents Statuses:")
-    for i in list(tomasys.ComponentState.instances()):
-        print(i.name, i.c_status)
+    # print("\nComponents Statuses:")
+    # for i in list(tomasys.ComponentState.instances()):
+    #     print(i.name, i.c_status)
 
-    print("\nBindings Statuses:")
-    for i in list(tomasys.Binding.instances()):
-        print(i.name, i.b_status)
+    # print("\nBindings Statuses:")
+    # for i in list(tomasys.Binding.instances()):
+    #     print(i.name, i.b_status)
 
     print("\nFGs:")
     for i in list(tomasys.FunctionGrounding.instances()):
@@ -207,14 +207,14 @@ def print_ontology_status():
     for i in list(tomasys.Objective.instances()):
         print(i.name,"\t|  ", i.o_status, "\t|  ", [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR])
 
-    print("\nCC availability:")
-    for i in list(tomasys.ComponentClass.instances()):
-        print(i.name, i.cc_availability)
+    # print("\nCC availability:")
+    # for i in list(tomasys.ComponentClass.instances()):
+    #     print(i.name, i.cc_availability)
 
-    print("\nFDs information:\n NAME \t")
-    for i in list(tomasys.FunctionDesign.instances()):
-        print(i.name, "\t", i.fd_realisability, "\t", [
-              (qa.isQAtype, qa.hasValue) for qa in i.hasQAestimation])
+    # print("\nFDs information:\n NAME \t")
+    # for i in list(tomasys.FunctionDesign.instances()):
+    #     print(i.name, "\t", i.fd_realisability, "\t", [
+    #           (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAestimation])
 
 
 
@@ -229,7 +229,7 @@ def timer_cb(event):
     try:
         sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
     except owlready2.base.OwlReadyInconsistentOntologyError as err:
-        print("Reasoning error: {0}".format(err))
+        rospy.logerr("Reasoning error: {0}".format(err))
         onto.save(file="error.owl", format="rdfxml")
     rospy.loginfo('     >> Finished ontological reasoning)')
 
@@ -242,7 +242,7 @@ def timer_cb(event):
     for o in list(tomasys.Objective.instances() ):
         if o.o_status == "INTERNAL_ERROR":
             objectives_internal_error.append(o)
-    print("\nObjectives in error:", [o.name for o in objectives_internal_error] )
+    rospy.logerr("Objectives in error: {}".format([o.name for o in objectives_internal_error]) )
     rospy.loginfo('  >> Finished MAPE-K ** ANALYSIS **')
 
     # ADAPT MAPE -Plan & Execute
@@ -255,7 +255,7 @@ def timer_cb(event):
             groundObjective(o, cspecs)
 
         str_specs = [cs.name for cs in cspecs]
-        print("RESULT CONFIG: ", str_specs)
+        rospy.logerr("RESULT CONFIG: {}".format(str_specs) ) # for DEBUGGING in csv
         if len(str_specs) != 0:
             request_reconfiguration()  # CHEOPS request reconfiguration by sending cspecs names
     
@@ -270,7 +270,7 @@ def timer_cb(event):
             rospy.loginfo('  >> Finished MAPE-K ** EXECUTION **')
             # Adaptation feedback: 
             if result == 1: # reconfiguration executed ok
-                print("== RECONFIGURATION SUCCEEDED ==")
+                rospy.logerr("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
                 # update the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
                 fg = onto.search_one(
                     solvesO=objectives_internal_error[0])
@@ -278,23 +278,20 @@ def timer_cb(event):
                 fg = tomasys.FunctionGrounding(
                     "fg_new", namespace=onto, typeFD=fd, solvesO=objectives_internal_error[0])
                 resetOntologyStatuses()
-                rospy.loginfo('Exited timer_cb for metacontrol reasoning')
 
             elif result == -1:
-                print("== RECONFIGURATION UNKNOWN ==")
-                rospy.loginfo('Exited timer_cb for metacontrol reasoning')
+                rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv
             else:
-                print("== RECONFIGURATION FAILED ==")
-                rospy.loginfo('Exited timer_cb for metacontrol reasoning')
+                rospy.logerr("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
 
         else:
-            rospy.loginfo('Exited timer_cb for metacontrol reasoning')
-            print("No FD found to solve Objective, requesting shutdown not available")
+            rospy.logerr(
+                "No FD found to solve Objective, requesting shutdown not available") # for DEBUGGING in csv
 
-    #TODO
     else:
-        print("-- NO ADAPTATION NEEDED --")
-        rospy.loginfo('Exited timer_cb for metacontrol reasoning')
+        rospy.loginfo("- NO ADAPTATION NEEDED -")
+
+    rospy.loginfo('Exited timer_cb for metacontrol reasoning')
 
 
 # for MVP with QAs - request the FD.name to reconfigure to
@@ -306,7 +303,7 @@ def request_configuration(fd):
     rosgraph_manipulator_client.send_goal(goal)
     rosgraph_manipulator_client.wait_for_result()
     result = rosgraph_manipulator_client.get_result().result
-    print('Result: ', result)
+    rospy.loginfo('Result: {}'.format(result) )
     return result
 
 
