@@ -68,10 +68,10 @@ def obtainBestFunctionDesign(o):
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
     realisable_fds = [fd for fd in fds if fd.fd_realisability != False]
-    print("== FunctionDesigns REALISABLE for obj: ", [fd.name for fd in realisable_fds])
+    # print("== FunctionDesigns REALISABLE for obj: ", [fd.name for fd in realisable_fds])
     # discard FDs already grounded for this objective when objective in error
     suitable_fds= [fd for fd in fds if (not o in fd.fd_error_log)]
-    print("== FunctionDesigns suitable NOT IN ERROR LOG: ", [fd.name for fd in suitable_fds])
+    # print("== FunctionDesigns suitable NOT IN ERROR LOG: ", [fd.name for fd in suitable_fds])
     # discard those FD that will not meet objective NFRs
     fds_for_obj = meetNFRs(o, suitable_fds)
     print("== FunctionDesigns also meeting NFRs: ", [fd.name for fd in fds_for_obj])
@@ -98,17 +98,19 @@ def meetNFRs(o, fds):
     for fd in fds:
         for nfr in o.hasNFR:
             qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
-            if qas == []:
-                rospy.logwarn("FD has no expected value for this QA")
+        if len(qas) != 1:
+            rospy.logwarn("FD has no expected value for this QA or multiple definitions (inconsistent)")
+            break
+        else:
+            if nfr.isQAtype.name == 'energy':
+                if qas[0].hasValue > nfr.hasValue: # specific semantics for energy
+                    break
+            elif nfr.isQAtype.name == 'safety':
+                if qas[0].hasValue < nfr.hasValue:  # specific semantics for energy
+                    break
             else:
-                if nfr.isQAtype.name == 'energy':
-                    if qas[0].hasValue < nfr.hasValue: # specific semantics for energy
-                        filtered.append(fd)
-                elif nfr.isQAtype.name == 'safety':
-                    if qas[0].hasValue > nfr.hasValue:  # specific semantics for energy
-                        filtered.append(fd)
-                else:
-                    rospy.logwarn("No known criteria for FD selection for that QA")
+                rospy.logwarn("No known criteria for FD selection for that QA")
+        filtered.append(fd)
     if filtered == []:
         rospy.logwarn("No FDs meetf NFRs")
 
@@ -119,7 +121,6 @@ def utility(fd):
     # utility is equal to the expected time performance
     utility = [
         qa.hasValue for qa in fd.hasQAestimation if qa.isQAtype.name == 'performance']
-    print("FD performance: ", utility[0])
     return utility[0]
 
 
@@ -127,10 +128,10 @@ def utility(fd):
 # MVP: select FD to reconfigure to fix Objective in ERROR
 def selectFD(o):
     global tomasys, onto
-    print("=> Reasoner searches FD for objective: ", o.name)
+    rospy.loginfo("=> Reasoner searches FD for objective: {}".format(o.name) )
     fd = obtainBestFunctionDesign(o)
     if(fd == None):
-        print("*** Objective ", o.name, "cannot be realised ***")
+        rospy.logerr("Objective {} cannot be realised".format(o.name))
         return ["safe_shutdown"]
     else:
         return fd
