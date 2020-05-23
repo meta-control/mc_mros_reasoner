@@ -57,9 +57,9 @@ def obtainBestFunctionDesign(o):
     for fd in list(tomasys.FunctionDesign.instances()):
         if fd.solvesF == f:
             fds.append(fd)
-    rospy.loginfo("== FunctionDesigns available for obj: ", [fd.name for fd in fds])
-    rospy.loginfo("Objective NFR ENERGY: ", o.hasNFR)
-    
+    rospy.loginfo("== FunctionDesigns available for obj: %s", str([fd.name for fd in fds]))
+    rospy.loginfo("Objective NFR ENERGY: %s", str(o.hasNFR))
+
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
     realisable_fds = [fd for fd in fds if fd.fd_realisability != False]
@@ -77,11 +77,11 @@ def obtainBestFunctionDesign(o):
         best_fd = fds_for_obj[0]
         for fd in fds_for_obj:
             u = utility(fd)
-            if  u > aux: 
+            if  u > aux:
                 best_fd = fd
                 aux = u
-        
-        rospy.loginfo("> Best FD available", best_fd.name)
+
+        rospy.loginfo("> Best FD available %s", str(best_fd.name))
         return best_fd
     else:
         rospy.logerr("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
@@ -89,7 +89,7 @@ def obtainBestFunctionDesign(o):
 
 def meetNFRs(o, fds):
     filtered = []
-    rospy.loginfo("== Checking FDs for Objective with NFRs type: ", o.hasNFR[0].isQAtype.name, "and value: ", o.hasNFR[0].hasValue)
+    rospy.loginfo("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
     for fd in fds:
         for nfr in o.hasNFR:
             qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
@@ -178,7 +178,7 @@ def updateValueQA(fg, qa_type, value):
         qav = tomasys.QAvalue("obs_{}".format(qa_type.name
                                                ), namespace=onto, isQAtype=qa_type, hasValue=value)
         fg.hasQAvalue.append(qav)
-    else: 
+    else:
         for qa in qas:
             if qa.isQAtype == qa_type:
                 qa.hasValue = value
@@ -221,7 +221,7 @@ def print_ontology_status():
 def timer_cb(event):
     global onto
     rospy.loginfo('Entered timer_cb for metacontrol reasoning')
-    
+
     # EXEC REASONING to update ontology with inferences
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
@@ -235,7 +235,7 @@ def timer_cb(event):
 
     # PRINT system status
     print_ontology_status()
-    
+
     # EVALUATE and retrieve desired configuration (MAPE - Analysis)
     # init objectives in error
     objectives_internal_error = []
@@ -258,7 +258,7 @@ def timer_cb(event):
         rospy.logerr("RESULT CONFIG: {}".format(str_specs) ) # for DEBUGGING in csv
         if len(str_specs) != 0:
             request_reconfiguration()  # CHEOPS request reconfiguration by sending cspecs names
-    
+
     # MVP (TODO fix when CHEOPS also only 1)
     elif len(objectives_internal_error) == 1 :
         fd = selectFD(objectives_internal_error[0])
@@ -268,7 +268,7 @@ def timer_cb(event):
             rospy.loginfo('  >> Started MAPE-K ** EXECUTION **')
             result = request_configuration(fd)
             rospy.loginfo('  >> Finished MAPE-K ** EXECUTION **')
-            # Adaptation feedback: 
+            # Adaptation feedback:
             if result == 1: # reconfiguration executed ok
                 rospy.logerr("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
                 # update the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
@@ -311,7 +311,7 @@ if __name__ == '__main__':
     # load ontology
     onto_file = rospy.get_param('/onto_file')
     loadOntology(onto_file)
-    rospy.loginfo("Loaded ontology: " + onto_file)
+    rospy.loginfo("Loaded ontology: %s", str(onto_file))
 
     # initialize the system configuration (FG or grounded FD)
     grounded_configuration = rospy.get_param('/desired_configuration', 'standard')
