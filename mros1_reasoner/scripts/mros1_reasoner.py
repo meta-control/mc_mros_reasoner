@@ -31,6 +31,14 @@ from init_models import *
 
 from threading import Lock
 
+import signal, sys
+
+def save_ontology_exit(signal, frame):
+    onto.save(file="error.owl", format="rdfxml")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, save_ontology_exit)
+
 # Initialize global variables
 tomasys = None    # owl model with the tomasys ontology
 onto = None       # owl model with the application model as individuals of tomasys classes
