@@ -220,6 +220,7 @@ def print_ontology_status():
 
 def timer_cb(event):
     global onto
+    global grounded_configuration
     rospy.loginfo('Entered timer_cb for metacontrol reasoning')
 
     # EXEC REASONING to update ontology with inferences
@@ -271,6 +272,8 @@ def timer_cb(event):
             # Adaptation feedback:
             if result == 1: # reconfiguration executed ok
                 rospy.logerr("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
+                ## Set new grounded_configuration
+                grounded_configuration = str(fd.name)
                 # update the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
                 fg = onto.search_one(
                     solvesO=objectives_internal_error[0])
