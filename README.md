@@ -74,13 +74,4 @@ roslaunch mros1_reasoner run.launch
 ```
 
 ## Testing
-The `mros1_reasoner` can be tested with the cheops_mock_diagnostics. In another terminal run:
-```
-source $YOUR_CHEOPS_WS/devel/setup.bash
-roslaunch cheops_mock_diagnostics mock_metacontrol_monitoring_input.launch
-```
-
-and then you can simulate failures in some components of the system by running for example (in yet another terminal):
-```
-rosservice call /mock_camera/is_in_error "data: true"
-```
+_Todo_
