@@ -259,7 +259,10 @@ def timer_cb(event):
     for o in list(tomasys.Objective.instances() ):
         if o.o_status == "INTERNAL_ERROR":
             objectives_internal_error.append(o)
-    rospy.logerr("Objectives in error: {}".format([o.name for o in objectives_internal_error]) )
+    if not objectives_internal_error:
+        rospy.loginfo("No Objectives in status ERROR: no adaptation is needed")
+    else:
+        rospy.logwarn("Objectives in status ERROR: {}".format([o.name for o in objectives_internal_error]) )
     rospy.loginfo('  >> Finished MAPE-K ** ANALYSIS **')
 
     # ADAPT MAPE -Plan & Execute
@@ -287,7 +290,7 @@ def timer_cb(event):
             rospy.loginfo('  >> Finished MAPE-K ** EXECUTION **')
             # Adaptation feedback:
             if result == 1: # reconfiguration executed ok
-                rospy.logerr("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
+                rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
                 ## Set new grounded_configuration
                 grounded_configuration = str(fd.name)
                 # update the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
