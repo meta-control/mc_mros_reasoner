@@ -33,6 +33,8 @@ from threading import Lock
 
 import signal, sys
 
+# For debugging purposes: saves state of the KB in an ontology file
+# TODO save file in a temp location
 def save_ontology_exit(signal, frame):
     onto.save(file="error.owl", format="rdfxml")
     sys.exit(0)
@@ -42,7 +44,7 @@ signal.signal(signal.SIGINT, save_ontology_exit)
 # Initialize global variables
 tomasys = None    # owl model with the tomasys ontology
 onto = None       # owl model with the application model as individuals of tomasys classes
-mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected t the real system
+mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected to the real system
 grounded_configuration = None
 
 # get an instance of RosPack with the default search paths
@@ -51,17 +53,18 @@ rospack = rospkg.RosPack()
 # Lock to ensure safety of tQAvalues
 lock = Lock()
 
-# Load ontologies: application model and tomasys
+# Load ontologies: application model and tomasys 
 def loadOntology(file):
     onto_path.append(rospack.get_path('mc_mdl_tomasys')+'/') # local folder to search for ontologies
     onto_path.append(rospack.get_path('mc_mdl_abb')+'/') # local folder to search for ontologies
     onto_path.append(rospack.get_path('mros1_reasoner')+'/scripts/') # include also this rospkg
     global tomasys, onto
-    tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file
+    tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
     onto = get_ontology(file).load()
 
 
 # MVP metacontrol PLAN: returns the FD that is estimated to maximize QA (TODO trade-off) for a given objective o
+# TODO move to python class ROS independent
 def obtainBestFunctionDesign(o):
     global tomasys, onto
     f = o.typeF
@@ -100,6 +103,7 @@ def obtainBestFunctionDesign(o):
         rospy.logerr("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
 
+# TODO move to python class ROS independent
 def meetNFRs(o, fds):
     filtered = []
     rospy.loginfo("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
@@ -125,6 +129,8 @@ def meetNFRs(o, fds):
     return filtered
 
 # MVP: compute expected utility based on QA trade-off, the criteria to chose FDs/configurations
+# TODO utility is the selection criteria for FDs and it is hardcoded as QA performance
+# TODO move to python class ROS independent
 def utility(fd):
     # utility is equal to the expected time performance
     utility = [
@@ -134,6 +140,7 @@ def utility(fd):
 
 
 # MVP: select FD to reconfigure to fix Objective in ERROR
+# TODO move to python class ROS independent
 def selectFD(o):
     global tomasys, onto
     rospy.loginfo("=> Reasoner searches FD for objective: {}".format(o.name) )
@@ -267,7 +274,7 @@ def timer_cb(event):
 
     # ADAPT MAPE -Plan & Execute
     rospy.loginfo('  >> Started MAPE-K ** PLAN adaptation **')
-    # CHEOPS
+    # CHEOPS - TODO TEST
     if len(objectives_internal_error) > 1:
         # CHEOPS Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
         cspecs = []
