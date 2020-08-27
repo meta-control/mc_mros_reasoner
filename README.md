@@ -40,7 +40,7 @@ $ wstool init src https://raw.githubusercontent.com/rosin-project/mros1_reasoner
 - **IMP Note:** For `mros1_reasoner_ws` you cannot use apt or rosdep install .. (as that will try to use apt and it will install the regular Melodic Python 2 packages, which are invisible to `mros1_reasoner_ws`)
 - For the non-Python 3 workspace and its packages you can use apt and `rosdep install ..`
 
-## Build the code
+### Build the code
 
 - Once you have the workspace setup, you can build the workspace
 - Do not forget to source your Python3 ROS Melodic workspace before building your `mros1_reasoner_ws`
@@ -65,7 +65,12 @@ sudo -E apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6
 sudo apt clean && sudo apt update
 ```
 
-## Execution
+## User instructions
+The mros1_reasoner node needs the following elements:
+- an OWL model of the system to be metacontrolled. This can be manually created directly in OWL, e.g. using Protege, or it can be generated automatically from other models of the system ([rosin-experiments](https://github.com/rosin-project/rosin-experiments) provides a way to develop the model according to RosModel, and the script [`rosmodel2owl.py`](https://github.com/tud-cor/mc_mros_reasoner/blob/master/mros1_reasoner/scripts/rosmodel2owl.py) provides a way to transform it to OWL)
+- monitoring and reconfiguration infrastructure for the given platform, e.g. for ROS1 reconfiguration capabilities are provided by [`ros_manipulator.py`](https://github.com/rosin-project/metacontrol_sim/blob/master/scripts/rosgraph_manipulator.py) and by the launchfiles in [metacontrol_move_base_configurations](https://github.com/rosin-project/metacontrol_move_base_configurations)
+
+### Execution
 Activate your virtual environment, source your ws and launch the reasoner:
 ```
 source venv3.5_ros/bin/activate
