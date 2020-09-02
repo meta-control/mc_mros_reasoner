@@ -17,7 +17,6 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>metacontrol_msgs</exec_depend>
   <exec_depend>mc_mdl_tomasys</exec_depend>
-  <exec_depend>mc_mdl_abb</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
 
 
