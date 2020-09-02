@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="mros1_examples" type="talker.py" name="talker" cwd="node" respawn="false" />
+	<node pkg="mros1_examples" type="listener.py" name="listener" cwd="node" respawn="false" output="screen"/>
+</launch>
