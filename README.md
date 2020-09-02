@@ -66,11 +66,11 @@ sudo apt clean && sudo apt update
 ```
 
 ## Execution
-Activate your virtual environment, source your ws and launch the reasoner:
+Activate your virtual environment, source your ws and launch the reasoner, passing as parameter the path of the ontology file to initialize the KB:
 ```
-source venv3.5_ros/bin/activate
+source [path/to]/venv3.6_ros/bin/activate
 source mros1_reasoner_ws/devel/setup.bash
-roslaunch mros1_reasoner run.launch
+roslaunch mros1_reasoner run.launch onto:=kb.owl
 ```
 
 ## Testing
