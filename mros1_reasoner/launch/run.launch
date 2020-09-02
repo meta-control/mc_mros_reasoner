@@ -1,6 +1,16 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="onto" default="abb_dualarm_mm_complete.owl"/>
+  <arg name="onto" default="kb.owl"/>
+  <arg name="nfr_energy" default="0.7"/>
+  <arg name="nfr_safety" default="0.4"/>
+  <arg name="desired_configuration" default="f1_v2_r2"/>
+
   <param name="/onto_file" type="string" value="$(arg onto)"/>
+  <param name="/desired_configuration" type="string" value="$(arg desired_configuration)"/>
+  <param name="/nfr_energy" value="$(arg nfr_energy)"/>
+  <param name="/nfr_safety" value="$(arg nfr_safety)"/>
+
   <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner.py" output="screen"/>
+
+
 </launch>
