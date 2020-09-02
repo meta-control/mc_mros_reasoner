@@ -56,8 +56,7 @@ lock = Lock()
 # Load ontologies: application model and tomasys 
 def loadOntology(file):
     onto_path.append(rospack.get_path('mc_mdl_tomasys')+'/') # local folder to search for ontologies
-    onto_path.append(rospack.get_path('mc_mdl_abb')+'/') # local folder to search for ontologies
-    onto_path.append(rospack.get_path('mros1_reasoner')+'/scripts/') # include also this rospkg
+    onto_path.append(os.path.dirname(os.path.realpath(file))) 
     global tomasys, onto
     tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
     onto = get_ontology(file).load()
