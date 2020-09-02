@@ -27,8 +27,6 @@ from collections import defaultdict
 import argparse
 from decimal import Decimal
 
-from init_models import *
-
 from threading import Lock
 
 import signal, sys
@@ -61,6 +59,52 @@ def loadOntology(file):
     tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
     onto = get_ontology(file).load()
 
+# Initializes the KB according to 2 cases:
+# - If there is an Objective individual in the ontology file, the KB is initialized only using the OWL file
+# - If there is no Objective individual, a navigation Objective is create in the KB, with associated NFRs that are read frmo rosparam
+def initKB(onto, tomasys, config_name = "standard"):
+    
+    rospy.loginfo('KB initialization:\n \t - Supported QAs: \n \t \t - for Function f_navigate: /nfr_energy, /nfr_safety \n \t - If an Objective instance is not found in the owl file, a default o_navigate is created.' )
+
+    #Root objectives
+    if onto.search(type=tomasys.Objective) == None:
+        rospy.loginfo('Creating default Objectve o_navigateA with default NFRs')
+        o = tomasys.Objective("o_navigateA", namespace=onto,
+                            typeF=onto.search_one(iri="*f_navigate"))
+
+        # Read NFRs from rosparam
+        if not rospy.has_param('/nfr_energy'):
+            rospy.logwarn(
+                'No value in rosparam server for /nfr_energy, setting it to 0.5')
+            rospy.set_param('/nfr_energy', 0.5)
+        else:
+            nfr_energy_value = float(rospy.get_param('/nfr_energy'))
+        
+        if not rospy.has_param('/nfr_safety'):
+            rospy.logwarn(
+                'No value in rosparam server for /nfr_energy, setting it to 0.8')
+            rospy.set_param('/nfr_safety', 0.8)
+        else:
+            nfr_safety_value = float(rospy.get_param('/nfr_safety'))
+
+        # Load NFRs in the KB
+        nfr_energy = tomasys.QAvalue("nfr_energy", namespace=onto, isQAtype=onto.search_one(
+            iri="*energy"), hasValue=nfr_energy_value)
+        nfr_safety = tomasys.QAvalue("nfr_safety", namespace=onto, isQAtype=onto.search_one(
+            iri="*safety"), hasValue=nfr_safety_value)
+        
+        # Link NFRs to objective
+        o.hasNFR.append(nfr_energy)
+        o.hasNFR.append(nfr_safety)
+
+        # # Function Groundings and Objectives
+        fg = tomasys.FunctionGrounding("fg_{}".format(config_name), namespace=onto, typeFD=onto.search_one(iri="*{}".format(config_name)), solvesO=o)
+      
+    else:
+        rospy.logwarn('Objective, NFRs and initial FG are provided by the OWL file')
+
+    # For debugging InConsistent ontology errors, save the ontology before reasoning
+    onto.save(file="tmp_debug.owl", format="rdfxml")
 
 # MVP metacontrol PLAN: returns the FD that is estimated to maximize QA (TODO trade-off) for a given objective o
 # TODO move to python class ROS independent
