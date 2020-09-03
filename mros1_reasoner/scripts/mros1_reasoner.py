@@ -68,7 +68,7 @@ def initKB(onto, tomasys, config_name = "standard"):
 
     #Root objectives
     objectives = onto.search(type=tomasys.Objective)
-    if objectives == None:
+    if objectives == []:
         rospy.loginfo('Creating default Objectve o_navigateA with default NFRs')
         o = tomasys.Objective("o_navigateA", namespace=onto,
                             typeF=onto.search_one(iri="*f_navigate"))
