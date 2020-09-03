@@ -186,9 +186,10 @@ def utility(fd):
     # utility is equal to the expected time performance
     utility = [
         qa.hasValue for qa in fd.hasQAestimation if qa.isQAtype.name == 'performance']
-    return utility[0]
-
-
+    if len(utility) == 0:
+        return 0.001    #if utility is not known it is assumed to be 0.001 (very low)
+    else:
+        return utility[0]
 
 # MVP: select FD to reconfigure to fix Objective in ERROR
 # TODO move to python class ROS independent
