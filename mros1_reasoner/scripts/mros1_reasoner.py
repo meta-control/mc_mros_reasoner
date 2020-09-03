@@ -154,6 +154,9 @@ def obtainBestFunctionDesign(o):
 # TODO move to python class ROS independent
 def meetNFRs(o, fds):
     filtered = []
+    if len(o.hasNFR) == 0:
+        rospy.logwarn("== Objective has no NFRs, so a random FD is picked")
+        return [next(iter(fds))]
     rospy.loginfo("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
     for fd in fds:
         for nfr in o.hasNFR:
