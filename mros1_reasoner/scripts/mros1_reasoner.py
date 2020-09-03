@@ -67,7 +67,8 @@ def initKB(onto, tomasys, config_name = "standard"):
     rospy.loginfo('KB initialization:\n \t - Supported QAs: \n \t \t - for Function f_navigate: /nfr_energy, /nfr_safety \n \t - If an Objective instance is not found in the owl file, a default o_navigate is created.' )
 
     #Root objectives
-    if onto.search(type=tomasys.Objective) == None:
+    objectives = onto.search(type=tomasys.Objective)
+    if objectives == None:
         rospy.loginfo('Creating default Objectve o_navigateA with default NFRs')
         o = tomasys.Objective("o_navigateA", namespace=onto,
                             typeF=onto.search_one(iri="*f_navigate"))
@@ -100,8 +101,12 @@ def initKB(onto, tomasys, config_name = "standard"):
         # # Function Groundings and Objectives
         fg = tomasys.FunctionGrounding("fg_{}".format(config_name), namespace=onto, typeFD=onto.search_one(iri="*{}".format(config_name)), solvesO=o)
       
-    else:
+    elif len(objectives) == 1:
+        o = next(iter(objectives))
+        fg = tomasys.FunctionGrounding("fg_{}".format(o.name), namespace=onto, typeFD=obtainBestFunctionDesign(o), solvesO=o)
         rospy.logwarn('Objective, NFRs and initial FG are provided by the OWL file')
+    else:
+        rospy.logerr('Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
 
     # For debugging InConsistent ontology errors, save the ontology before reasoning
     onto.save(file="tmp_debug.owl", format="rdfxml")
