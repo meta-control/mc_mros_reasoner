@@ -215,9 +215,21 @@ def callbackDiagnostics(msg):
             rospy.loginfo('received QA observation')
             updateQA(diagnostic_status)
 
-def updateBinding(msg):
-    # TODO handle reporting of a fg.binding in error
-    print("binding error received")
+# the DiagnosticStatus message process contains, per field
+# - message: "binding_error"
+# - name: name of the fg reported, as named in the OWL file
+# - level: values 0 and 1 are mapped to nothing, values 2 or 3 are mapper to fg.status="INTERNAL_ERROR"
+def updateBinding(diagnostic_status):
+    rospy.loginfo("binding error received")
+    fg = onto.search_one(iri="*{}".format(diagnostic_status.name))
+    if fg == None:
+        rospy.logwarn("Unkown Function Grounding: %s", diagnostic_status.name)
+        return
+    if diagnostic_status.level > 1:
+        fg.fg_status = "INTERNAL_ERROR"
+    else:
+        rospy.logwarn("Diagnostics message received for %s with level %d, nothing done about it." % (fg.name, diagnostic_status.level))
+
 
 # To reset the inferences that no longer hold due to adaptation
 def resetOntologyStatuses():
