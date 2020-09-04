@@ -133,10 +133,9 @@ def obtainBestFunctionDesign(o):
     # print("== FunctionDesigns suitable NOT IN ERROR LOG: ", [fd.name for fd in suitable_fds])
     # discard those FD that will not meet objective NFRs
     fds_for_obj = meetNFRs(o, suitable_fds)
-    print("== FunctionDesigns also meeting NFRs: ", [fd.name for fd in fds_for_obj])
-
     # get best FD based on higher Utility/trade-off of QAs
     if fds_for_obj != []:
+        rospy.loginfo("== FunctionDesigns also meeting NFRs: %s", [fd.name for fd in fds_for_obj])
         aux = 0
         best_fd = fds_for_obj[0]
         for fd in fds_for_obj:
