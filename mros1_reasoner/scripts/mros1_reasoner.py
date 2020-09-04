@@ -188,7 +188,7 @@ def meetNFRs(o, fds):
 def utility(fd):
     # utility is equal to the expected time performance
     utility = [
-        qa.hasValue for qa in fd.hasQAestimation if qa.isQAtype.name == 'performance']
+        qa.hasValue for qa in fd.hasQAestimation if "perfomance" in qa.isQAtype.name]
     if len(utility) == 0:
         return 0.001    #if utility is not known it is assumed to be 0.001 (very low)
     else:
