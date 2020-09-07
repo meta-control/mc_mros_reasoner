@@ -1,7 +1,7 @@
 - git:
     local-name: mros1_reasoner
     uri: https://github.com/rosin-project/mros1_reasoner.git
-    version: mvp
+    version: virtual_env
 - git:
     local-name: metacontrol_msgs
     uri: https://github.com/rosin-project/metacontrol_msgs
