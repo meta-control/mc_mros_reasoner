@@ -7,12 +7,12 @@
     uri: https://github.com/rosin-project/metacontrol_msgs
 - git:
     local-name: mc_mdl_tomasys
-    uri: https://github.com/rosin-project/mc_mdl_tomasys.git
-    version: mvp
+    uri: https://github.com/tud-cor/mc_mdl_tomasys
+    version: master
 - git:
     local-name: mc_mdl_abb
     uri: https://github.com/rosin-project/mc_mdl_abb.git
-    version: mvp
+    version: master
 - git:
     local-name: catkin_virtualenv
     uri: https://github.com/locusrobotics/catkin_virtualenv.git
