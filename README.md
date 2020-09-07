@@ -6,11 +6,19 @@ A meta-controller implementation for ROS1
 
 ### Previous steps
 
-- you need to install a `java jre` you can install it with:
+#### Install java jre
+
+The `mros_reasoner` uses  [Owlready2](https://owlready2.readthedocs.io/en/latest/index.html) to handle the ontologies and perform reasoning.
+
+Owlready2 by default uses the [HermiT reasoner](http://www.hermit-reasoner.com/) which is written in Java, and thus you need a Java Vitual Machine to perform reasoning in Owlready2.
+
+**To install the Java Vitual Machine you can use**
 
 ```console
 sudo apt-get install openjdk-11-jre
 ```
+
+Under Linux, Owlready should automatically find Java.
 
 ### Create reasoner_ws
 
