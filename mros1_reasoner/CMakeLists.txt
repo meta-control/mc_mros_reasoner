@@ -185,7 +185,6 @@ install(FILES requirements.txt
 set(python_scripts
   scripts/mros1_reasoner.py
   scripts/rosmodel2owl.py
-  scripts/owl_reasoner.py
   scripts/test_mros1_reasoner.py
 )
 
