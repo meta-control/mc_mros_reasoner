@@ -12,7 +12,7 @@
 - git:
     local-name: mc_mdl_abb
     uri: https://github.com/rosin-project/mc_mdl_abb.git
-    version: master
+    
 - git:
     local-name: catkin_virtualenv
     uri: https://github.com/locusrobotics/catkin_virtualenv.git
