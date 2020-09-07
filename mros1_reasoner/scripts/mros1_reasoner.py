@@ -27,12 +27,12 @@ from collections import defaultdict
 import argparse
 from decimal import Decimal
 
-from init_models import *
-
 from threading import Lock
 
 import signal, sys
 
+# For debugging purposes: saves state of the KB in an ontology file
+# TODO save file in a temp location
 def save_ontology_exit(signal, frame):
     onto.save(file="error.owl", format="rdfxml")
     sys.exit(0)
@@ -42,7 +42,7 @@ signal.signal(signal.SIGINT, save_ontology_exit)
 # Initialize global variables
 tomasys = None    # owl model with the tomasys ontology
 onto = None       # owl model with the application model as individuals of tomasys classes
-mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected t the real system
+mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected to the real system
 grounded_configuration = None
 
 # get an instance of RosPack with the default search paths
@@ -51,17 +51,63 @@ rospack = rospkg.RosPack()
 # Lock to ensure safety of tQAvalues
 lock = Lock()
 
-# Load ontologies: application model and tomasys
+# Load ontologies: application model and tomasys 
 def loadOntology(file):
     onto_path.append(rospack.get_path('mc_mdl_tomasys')+'/') # local folder to search for ontologies
-    onto_path.append(rospack.get_path('mc_mdl_abb')+'/') # local folder to search for ontologies
-    onto_path.append(rospack.get_path('mros1_reasoner')+'/scripts/') # include also this rospkg
+    onto_path.append(os.path.dirname(os.path.realpath(file))) 
     global tomasys, onto
-    tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file
+    tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
     onto = get_ontology(file).load()
 
+# Initializes the KB according to 2 cases:
+# - If there is an Objective individual in the ontology file, the KB is initialized only using the OWL file
+# - If there is no Objective individual, a navigation Objective is create in the KB, with associated NFRs that are read frmo rosparam
+def initKB(onto, tomasys, config_name = "standard"):
+    
+    rospy.loginfo('KB initialization:\n \t - Supported QAs: \n \t \t - for Function f_navigate: /nfr_energy, /nfr_safety \n \t - If an Objective instance is not found in the owl file, a default o_navigate is created.' )
+
+    #Root objectives
+    if onto.search(type=tomasys.Objective) == None:
+        rospy.loginfo('Creating default Objectve o_navigateA with default NFRs')
+        o = tomasys.Objective("o_navigateA", namespace=onto,
+                            typeF=onto.search_one(iri="*f_navigate"))
+
+        # Read NFRs from rosparam
+        if not rospy.has_param('/nfr_energy'):
+            rospy.logwarn(
+                'No value in rosparam server for /nfr_energy, setting it to 0.5')
+            rospy.set_param('/nfr_energy', 0.5)
+        else:
+            nfr_energy_value = float(rospy.get_param('/nfr_energy'))
+        
+        if not rospy.has_param('/nfr_safety'):
+            rospy.logwarn(
+                'No value in rosparam server for /nfr_energy, setting it to 0.8')
+            rospy.set_param('/nfr_safety', 0.8)
+        else:
+            nfr_safety_value = float(rospy.get_param('/nfr_safety'))
+
+        # Load NFRs in the KB
+        nfr_energy = tomasys.QAvalue("nfr_energy", namespace=onto, isQAtype=onto.search_one(
+            iri="*energy"), hasValue=nfr_energy_value)
+        nfr_safety = tomasys.QAvalue("nfr_safety", namespace=onto, isQAtype=onto.search_one(
+            iri="*safety"), hasValue=nfr_safety_value)
+        
+        # Link NFRs to objective
+        o.hasNFR.append(nfr_energy)
+        o.hasNFR.append(nfr_safety)
+
+        # # Function Groundings and Objectives
+        fg = tomasys.FunctionGrounding("fg_{}".format(config_name), namespace=onto, typeFD=onto.search_one(iri="*{}".format(config_name)), solvesO=o)
+      
+    else:
+        rospy.logwarn('Objective, NFRs and initial FG are provided by the OWL file')
+
+    # For debugging InConsistent ontology errors, save the ontology before reasoning
+    onto.save(file="tmp_debug.owl", format="rdfxml")
 
 # MVP metacontrol PLAN: returns the FD that is estimated to maximize QA (TODO trade-off) for a given objective o
+# TODO move to python class ROS independent
 def obtainBestFunctionDesign(o):
     global tomasys, onto
     f = o.typeF
@@ -100,6 +146,7 @@ def obtainBestFunctionDesign(o):
         rospy.logerr("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
 
+# TODO move to python class ROS independent
 def meetNFRs(o, fds):
     filtered = []
     rospy.loginfo("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
@@ -125,6 +172,8 @@ def meetNFRs(o, fds):
     return filtered
 
 # MVP: compute expected utility based on QA trade-off, the criteria to chose FDs/configurations
+# TODO utility is the selection criteria for FDs and it is hardcoded as QA performance
+# TODO move to python class ROS independent
 def utility(fd):
     # utility is equal to the expected time performance
     utility = [
@@ -134,6 +183,7 @@ def utility(fd):
 
 
 # MVP: select FD to reconfigure to fix Objective in ERROR
+# TODO move to python class ROS independent
 def selectFD(o):
     global tomasys, onto
     rospy.loginfo("=> Reasoner searches FD for objective: {}".format(o.name) )
@@ -267,7 +317,7 @@ def timer_cb(event):
 
     # ADAPT MAPE -Plan & Execute
     rospy.loginfo('  >> Started MAPE-K ** PLAN adaptation **')
-    # CHEOPS
+    # CHEOPS - TODO TEST
     if len(objectives_internal_error) > 1:
         # CHEOPS Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
         cspecs = []

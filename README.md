@@ -70,7 +70,7 @@ Source your ws and launch the reasoner:
 
 ```console
 source mros1_reasoner_ws/devel/setup.bash
-roslaunch mros1_reasoner run.launch
+roslaunch mros1_reasoner run.launch onto:=kb.owl
 ```
 
 ### Testing
