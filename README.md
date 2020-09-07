@@ -23,13 +23,15 @@ sudo apt-get install openjdk-11-jre
 
 ### Get mros1_reasoner and dependencies using wstool
 
-- You need to copy the `mros1_reasoner` and its dependencies into the Python 3 reasoner workspace (ie: `mros1_reasoner_ws`), so they now exists in both the Python 2 as well as the Python 3 workspaces.
+- You need to copy the `mros1_reasoner` and its dependencies into the reasoner workspace (ie: `mros1_reasoner_ws`).
 
 ```console
   cd ~/mros1_reasoner_ws
-  wstool init src https://raw.githubusercontent.com/rosin-project/mros1_reasoner/mvp/mros1_reasoner/mros1_reasoner.rosinstall
-  rosdep install --from-paths ./src -y -i -r --skip-keys="abb_rws_interface"
+  wstool init ~/mros1_reasoner_ws/src https://raw.githubusercontent.com/tud-cor/mc_mros_reasoner/master/mros1_reasoner/mros1_reasoner.rosinstall
+  rosdep install --from-paths ~/mros1_reasoner_ws/src -y -i -r --skip-keys="abb_rws_interface"
 ```
+
+**Note** The above `rosdep install` uses the `-r` argument in order to ignore possible errors. Please check the console output to make sure all dependencies are installed correctly.
 
 ### Build the code
 
