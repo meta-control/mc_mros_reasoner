@@ -303,8 +303,6 @@ def print_ontology_status():
     #     print(i.name, "\t", i.fd_realisability, "\t", [
     #           (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAestimation])
 
-
-
 def timer_cb(event):
     global onto
     global grounded_configuration
