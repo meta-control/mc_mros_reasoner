@@ -43,7 +43,7 @@ signal.signal(signal.SIGINT, save_ontology_exit)
 tomasys = None    # owl model with the tomasys ontology
 onto = None       # owl model with the application model as individuals of tomasys classes
 mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected to the real system
-grounded_configuration = None
+grounded_configuration = None   # name of the current system configuration, as stored in KB
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
@@ -62,14 +62,15 @@ def loadOntology(file):
 # Initializes the KB according to 2 cases:
 # - If there is an Objective individual in the ontology file, the KB is initialized only using the OWL file
 # - If there is no Objective individual, a navigation Objective is create in the KB, with associated NFRs that are read frmo rosparam
-def initKB(onto, tomasys, config_name = "standard"):
+def initKB(onto, tomasys, config_name):
     
     rospy.loginfo('KB initialization:\n \t - Supported QAs: \n \t \t - for Function f_navigate: /nfr_energy, /nfr_safety \n \t - If an Objective instance is not found in the owl file, a default o_navigate is created.' )
 
     #Root objectives
     objectives = onto.search(type=tomasys.Objective)
+    # if no objectives in the OWL file, standard navigation objective is assumed
     if objectives == []:
-        rospy.loginfo('Creating default Objectve o_navigateA with default NFRs')
+        rospy.loginfo('Creating default Objective o_navigateA with default NFRs')
         o = tomasys.Objective("o_navigateA", namespace=onto,
                             typeF=onto.search_one(iri="*f_navigate"))
 
@@ -102,9 +103,9 @@ def initKB(onto, tomasys, config_name = "standard"):
         fg = tomasys.FunctionGrounding("fg_{}".format(config_name), namespace=onto, typeFD=onto.search_one(iri="*{}".format(config_name)), solvesO=o)
       
     elif len(objectives) == 1:
-        o = next(iter(objectives))
-        fg = tomasys.FunctionGrounding("fg_{}".format(o.name), namespace=onto, typeFD=obtainBestFunctionDesign(o), solvesO=o)
-        rospy.logwarn('Objective, NFRs and initial FG are provided by the OWL file')
+        o = objectives[0]
+        fg = tomasys.FunctionGrounding("fg_" + o.name.replace('o_',''), namespace=onto, typeFD=obtainBestFunctionDesign(o), solvesO=o)
+        rospy.logwarn('Objective, NFRs and initial FG are generated from the OWL file')
     else:
         rospy.logerr('Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
 
@@ -214,7 +215,6 @@ def callbackDiagnostics(msg):
         if diagnostic_status.message == "binding error":
             updateBinding(diagnostic_status)
         if diagnostic_status.message == "QA status":
-            rospy.loginfo('received QA observation')
             updateQA(diagnostic_status)
 
 # the DiagnosticStatus message process contains, per field
@@ -238,17 +238,15 @@ def resetOntologyStatuses():
     for o in list(tomasys.Objective.instances()):
         o.o_status = None
 
-# MVP update QA value based on incoming diagnostic
-counter=0
+# update QA value based on incoming diagnostic
 def updateQA(diagnostic_status):
-    global counter
-    counter += 1
-    # TODO find the FG that solves the Objective with the same name that the one in the QA message (in diagnostic_status.name)
-    fg = next((fg for fg in tomasys.FunctionGrounding.instances() if fg.name == "fg_" + grounded_configuration), None)
+    rospy.logwarn("QA value received\tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
 
+    # TODO find the FG that solves the Objective with the same name that the one in the QA message (in diagnostic_status.name)
+    fg = next((fg for fg in tomasys.FunctionGrounding.instances() if fg.name == grounded_configuration), None)
     if fg == None:
-        print("ERROR: FG not found")
-        return
+        rospy.logwarn("QA message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
+        fg = tomasys.FunctionGrounding.instances()[0]
     qa_type = onto.search_one(iri="*{}".format(diagnostic_status.values[0].key))
     if qa_type != None:
         value = float(diagnostic_status.values[0].value)
@@ -361,15 +359,16 @@ def timer_cb(event):
             rospy.loginfo('  >> Finished MAPE-K ** EXECUTION **')
             # Adaptation feedback:
             if result == 1: # reconfiguration executed ok
-                rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
-                ## Set new grounded_configuration
-                grounded_configuration = str(fd.name)
+                rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv         
                 # update the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
                 fg = onto.search_one(
                     solvesO=objectives_internal_error[0])
                 destroy_entity(fg)
                 fg = tomasys.FunctionGrounding(
                     "fg_"+fd.name.replace('fd_', ''), namespace=onto, typeFD=fd, solvesO=objectives_internal_error[0])
+                ## Set new grounded_configuration
+                grounded_configuration = str(fg.name)
+
                 resetOntologyStatuses()
 
             elif result == -1:
