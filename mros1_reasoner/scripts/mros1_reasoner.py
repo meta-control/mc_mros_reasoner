@@ -403,18 +403,27 @@ def request_configuration(fd):
 
 
 if __name__ == '__main__':
+    # Start rosnode
+    rospy.init_node('mros1_reasoner')
+
     # load ontology
     onto_file = rospy.get_param('/onto_file')
     loadOntology(onto_file)
     rospy.loginfo("Loaded ontology: %s", str(onto_file))
 
-    # initialize the system configuration (FG or grounded FD)
-    grounded_configuration = rospy.get_param('/desired_configuration', 'standard')
+    # initialize the system grounded_configuration (FG or grounded FD) from rosparam
+    try:
+        grounded_configuration = rospy.get_param('/desired_configuration')
+        rospy.loginfo('grounded_configuration initialized to: %s', grounded_configuration)
+
+    except KeyError:
+        grounded_configuration = None
+        rospy.logwarn('grounded_configuration not found in the param server')
+
     # initialize KB with the ontology
     initKB(onto, tomasys, grounded_configuration)
 
-    # Start rosnode stuff
-    rospy.init_node('mros1_reasoner')
+    #Start interfaces
     sub_diagnostics = rospy.Subscriber('/diagnostics', DiagnosticArray, callbackDiagnostics)
 
     timer = rospy.Timer(rospy.Duration(2.), timer_cb)
