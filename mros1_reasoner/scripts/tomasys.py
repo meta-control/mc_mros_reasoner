@@ -15,6 +15,42 @@ def loadTomasysKB(tboxfile, abox_file):
     abox = get_ontology(abox_file).load()
     return tbox, abox
 
+# To reset the individuals that no longer hold due to adaptation
+# for the moment, only Objective individuals statuses
+# - tomasys: ontology holding the Tbox
+def resetKBstatuses(tomasys):
+    for o in list(tomasys.Objective.instances()):
+        o.o_status = None 
+
+# For debugging purposes
+def print_ontology_status(tomasys):
+    # print("\nComponents Statuses:")
+    # for i in list(tomasys.ComponentState.instances()):
+    #     print(i.name, i.c_status)
+
+    # print("\nBindings Statuses:")
+    # for i in list(tomasys.Binding.instances()):
+    #     print(i.name, i.b_status)
+
+    print("\nFGs:")
+    for i in list(tomasys.FunctionGrounding.instances()):
+        print(i.name, "\tobjective: ", i.solvesO, "\tstatus: ", i.fg_status, "\tFD: ",
+              i.typeFD, "\tQAvalues: ", [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue])
+
+    print("\nOBJECTIVE\t|  STATUS\t|  NFRs")
+    for i in list(tomasys.Objective.instances()):
+        print(i.name,"\t|  ", i.o_status, "\t|  ", [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR])
+
+    # print("\nCC availability:")
+    # for i in list(tomasys.ComponentClass.instances()):
+    #     print(i.name, i.cc_availability)
+
+    # print("\nFDs information:\n NAME \t")
+    # for i in list(tomasys.FunctionDesign.instances()):
+    #     print(i.name, "\t", i.fd_realisability, "\t", [
+    #           (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAestimation])
+   
+
 # Given
 # - o: individual of tomasys:Objective
 # - abox: ontology that contains the individuals in the KB

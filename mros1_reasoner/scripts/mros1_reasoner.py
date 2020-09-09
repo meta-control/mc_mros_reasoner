@@ -214,33 +214,6 @@ def updateValueQA(fg, qa_type, value):
                                          ), isQAtype=qa_type, namespace=onto, hasValue=value)
         fg.hasQAvalue.append(qav)
 
-def print_ontology_status():
-    global onto
-    # print("\nComponents Statuses:")
-    # for i in list(tomasys.ComponentState.instances()):
-    #     print(i.name, i.c_status)
-
-    # print("\nBindings Statuses:")
-    # for i in list(tomasys.Binding.instances()):
-    #     print(i.name, i.b_status)
-
-    print("\nFGs:")
-    for i in list(tomasys.FunctionGrounding.instances()):
-        print(i.name, "\tobjective: ", i.solvesO, "\tstatus: ", i.fg_status, "\tFD: ",
-              i.typeFD, "\tQAvalues: ", [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue])
-
-    print("\nOBJECTIVE\t|  STATUS\t|  NFRs")
-    for i in list(tomasys.Objective.instances()):
-        print(i.name,"\t|  ", i.o_status, "\t|  ", [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR])
-
-    # print("\nCC availability:")
-    # for i in list(tomasys.ComponentClass.instances()):
-    #     print(i.name, i.cc_availability)
-
-    # print("\nFDs information:\n NAME \t")
-    # for i in list(tomasys.FunctionDesign.instances()):
-    #     print(i.name, "\t", i.fd_realisability, "\t", [
-    #           (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAestimation])
 
 def timer_cb(event):
     global onto
@@ -261,7 +234,7 @@ def timer_cb(event):
     rospy.loginfo('     >> Finished ontological reasoning)')
 
     # PRINT system status
-    print_ontology_status()
+    print_ontology_status(tomasys)
 
     # EVALUATE and retrieve desired configuration (MAPE - Analysis)
     # init objectives in error
@@ -311,7 +284,7 @@ def timer_cb(event):
                 ## Set new grounded_configuration
                 grounded_configuration = str(fg.name)
 
-                resetOntologyStatuses()
+                resetKBstatuses(tomasys)
 
             elif result == -1:
                 rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv
