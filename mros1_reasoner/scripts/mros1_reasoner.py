@@ -240,10 +240,10 @@ def resetOntologyStatuses():
 
 # update QA value based on incoming diagnostic
 def updateQA(diagnostic_status):
-    rospy.logwarn("QA value received\tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
+    rospy.logwarn("QA value received for\t{0} \tTYPE: {1}\tVALUE: {2}".format(diagnostic_status.name, diagnostic_status.values[0].key, diagnostic_status.values[0].value))
 
-    # TODO find the FG that solves the Objective with the same name that the one in the QA message (in diagnostic_status.name)
-    fg = next((fg for fg in tomasys.FunctionGrounding.instances() if fg.name == grounded_configuration), None)
+    # Find the FG with the same name that the one in the QA message (in diagnostic_status.name)
+    fg = next((fg for fg in tomasys.FunctionGrounding.instances() if fg.name == diagnostic_status.name), None)
     if fg == None:
         rospy.logwarn("QA message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
         fg = tomasys.FunctionGrounding.instances()[0]
