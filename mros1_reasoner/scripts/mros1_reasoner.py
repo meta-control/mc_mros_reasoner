@@ -31,6 +31,8 @@ from threading import Lock
 
 import signal, sys
 
+from tomasys import *
+
 # For debugging purposes: saves state of the KB in an ontology file
 # TODO save file in a temp location
 def save_ontology_exit(signal, frame):
@@ -50,14 +52,6 @@ rospack = rospkg.RosPack()
 
 # Lock to ensure safety of tQAvalues
 lock = Lock()
-
-# Load ontologies: application model and tomasys 
-def loadOntology(file):
-    onto_path.append(rospack.get_path('mc_mdl_tomasys')+'/') # local folder to search for ontologies
-    onto_path.append(os.path.dirname(os.path.realpath(file))) 
-    global tomasys, onto
-    tomasys = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
-    onto = get_ontology(file).load()
 
 # Initializes the KB according to 2 cases:
 # - If there is an Objective individual in the ontology file, the KB is initialized only using the OWL file
@@ -405,7 +399,7 @@ if __name__ == '__main__':
 
     # load ontology
     onto_file = rospy.get_param('/onto_file')
-    loadOntology(onto_file)
+    tomasys, onto = loadTomasysKB(rospack.get_path('mc_mdl_tomasys')+'/tomasys.owl', onto_file)
     rospy.loginfo("Loaded ontology: %s", str(onto_file))
 
     # initialize the system grounded_configuration (FG or grounded FD) from rosparam
