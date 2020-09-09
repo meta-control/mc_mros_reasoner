@@ -36,7 +36,7 @@ Under Linux, Owlready should automatically find Java.
 ```console
   cd ~/mros1_reasoner_ws
   wstool init ~/mros1_reasoner_ws/src https://raw.githubusercontent.com/tud-cor/mc_mros_reasoner/master/mros1_reasoner/mros1_reasoner.rosinstall
-  rosdep install --from-paths ~/mros1_reasoner_ws/src -y -i -r --skip-keys="abb_rws_interface"
+  rosdep install --from-paths ~/mros1_reasoner_ws/src -y -i -r
 ```
 
 **Note** The above `rosdep install` uses the `-r` argument in order to ignore possible errors. Please check the console output to make sure all dependencies are installed correctly.
