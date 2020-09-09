@@ -148,19 +148,6 @@ def obtainBestFunctionDesign(o):
         return None
 
 
-# MVP: select FD to reconfigure to fix Objective in ERROR
-# TODO move to python class ROS independent
-def selectFD(o):
-    global tomasys, onto
-    rospy.loginfo("=> Reasoner searches FD for objective: {}".format(o.name) )
-    fd = obtainBestFunctionDesign(o)
-    if(fd == None):
-        rospy.logerr("Objective {} cannot be realised".format(o.name))
-        return ["safe_shutdown"]
-    else:
-        return fd
-
-
 # MVP: callback for diagnostic msg received from QA Observer
 def callbackDiagnostics(msg):
     global onto
@@ -302,9 +289,10 @@ def timer_cb(event):
         if len(str_specs) != 0:
             request_reconfiguration()  # CHEOPS request reconfiguration by sending cspecs names
 
-    # MVP (TODO fix when CHEOPS also only 1)
     elif len(objectives_internal_error) == 1 :
-        fd = selectFD(objectives_internal_error[0])
+        o = objectives_internal_error[0]
+        rospy.loginfo("=> Reasoner searches FD for objective: {}".format(o.name) )
+        fd = obtainBestFunctionDesign(o)
         rospy.loginfo('  >> Finished MAPE-K ** Plan adaptation **')
         # MVP to request new configuration
         if fd != ["safe_shutdown"]:
@@ -332,7 +320,7 @@ def timer_cb(event):
 
         else:
             rospy.logerr(
-                "No FD found to solve Objective, requesting shutdown not available") # for DEBUGGING in csv
+                "No FD found to solve Objective {}, requesting shutdown not available".format(o.name)) # for DEBUGGING in csv
 
     else:
         rospy.loginfo("- NO ADAPTATION NEEDED -")
