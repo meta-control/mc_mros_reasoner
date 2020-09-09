@@ -2,7 +2,7 @@
 - git:
     local-name: mros1_reasoner
     uri: https://github.com/tud-cor/mc_mros_reasoner.git
-    version: melodic
+    version: master
 - git:
     local-name: metacontrol_msgs
     uri: https://github.com/rosin-project/metacontrol_msgs
@@ -11,6 +11,6 @@
     uri: https://github.com/tud-cor/mc_mdl_tomasys.git
     version: v0.1
 - git:
-    local-name: mc_mdl_abb
-    uri: https://github.com/rosin-project/mc_mdl_abb.git
-    version: master
+    local-name: catkin_virtualenv
+    uri: https://github.com/locusrobotics/catkin_virtualenv.git
+    version: 0.6.1

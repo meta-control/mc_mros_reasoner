@@ -4,7 +4,7 @@ project(mros1_reasoner)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS catkin_virtualenv)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -98,6 +98,9 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+catkin_generate_virtualenv(
+  PYTHON_INTERPRETER python3
+)
 ###########
 ## Build ##
 ###########
@@ -173,6 +176,24 @@ include_directories(
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+
+
+install(FILES requirements.txt
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+
+set(python_scripts
+  scripts/mros1_reasoner.py
+  scripts/rosmodel2owl.py
+  scripts/test_mros1_reasoner.py
+)
+
+
+# Make sure your python executables are installed using `catkin_install_python`:
+catkin_install_python(
+  PROGRAMS ${python_scripts}
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 #############
 ## Testing ##
