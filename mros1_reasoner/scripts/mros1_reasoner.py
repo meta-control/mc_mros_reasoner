@@ -34,6 +34,7 @@ import signal, sys
 from tomasys import *
 
 # For debugging purposes: saves state of the KB in an ontology file
+# TODO move to library
 # TODO save file in a temp location
 def save_ontology_exit(signal, frame):
     onto.save(file="error.owl", format="rdfxml")
@@ -53,6 +54,7 @@ rospack = rospkg.RosPack()
 # Lock to ensure safety of tQAvalues
 lock = Lock()
 
+# NOTE REFACTORING: This KB initialization is completely mixed with ROS interfaces, probably libraty should not have an initKB method, but utility methods to update the abox according to incoming information
 # Initializes the KB according to 2 cases:
 # - If there is an Objective individual in the ontology file, the KB is initialized only using the OWL file
 # - If there is no Objective individual, a navigation Objective is create in the KB, with associated NFRs that are read frmo rosparam
@@ -145,48 +147,6 @@ def obtainBestFunctionDesign(o):
         rospy.logerr("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
 
-# TODO move to python class ROS independent
-def meetNFRs(o, fds):
-    if fds == []:
-        rospy.logwarn("Empty set of given FDs")
-        return []
-    filtered = []
-    if len(o.hasNFR) == 0:
-        rospy.logwarn("== Objective has no NFRs, so a random FD is picked")
-        return [next(iter(fds))]
-    rospy.loginfo("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
-    for fd in fds:
-        for nfr in o.hasNFR:
-            qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
-        if len(qas) != 1:
-            rospy.logwarn("FD has no expected value for this QA or multiple definitions (inconsistent)")
-            break
-        else:
-            if nfr.isQAtype.name == 'energy':
-                if qas[0].hasValue > nfr.hasValue: # specific semantics for energy
-                    break
-            elif nfr.isQAtype.name == 'safety':
-                if qas[0].hasValue < nfr.hasValue:  # specific semantics for energy
-                    break
-            else:
-                rospy.logwarn("No known criteria for FD selection for that QA")
-        filtered.append(fd)
-    if filtered == []:
-        rospy.logwarn("No FDs meetf NFRs")
-
-    return filtered
-
-# MVP: compute expected utility based on QA trade-off, the criteria to chose FDs/configurations
-# TODO utility is the selection criteria for FDs and it is hardcoded as QA performance
-# TODO move to python class ROS independent
-def utility(fd):
-    # utility is equal to the expected time performance
-    utility = [
-        qa.hasValue for qa in fd.hasQAestimation if "perfomance" in qa.isQAtype.name]
-    if len(utility) == 0:
-        return 0.001    #if utility is not known it is assumed to be 0.001 (very low)
-    else:
-        return utility[0]
 
 # MVP: select FD to reconfigure to fix Objective in ERROR
 # TODO move to python class ROS independent
