@@ -12,7 +12,7 @@ The `mros_reasoner` uses  [Owlready2](https://owlready2.readthedocs.io/en/latest
 
 Owlready2 by default uses the [HermiT reasoner](http://www.hermit-reasoner.com/) which is written in Java, and thus you need a Java Vitual Machine to perform reasoning in Owlready2.
 
-**To install the Java Vitual Machine you can use**
+You can use this command **To install the Java Vitual Machine**
 
 ```console
 sudo apt-get install openjdk-11-jre
@@ -49,22 +49,6 @@ Under Linux, Owlready should automatically find Java.
 ```console
 source /opt/ros/melodic/setup.bash
 catkin build
-```
-
-### Known issues
-
-If you run into an issue with:
-
-`sudo apt install python3-venv libpython3-dev python-catkin-tools`
-
-try the following:
-
-```console
-sudo apt clean
-sudo apt update
-sudo apt-key del 421C365BD9FF1F717815A3895523BAEEB01FA116
-sudo -E apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-sudo apt clean && sudo apt update
 ```
 
 ## User instructions
