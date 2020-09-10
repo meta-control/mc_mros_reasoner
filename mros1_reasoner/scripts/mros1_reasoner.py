@@ -79,15 +79,15 @@ def initKB(onto, tomasys, config_name):
             rospy.logwarn(
                 'No value in rosparam server for /nfr_energy, setting it to 0.5')
             rospy.set_param('/nfr_energy', 0.5)
-        else:
-            nfr_energy_value = float(rospy.get_param('/nfr_energy'))
+        
+        nfr_energy_value = float(rospy.get_param('/nfr_energy'))
         
         if not rospy.has_param('/nfr_safety'):
             rospy.logwarn(
                 'No value in rosparam server for /nfr_energy, setting it to 0.8')
             rospy.set_param('/nfr_safety', 0.8)
-        else:
-            nfr_safety_value = float(rospy.get_param('/nfr_safety'))
+        
+        nfr_safety_value = float(rospy.get_param('/nfr_safety'))
 
         # Load NFRs in the KB
         nfr_energy = tomasys.QAvalue("nfr_energy", namespace=onto, isQAtype=onto.search_one(
