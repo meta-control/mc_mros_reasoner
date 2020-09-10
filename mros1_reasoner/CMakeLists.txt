@@ -185,6 +185,7 @@ install(FILES requirements.txt
 set(python_scripts
   scripts/mros1_reasoner.py
   scripts/rosmodel2owl.py
+  test/send_qa_value_test.py
 )
 
 
@@ -206,3 +207,12 @@ catkin_install_python(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest)
+  foreach(T
+      test/send_qa_value_test.test
+      )
+     add_rostest(${T})
+  endforeach()
+endif()
