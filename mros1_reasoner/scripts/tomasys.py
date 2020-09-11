@@ -116,6 +116,16 @@ def obtainBestFunctionDesign(o, tomasys):
         print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
 
+# creates a new fg individual of type fd to solve the given objective, and deletec the previous fg from the KB
+# return a string with the name of the fg individual
+def updateGrounding(objective, fd):
+    fg = onto.search_one(solvesO=objective)
+    destroy_entity(fg)
+    fg = tomasys.FunctionGrounding(
+        "fg_"+fd.name.replace('fd_', ''), namespace=onto, typeFD=fd, solvesO=objective)
+    return str(fg.name)
+
+
 # Returns all FunctionDesign individuals from a given set (fds) that comply with the NFRs of a giben Objective individual (o)
 def meetNFRs(o, fds):
     if fds == []:

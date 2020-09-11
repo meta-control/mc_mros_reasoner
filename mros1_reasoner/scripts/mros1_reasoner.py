@@ -215,17 +215,9 @@ def timer_cb(event):
             # Adaptation feedback:
             if result == 1: # reconfiguration executed ok
                 rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv         
-                # update the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-                fg = onto.search_one(
-                    solvesO=objectives_internal_error[0])
-                destroy_entity(fg)
-                fg = tomasys.FunctionGrounding(
-                    "fg_"+fd.name.replace('fd_', ''), namespace=onto, typeFD=fd, solvesO=objectives_internal_error[0])
-                ## Set new grounded_configuration
-                grounded_configuration = str(fg.name)
-
+        # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
+        grounded_configuration = updateGrounding(o, fd) # Set new grounded_configuration
                 resetKBstatuses(tomasys)
-
             elif result == -1:
                 rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv
             else:
