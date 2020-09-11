@@ -180,12 +180,8 @@ def timer_cb(event):
     # PRINT system status
     print_ontology_status(tomasys)
 
-    # EVALUATE and retrieve desired configuration (MAPE - Analysis)
-    # init objectives in error
-    objectives_internal_error = []
-    for o in list(tomasys.Objective.instances() ):
-        if o.o_status == "INTERNAL_ERROR":
-            objectives_internal_error.append(o)
+    # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
+    objectives_internal_error = evaluateObjectives(tomasys)
     if not objectives_internal_error:
         rospy.loginfo("No Objectives in status ERROR: no adaptation is needed")
     else:

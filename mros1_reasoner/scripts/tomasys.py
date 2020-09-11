@@ -68,7 +68,13 @@ def updateQAvalue(fg, qa_type, value):
                                          ), isQAtype=qa_type, namespace=onto, hasValue=value)
         fg.hasQAvalue.append(qav)
 
-
+# Evaluates the Objective individuals in the KB and returns a list with those in error
+def evaluateObjectives(tomasys):
+    objectives_internal_error = []
+    for o in list(tomasys.Objective.instances() ):
+        if o.o_status == "INTERNAL_ERROR":
+            objectives_internal_error.append(o)
+    return objectives_internal_error
 
 
 # Select best FD in the KB, given:
