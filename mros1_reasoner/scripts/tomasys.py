@@ -51,7 +51,7 @@ def print_ontology_status(tomasys):
     #           (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAestimation])
    
 
-# Given
+# Select best FD in the KB, given:
 # - o: individual of tomasys:Objective
 # - tomasys ontology that contains the tomasys tbox
 def obtainBestFunctionDesign(o, tomasys):
