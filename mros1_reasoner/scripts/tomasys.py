@@ -53,9 +53,8 @@ def print_ontology_status(tomasys):
 
 # Given
 # - o: individual of tomasys:Objective
-# - abox: ontology that contains the individuals in the KB
 # - tomasys ontology that contains the tomasys tbox
-def obtainBestFunctionDesign(o, abox, tomasys):
+def obtainBestFunctionDesign(o, tomasys):
     f = o.typeF
     # get fds for Function F
     fds = []

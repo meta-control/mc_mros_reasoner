@@ -100,52 +100,13 @@ def initKB(onto, tomasys, config_name):
       
     elif len(objectives) == 1:
         o = objectives[0]
-        fg = tomasys.FunctionGrounding("fg_" + o.name.replace('o_',''), namespace=onto, typeFD=obtainBestFunctionDesign(o), solvesO=o)
+        fg = tomasys.FunctionGrounding("fg_" + o.name.replace('o_',''), namespace=onto, typeFD=obtainBestFunctionDesign(o, tomasys), solvesO=o)
         rospy.logwarn('Objective, NFRs and initial FG are generated from the OWL file')
     else:
         rospy.logerr('Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
 
     # For debugging InConsistent ontology errors, save the ontology before reasoning
     onto.save(file="tmp_debug.owl", format="rdfxml")
-
-# MVP metacontrol PLAN: returns the FD that is estimated to maximize QA (TODO trade-off) for a given objective o
-# TODO move to python class ROS independent
-def obtainBestFunctionDesign(o):
-    global tomasys, onto
-    f = o.typeF
-    # get fds for Function F
-    fds = []
-    for fd in list(tomasys.FunctionDesign.instances()):
-        if fd.solvesF == f:
-            fds.append(fd)
-    rospy.loginfo("== FunctionDesigns available for obj: %s", str([fd.name for fd in fds]))
-    rospy.loginfo("Objective NFR ENERGY: %s", str(o.hasNFR))
-
-    # fiter fds to only those available
-    # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
-    realisable_fds = [fd for fd in fds if fd.fd_realisability != False]
-    # print("== FunctionDesigns REALISABLE for obj: ", [fd.name for fd in realisable_fds])
-    # discard FDs already grounded for this objective when objective in error
-    suitable_fds= [fd for fd in fds if (not o in fd.fd_error_log)]
-    # print("== FunctionDesigns suitable NOT IN ERROR LOG: ", [fd.name for fd in suitable_fds])
-    # discard those FD that will not meet objective NFRs
-    fds_for_obj = meetNFRs(o, suitable_fds)
-    # get best FD based on higher Utility/trade-off of QAs
-    if fds_for_obj != []:
-        rospy.loginfo("== FunctionDesigns also meeting NFRs: %s", [fd.name for fd in fds_for_obj])
-        aux = 0
-        best_fd = fds_for_obj[0]
-        for fd in fds_for_obj:
-            u = utility(fd)
-            if  u > aux:
-                best_fd = fd
-                aux = u
-
-        rospy.loginfo("> Best FD available %s", str(best_fd.name))
-        return best_fd
-    else:
-        rospy.logerr("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
-        return None
 
 
 # MVP: callback for diagnostic msg received from QA Observer
@@ -265,7 +226,7 @@ def timer_cb(event):
     elif len(objectives_internal_error) == 1 :
         o = objectives_internal_error[0]
         rospy.loginfo("=> Reasoner searches FD for objective: {}".format(o.name) )
-        fd = obtainBestFunctionDesign(o)
+        fd = obtainBestFunctionDesign(o, tomasys)
         rospy.loginfo('  >> Finished MAPE-K ** Plan adaptation **')
         # MVP to request new configuration
         if fd != ["safe_shutdown"]:
