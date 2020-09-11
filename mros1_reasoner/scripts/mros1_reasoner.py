@@ -184,52 +184,46 @@ def timer_cb(event):
     objectives_internal_error = evaluateObjectives(tomasys)
     if not objectives_internal_error:
         rospy.loginfo("No Objectives in status ERROR: no adaptation is needed")
+        rospy.loginfo('  >> Finished MAPE-K ** ANALYSIS **')
+        rospy.loginfo('Exited timer_cb for metacontrol reasoning')
+        return
+    elif len(objectives_internal_error) > 1 :
+        rospy.logerr("- More than 1 objectives in error, case not supported yet.")
+        rospy.loginfo('  >> Finished MAPE-K ** ANALYSIS **')
+        rospy.loginfo('Exited timer_cb for metacontrol reasoning')
+        return
     else:
         rospy.logwarn("Objectives in status ERROR: {}".format([o.name for o in objectives_internal_error]) )
-    rospy.loginfo('  >> Finished MAPE-K ** ANALYSIS **')
+        rospy.loginfo('  >> Finished MAPE-K ** ANALYSIS **')
 
     # ADAPT MAPE -Plan & Execute
     rospy.loginfo('  >> Started MAPE-K ** PLAN adaptation **')
-    # CHEOPS - TODO TEST
-    if len(objectives_internal_error) > 1:
-        # CHEOPS Ground a solution hierarchy for each root objective in error. We assume here that root_objectives do not share intermediate objectives
-        cspecs = []
-        for o in objectives_internal_error:
-            groundObjective(o, cspecs)
 
-        str_specs = [cs.name for cs in cspecs]
-        rospy.logerr("RESULT CONFIG: {}".format(str_specs) ) # for DEBUGGING in csv
-        if len(str_specs) != 0:
-            request_reconfiguration()  # CHEOPS request reconfiguration by sending cspecs names
 
-    elif len(objectives_internal_error) == 1 :
-        o = objectives_internal_error[0]
-        rospy.loginfo("=> Reasoner searches FD for objective: {}".format(o.name) )
-        fd = obtainBestFunctionDesign(o, tomasys)
-        rospy.loginfo('  >> Finished MAPE-K ** Plan adaptation **')
-        # MVP to request new configuration
-        if fd != ["safe_shutdown"]:
-            rospy.loginfo('  >> Started MAPE-K ** EXECUTION **')
-            result = request_configuration(fd)
-            rospy.loginfo('  >> Finished MAPE-K ** EXECUTION **')
-            # Adaptation feedback:
-            if result == 1: # reconfiguration executed ok
-                rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv         
+    o = objectives_internal_error[0]
+    rospy.loginfo("=> Reasoner searches FD for objective: {}".format(o.name) )
+    fd = obtainBestFunctionDesign(o, tomasys)
+    if not fd:
+        rospy.logerr(
+            "No FD found to solve Objective {}".format(o.name)) # for DEBUGGING in csv
+        rospy.loginfo('Exited timer_cb for metacontrol reasoning')
+        return
+    rospy.loginfo('  >> Finished MAPE-K ** Plan adaptation **')
+
+    # request new configuration
+    rospy.loginfo('  >> Started MAPE-K ** EXECUTION **')
+    result = request_configuration(fd)
+    rospy.loginfo('  >> Finished MAPE-K ** EXECUTION **')
+    # Process adaptation feedback to update KB:
+    if result == 1: # reconfiguration executed ok
+        rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv         
         # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
         grounded_configuration = updateGrounding(o, fd) # Set new grounded_configuration
-                resetKBstatuses(tomasys)
-            elif result == -1:
-                rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv
-            else:
-                rospy.logerr("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
-
-        else:
-            rospy.logerr(
-                "No FD found to solve Objective {}, requesting shutdown not available".format(o.name)) # for DEBUGGING in csv
-
+        resetKBstatuses(tomasys)
+    elif result == -1:
+        rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv
     else:
-        rospy.loginfo("- NO ADAPTATION NEEDED -")
-
+        rospy.logerr("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
     rospy.loginfo('Exited timer_cb for metacontrol reasoning')
 
 
