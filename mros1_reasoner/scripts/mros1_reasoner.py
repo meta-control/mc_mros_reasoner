@@ -154,27 +154,9 @@ def updateQA(diagnostic_status):
         value = float(diagnostic_status.values[0].value)
         rospy.loginfo("QA value received!\tTYPE: {0}\tVALUE: {1}".format(qa_type.name, value))
         with lock:
-            updateValueQA(fg, qa_type, value)
+            updateQAvalue(fg, qa_type, value)
     else:
         rospy.logwarn("Unsupported QA TYPE received: %s ", str(diagnostic_status.values[0].key))
-
-def updateValueQA(fg, qa_type, value):
-    qas = fg.hasQAvalue
-
-    if qas == []: # for the first qa value received
-        qav = tomasys.QAvalue("obs_{}".format(qa_type.name
-                                               ), namespace=onto, isQAtype=qa_type, hasValue=value)
-        fg.hasQAvalue.append(qav)
-    else:
-        for qa in qas:
-            if qa.isQAtype == qa_type:
-                qa.hasValue = value
-                return
-        # case it is a new QA type value
-        qav = tomasys.QAvalue("obs_{}".format(qa_type.name
-                                         ), isQAtype=qa_type, namespace=onto, hasValue=value)
-        fg.hasQAvalue.append(qav)
-
 
 def timer_cb(event):
     global onto

@@ -49,7 +49,27 @@ def print_ontology_status(tomasys):
     # for i in list(tomasys.FunctionDesign.instances()):
     #     print(i.name, "\t", i.fd_realisability, "\t", [
     #           (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAestimation])
-   
+
+# update the QA value for an FG with the value received
+def updateQAvalue(fg, qa_type, value):
+    qas = fg.hasQAvalue
+
+    if qas == []: # for the first qa value received
+        qav = tomasys.QAvalue("obs_{}".format(qa_type.name
+                                               ), namespace=onto, isQAtype=qa_type, hasValue=value)
+        fg.hasQAvalue.append(qav)
+    else:
+        for qa in qas:
+            if qa.isQAtype == qa_type:
+                qa.hasValue = value
+                return
+        # case it is a new QA type value
+        qav = tomasys.QAvalue("obs_{}".format(qa_type.name
+                                         ), isQAtype=qa_type, namespace=onto, hasValue=value)
+        fg.hasQAvalue.append(qav)
+
+
+
 
 # Select best FD in the KB, given:
 # - o: individual of tomasys:Objective
