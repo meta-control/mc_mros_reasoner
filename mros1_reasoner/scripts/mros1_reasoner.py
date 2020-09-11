@@ -158,6 +158,7 @@ def updateQA(diagnostic_status):
     else:
         rospy.logwarn("Unsupported QA TYPE received: %s ", str(diagnostic_status.values[0].key))
 
+## main metacontrol loop
 def timer_cb(event):
     global onto
     global grounded_configuration
