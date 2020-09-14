@@ -7,7 +7,7 @@
   <param name="/desired_configuration" type="string" value="$(arg desired_configuration)"/>
   <param name="/nfr_energy" value="0.5"/>
   <param name="/nfr_safety" value="0.5"/>
-  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner.py" output="screen"/>
-  <test test-name="send_QA_value_test" pkg="mros1_reasoner" type="send_qa_value_test.py">
+  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner.py"/>
+  <test test-name="test_models_paper" pkg="mros1_reasoner" type="test_models_paper.py">
   </test>
 </launch>

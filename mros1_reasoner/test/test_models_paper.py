@@ -37,7 +37,7 @@
 ## Talker/listener demo validation 
 
 PKG = 'mros1_reasoner'
-NAME = 'send_QA_value_test'
+NAME = 'test_models_paper'
 MSG_DELAY = 0.2
 
 import sys, unittest
