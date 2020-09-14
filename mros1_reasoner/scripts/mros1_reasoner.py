@@ -134,12 +134,6 @@ def updateBinding(diagnostic_status):
     else:
         rospy.logwarn("Diagnostics message received for %s with level %d, nothing done about it." % (fg.name, diagnostic_status.level))
 
-
-# To reset the inferences that no longer hold due to adaptation
-def resetOntologyStatuses():
-    for o in list(tomasys.Objective.instances()):
-        o.o_status = None
-
 # update QA value based on incoming diagnostic
 def updateQA(diagnostic_status):
     rospy.logwarn("QA value received for\t{0} \tTYPE: {1}\tVALUE: {2}".format(diagnostic_status.name, diagnostic_status.values[0].key, diagnostic_status.values[0].value))
