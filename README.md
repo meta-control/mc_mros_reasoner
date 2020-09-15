@@ -90,5 +90,4 @@ Two [rostest](http://wiki.ros.org/rostest) have been created for this package:
     ```console
     source mros1_reasoner_ws/devel/setup.bash
     rostest mros1_reasoner test_qa_reception.test
-    ```
-1. The  
+    ```  
