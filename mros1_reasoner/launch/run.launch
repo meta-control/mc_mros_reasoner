@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="onto" default="kb.owl"/>
+  <arg name="onto" default="$(find mros1_reasoner)/owl/test1.owl"/>
   
   <param name="/onto_file" type="string" value="$(arg onto)"/>
   <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner.py" output="screen"/>
