@@ -10,6 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>catkin_virtualenv</build_depend>
+  <build_depend>rostest</build_depend>
 
   <exec_depend>metacontrol_msgs</exec_depend>
   <exec_depend>mc_mdl_tomasys</exec_depend>

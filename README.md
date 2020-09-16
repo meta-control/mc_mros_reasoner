@@ -36,7 +36,7 @@ Under Linux, Owlready should automatically find Java.
 ```console
   cd ~/mros1_reasoner_ws
   wstool init ~/mros1_reasoner_ws/src https://raw.githubusercontent.com/tud-cor/mc_mros_reasoner/master/mros1_reasoner/mros1_reasoner.rosinstall
-  rosdep install --from-paths ~/mros1_reasoner_ws/src -y -i -r --skip-keys="abb_rws_interface"
+  rosdep install --from-paths ~/mros1_reasoner_ws/src -y -i -r
 ```
 
 **Note** The above `rosdep install` uses the `-r` argument in order to ignore possible errors. Please check the console output to make sure all dependencies are installed correctly.
@@ -64,9 +64,30 @@ Source your ws and launch the reasoner:
 
 ```console
 source mros1_reasoner_ws/devel/setup.bash
-roslaunch mros1_reasoner run.launch onto:=kb.owl
+roslaunch mros1_reasoner run.launch
 ```
 
 ### Testing
 
-#### _To Do_
+Two [rostest](http://wiki.ros.org/rostest) have been created for this package:
+
+1. The **1-level functional architecture** test, which checks that the reasoner is capable of loading an `owl` file compliant with TOMAsys including:
+
+    1. a Function and multiple FDs that solves it.
+    1. QA performance values for the FDs.
+
+    To run this first test use:
+
+    ```console
+    source mros1_reasoner_ws/devel/setup.bash
+    rostest mros1_reasoner test_level_1_functional_arch.test
+    ```
+
+1. The **QA reception** test, checks wheter or not the reasoner can correctly receive a QA value and update it on its knowledge base.
+
+    To run this second test use:
+
+    ```console
+    source mros1_reasoner_ws/devel/setup.bash
+    rostest mros1_reasoner test_qa_reception.test
+    ```  
