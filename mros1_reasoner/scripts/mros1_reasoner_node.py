@@ -31,7 +31,7 @@ from threading import Lock
 
 import signal, sys
 
-from tomasys import *
+from mros1_reasoner.tomasys import *
 
 # For debugging purposes: saves state of the KB in an ontology file
 # TODO move to library
@@ -59,7 +59,7 @@ lock = Lock()
 # - If there is an Objective individual in the ontology file, the KB is initialized only using the OWL file
 # - If there is no Objective individual, a navigation Objective is create in the KB, with associated NFRs that are read frmo rosparam
 def initKB(onto, tomasys, config_name):
-    
+
     rospy.loginfo('KB initialization:\n \t - Supported QAs: \n \t \t - for Function f_navigate: /nfr_energy, /nfr_safety \n \t - If an Objective instance is not found in the owl file, a default o_navigate is created.' )
 
     #Root objectives
@@ -75,14 +75,14 @@ def initKB(onto, tomasys, config_name):
             rospy.logwarn(
                 'No value in rosparam server for /nfr_energy, setting it to 0.5')
             rospy.set_param('/nfr_energy', 0.5)
-        
+
         nfr_energy_value = float(rospy.get_param('/nfr_energy'))
-        
+
         if not rospy.has_param('/nfr_safety'):
             rospy.logwarn(
                 'No value in rosparam server for /nfr_energy, setting it to 0.8')
             rospy.set_param('/nfr_safety', 0.8)
-        
+
         nfr_safety_value = float(rospy.get_param('/nfr_safety'))
 
         # Load NFRs in the KB
@@ -90,14 +90,14 @@ def initKB(onto, tomasys, config_name):
             iri="*energy"), hasValue=nfr_energy_value)
         nfr_safety = tomasys.QAvalue("nfr_safety", namespace=onto, isQAtype=onto.search_one(
             iri="*safety"), hasValue=nfr_safety_value)
-        
+
         # Link NFRs to objective
         o.hasNFR.append(nfr_energy)
         o.hasNFR.append(nfr_safety)
 
         # # Function Groundings and Objectives
         fg = tomasys.FunctionGrounding("fg_{}".format(config_name), namespace=onto, typeFD=onto.search_one(iri="*{}".format(config_name)), solvesO=o)
-      
+
     elif len(objectives) == 1:
         o = objectives[0]
         fg = tomasys.FunctionGrounding("fg_" + o.name.replace('o_',''), namespace=onto, typeFD=obtainBestFunctionDesign(o, tomasys), solvesO=o)
@@ -210,7 +210,7 @@ def timer_cb(event):
     rospy.loginfo('  >> Finished MAPE-K ** EXECUTION **')
     # Process adaptation feedback to update KB:
     if result == 1: # reconfiguration executed ok
-        rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv         
+        rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
         # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
         grounded_configuration = updateGrounding(o, fd, tomasys, onto) # Set new grounded_configuration
         resetKBstatuses(tomasys)
