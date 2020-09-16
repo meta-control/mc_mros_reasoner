@@ -212,7 +212,7 @@ def timer_cb(event):
     if result == 1: # reconfiguration executed ok
         rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv         
         # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-        grounded_configuration = updateGrounding(o, fd, onto) # Set new grounded_configuration
+        grounded_configuration = updateGrounding(o, fd, tomasys, onto) # Set new grounded_configuration
         resetKBstatuses(tomasys)
     elif result == -1:
         rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv

@@ -17,12 +17,12 @@ def loadTomasysKB(tboxfile, abox_file):
 # To reset the individuals that no longer hold due to adaptation
 # for the moment, only Objective individuals statuses
 # - tomasys: ontology holding the Tbox
-def resetKBstatuses(tomasys):
-    for o in list(tomasys.Objective.instances()):
+def resetKBstatuses(tbox):
+    for o in list(tbox.Objective.instances()):
         o.o_status = None 
 
 # For debugging purposes
-def print_ontology_status(tomasys):
+def print_ontology_status(tbox):
     # print("\nComponents Statuses:")
     # for i in list(tomasys.ComponentState.instances()):
     #     print(i.name, i.c_status)
@@ -32,12 +32,12 @@ def print_ontology_status(tomasys):
     #     print(i.name, i.b_status)
 
     print("\nFGs:")
-    for i in list(tomasys.FunctionGrounding.instances()):
+    for i in list(tbox.FunctionGrounding.instances()):
         print(i.name, "\tobjective: ", i.solvesO, "\tstatus: ", i.fg_status, "\tFD: ",
               i.typeFD, "\tQAvalues: ", [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue])
 
     print("\nOBJECTIVE\t|  STATUS\t|  NFRs")
-    for i in list(tomasys.Objective.instances()):
+    for i in list(tbox.Objective.instances()):
         print(i.name,"\t|  ", i.o_status, "\t|  ", [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR])
 
     # print("\nCC availability:")
@@ -68,9 +68,9 @@ def updateQAvalue(fg, qa_type, value, tbox, abox):
         fg.hasQAvalue.append(qav)
 
 # Evaluates the Objective individuals in the KB and returns a list with those in error
-def evaluateObjectives(tomasys):
+def evaluateObjectives(tbox):
     objectives_internal_error = []
-    for o in list(tomasys.Objective.instances() ):
+    for o in list(tbox.Objective.instances() ):
         if o.o_status == "INTERNAL_ERROR":
             objectives_internal_error.append(o)
     return objectives_internal_error
@@ -79,11 +79,11 @@ def evaluateObjectives(tomasys):
 # Select best FD in the KB, given:
 # - o: individual of tomasys:Objective
 # - tomasys ontology that contains the tomasys tbox
-def obtainBestFunctionDesign(o, tomasys):
+def obtainBestFunctionDesign(o, tbox):
     f = o.typeF
     # get fds for Function F
     fds = []
-    for fd in list(tomasys.FunctionDesign.instances()):
+    for fd in list(tbox.FunctionDesign.instances()):
         if fd.solvesF == f:
             fds.append(fd)
     print("== FunctionDesigns available for obj: %s", str([fd.name for fd in fds]))
@@ -117,10 +117,10 @@ def obtainBestFunctionDesign(o, tomasys):
 
 # creates a new fg individual of type fd to solve the given objective, and deletec the previous fg from the KB
 # return a string with the name of the fg individual
-def updateGrounding(objective, fd, abox):
+def updateGrounding(objective, fd, tbox, abox):
     fg = abox.search_one(solvesO=objective)
     destroy_entity(fg)
-    fg = tomasys.FunctionGrounding(
+    fg = tbox.FunctionGrounding(
         "fg_"+fd.name.replace('fd_', ''), namespace=abox, typeFD=fd, solvesO=objective)
     return str(fg.name)
 
