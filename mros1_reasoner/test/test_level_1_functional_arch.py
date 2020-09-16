@@ -78,19 +78,17 @@ class TestLevel1Functions(unittest.TestCase):
     ##############################################################################
 
         if log_data.name == '/reasoner':
-            if log_data.level == 2:
+            if log_data.level == Log.INFO:
                 if (log_data.msg.startswith("Loaded ontology:")):
-                    rospy.loginfo("send_qa_test heard: %s"%log_data.msg)
+                    rospy.loginfo("OWL file loaded into KB: %s"%log_data.msg)
                     self.success_level_1 = self.success_level_1 + 1
-                if (log_data.msg.startswith("== FunctionDesigns also meeting NFRs:")):
-                    rospy.loginfo("send_qa_test heard: %s"%log_data.msg)
+            if log_data.level == Log.WARN:
+                if (log_data.msg.startswith("Objective, NFRs and initial FG are generated from the OWL file")):
+                    rospy.loginfo("KB initialized: %s"%log_data.msg)
                     self.success_level_1 = self.success_level_1 + 1
-                if (log_data.msg.startswith("> Best FD available fd_print_1")):
-                    rospy.loginfo("send_qa_test heard: %s"%log_data.msg)
-                    self.success_level_1 = self.success_level_1 + 1
-                if (self.success_level_1 == 3):
-                    rospy.loginfo("Got the 3 correct messages! - level_functional test OK!")
-                    self.success = True
+            if (self.success_level_1 == 2):
+                rospy.loginfo("Got the 3 correct messages! - level_functional test OK!")
+                self.success = True
                 
     ############################################################################## 
     def susbcriber_functional_architecture(self, timeout=5.0):
