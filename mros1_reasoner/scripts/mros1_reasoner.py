@@ -148,7 +148,7 @@ def updateQA(diagnostic_status):
         value = float(diagnostic_status.values[0].value)
         rospy.loginfo("QA value received!\tTYPE: {0}\tVALUE: {1}".format(qa_type.name, value))
         with lock:
-            updateQAvalue(fg, qa_type, value)
+            updateQAvalue(fg, qa_type, value, tomasys, onto)
     else:
         rospy.logwarn("Unsupported QA TYPE received: %s ", str(diagnostic_status.values[0].key))
 
@@ -212,7 +212,7 @@ def timer_cb(event):
     if result == 1: # reconfiguration executed ok
         rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv         
         # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-        grounded_configuration = updateGrounding(o, fd) # Set new grounded_configuration
+        grounded_configuration = updateGrounding(o, fd, onto) # Set new grounded_configuration
         resetKBstatuses(tomasys)
     elif result == -1:
         rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv

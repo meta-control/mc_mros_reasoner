@@ -10,7 +10,6 @@ using Owlready2 to manage the ontology or KnowledgeBase (KB)
 def loadTomasysKB(tboxfile, abox_file):
     onto_path.append(os.path.dirname(os.path.realpath(tboxfile)))
     onto_path.append(os.path.dirname(os.path.realpath(abox_file))) 
-    global tomasys, onto
     tbox = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
     abox = get_ontology(abox_file).load()
     return tbox, abox
@@ -51,12 +50,12 @@ def print_ontology_status(tomasys):
     #           (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAestimation])
 
 # update the QA value for an FG with the value received
-def updateQAvalue(fg, qa_type, value):
+def updateQAvalue(fg, qa_type, value, tbox, abox):
     qas = fg.hasQAvalue
 
     if qas == []: # for the first qa value received
-        qav = tomasys.QAvalue("obs_{}".format(qa_type.name
-                                               ), namespace=onto, isQAtype=qa_type, hasValue=value)
+        qav = tbox.QAvalue("obs_{}".format(qa_type.name
+                                               ), namespace=abox, isQAtype=qa_type, hasValue=value)
         fg.hasQAvalue.append(qav)
     else:
         for qa in qas:
@@ -64,8 +63,8 @@ def updateQAvalue(fg, qa_type, value):
                 qa.hasValue = value
                 return
         # case it is a new QA type value
-        qav = tomasys.QAvalue("obs_{}".format(qa_type.name
-                                         ), isQAtype=qa_type, namespace=onto, hasValue=value)
+        qav = tbox.QAvalue("obs_{}".format(qa_type.name
+                                         ), isQAtype=qa_type, namespace=abox, hasValue=value)
         fg.hasQAvalue.append(qav)
 
 # Evaluates the Objective individuals in the KB and returns a list with those in error
@@ -118,11 +117,11 @@ def obtainBestFunctionDesign(o, tomasys):
 
 # creates a new fg individual of type fd to solve the given objective, and deletec the previous fg from the KB
 # return a string with the name of the fg individual
-def updateGrounding(objective, fd):
-    fg = onto.search_one(solvesO=objective)
+def updateGrounding(objective, fd, abox):
+    fg = abox.search_one(solvesO=objective)
     destroy_entity(fg)
     fg = tomasys.FunctionGrounding(
-        "fg_"+fd.name.replace('fd_', ''), namespace=onto, typeFD=fd, solvesO=objective)
+        "fg_"+fd.name.replace('fd_', ''), namespace=abox, typeFD=fd, solvesO=objective)
     return str(fg.name)
 
 
