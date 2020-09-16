@@ -4,7 +4,7 @@
 
 
   <param name="/onto_file" type="string" value="$(arg onto)"/>
-  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner.py"/>
+  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner_node.py"/>
   <test test-name="test_qa_reception" pkg="mros1_reasoner" type="test_qa_reception.py"/>
 
 </launch>

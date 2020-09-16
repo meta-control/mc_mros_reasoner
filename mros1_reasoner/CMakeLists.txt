@@ -183,7 +183,7 @@ install(FILES requirements.txt
 
 
 set(python_scripts
-  scripts/mros1_reasoner.py
+  scripts/mros1_reasoner_node.py
   scripts/rosmodel2owl.py
   test/test_models_paper.py
   test/test_qa_reception.py
