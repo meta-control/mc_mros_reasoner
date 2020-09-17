@@ -4,25 +4,41 @@ author: c.h.corbato@tudelft.nl
 using Owlready2 to manage the ontology or KnowledgeBase (KB)
 """
 
+
 # Returns
-# - tbox: the ontology containing the Tbox frmo the tomasys.owl
-# - abox: the ontology containing the individuals to initialize the KB, aka the abox 
-def loadTomasysKB(tboxfile, abox_file):
-    onto_path.append(os.path.dirname(os.path.realpath(tboxfile)))
-    onto_path.append(os.path.dirname(os.path.realpath(abox_file))) 
-    tbox = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
-    abox = get_ontology(abox_file).load()
-    return tbox, abox
+# - kb_box: the ontology readed
+def loadKB_from_file(kb_file):
+    """ Reads a KB from a given file
+        (Replaces loadTomasysKB)
+        Args:
+                kb_file (string): Full path to the ontology to be loaded.
+        Returns:
+                kb_box (ontology): Ontology readed, None: if there is an error.
+    """
+    try:
+        kb_box = get_ontology(kb_file).load()
+    except Exception as e:
+        return None
+    return kb_box
+# # Returns
+# # - tbox: the ontology containing the Tbox frmo the tomasys.owl
+# # - abox: the ontology containing the individuals to initialize the KB, aka the abox
+# def loadTomasysKB(tboxfile, abox_file):
+#     onto_path.append(os.path.dirname(os.path.realpath(tboxfile)))
+#     onto_path.append(os.path.dirname(os.path.realpath(abox_file)))
+#     tbox = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
+#     abox = get_ontology(abox_file).load()
+#     return tbox, abox
 
 # To reset the individuals that no longer hold due to adaptation
 # for the moment, only Objective individuals statuses
 # - tomasys: ontology holding the Tbox
 def resetKBstatuses(tbox):
     for o in list(tbox.Objective.instances()):
-        o.o_status = None 
+        o.o_status = None
 
 # For debugging purposes
-def print_ontology_status(tbox):
+def print_ontology_status(kb_box):
     # print("\nComponents Statuses:")
     # for i in list(tomasys.ComponentState.instances()):
     #     print(i.name, i.c_status)
@@ -32,12 +48,12 @@ def print_ontology_status(tbox):
     #     print(i.name, i.b_status)
 
     print("\nFGs:")
-    for i in list(tbox.FunctionGrounding.instances()):
+    for i in list(kb_box.FunctionGrounding.instances()):
         print(i.name, "\tobjective: ", i.solvesO, "\tstatus: ", i.fg_status, "\tFD: ",
-              i.typeFD, "\tQAvalues: ", [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue])
+        i.typeFD, "\tQAvalues: ", [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue])
 
     print("\nOBJECTIVE\t|  STATUS\t|  NFRs")
-    for i in list(tbox.Objective.instances()):
+    for i in list(kb_box.Objective.instances()):
         print(i.name,"\t|  ", i.o_status, "\t|  ", [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR])
 
     # print("\nCC availability:")

@@ -1,10 +1,13 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="onto" default="$(find mros1_reasoner)/owl/test1.owl"/>
+  <arg name="tomasys" default="$(find mc_mdl_tomasys)/tomasys.owl"/>
 
+  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner_node.py" output="screen">
+    <param name="onto_file" type="string" value="$(arg onto)"/>
+    <param name="tomasys_file" type="string" value="$(arg tomasys)"/>
+  </node>
 
-  <param name="/onto_file" type="string" value="$(arg onto)"/>
-  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner_node.py"/>
   <test test-name="test_level_1_functional_arch" pkg="mros1_reasoner" type="test_level_1_functional_arch.py"/>
 
 </launch>

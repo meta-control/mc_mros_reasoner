@@ -34,7 +34,7 @@
 #
 # Revision $Id: gossipbot.py 1013 2008-05-21 01:08:56Z sfkwc $
 
-## Talker/listener demo validation 
+## Talker/listener demo validation
 
 PKG = 'mros1_reasoner'
 NAME = 'test_models_paper'
@@ -53,13 +53,13 @@ class TestSendQAValue(unittest.TestCase):
     def __init__(self, *args):
         super(TestSendQAValue, self).__init__(*args)
         rospy.init_node(NAME, anonymous=True)
-        
+
         self.success = False
         self.result = MvpReconfigurationResult()
-                
+
         self.message_pub = rospy.Publisher(
             '/diagnostics', DiagnosticArray, queue_size=1)
-        
+
         self._action_name = 'rosgraph_manipulator_action_server'
         self._as = actionlib.SimpleActionServer(
                 self._action_name,
@@ -69,24 +69,24 @@ class TestSendQAValue(unittest.TestCase):
         self._as.start()
         rospy.loginfo ('RosgraphManipulator Action Server started.')
 
-    
-    ############################################################################## 
+
+    ##############################################################################
     def test_one_equals_one(self):
-    ############################################################################## 
+    ##############################################################################
         rospy.loginfo("-D- test_one_equals_one")
         self.assertEquals(1, 1, "1!=1")
-    
-    ############################################################################## 
+
+    ##############################################################################
     def send_qa_value_msgs(self, key_names, init_value, end_value, step=0.1):
-    ############################################################################## 
+    ##############################################################################
 
-        key_value = init_value        
+        key_value = init_value
 
-        rospy.loginfo("- D - Test sending %s -  %s - Step value %s" % (str(key_names), str(key_value), str(step))) 
+        rospy.loginfo("- D - Test sending %s -  %s - Step value %s" % (str(key_names), str(key_value), str(step)))
 
         max_steps = (end_value - init_value) / step
 
-        rospy.logwarn("--- D --- Max steps %s " % (str(max_steps))) 
+        rospy.logwarn("--- D --- Max steps %s " % (str(max_steps)))
 
         step_count = 0
 
@@ -94,12 +94,12 @@ class TestSendQAValue(unittest.TestCase):
             diag_msg = DiagnosticArray()
             diag_msg.header.stamp = rospy.get_rostime()
 
-            for k_name in key_names:    
+            for k_name in key_names:
                 status_msg = DiagnosticStatus()
                 status_msg.level = DiagnosticStatus.OK
                 status_msg.name = ""
                 status_msg.values.append(
-                    KeyValue(str(k_name), str(key_value)))            
+                    KeyValue(str(k_name), str(key_value)))
                 status_msg.message = "QA status"
                 diag_msg.status.append(status_msg)
 
@@ -108,34 +108,34 @@ class TestSendQAValue(unittest.TestCase):
             step_count = step_count + 1
             rospy.sleep(2.0)
 
-    ############################################################################## 
+    ##############################################################################
     def test_publish_energy_qa_value(self):
-    ############################################################################## 
+    ##############################################################################
         self.success = False
-        self.send_qa_value_msgs(["energy"], 0.1, 0.8, 0.1)
+        self.send_qa_value_msgs(["energy"], 0.4, 0.7, 0.09)
         rospy.sleep(0.5)
         self.assert_(self.success)
-    
-    ############################################################################## 
+
+    ##############################################################################
     def test_publish_safety_qa_value(self):
-    ############################################################################## 
+    ##############################################################################
         self.success = False
-        self.send_qa_value_msgs(["safety","not_valid_qa"], 1.0, 0.3, -0.1)
+        self.send_qa_value_msgs(["safety","not_valid_qa"], 0.7, 0.4, -0.09)
         rospy.sleep(0.5)
         self.assert_(self.success)
-    
- 
-    ############################################################################## 
+
+
+    ##############################################################################
     def execute_cb(self, goal):
-    ############################################################################## 
-        
+    ##############################################################################
+
         rospy.loginfo ('Rosgraph Manipulator Action Server received goal %s' % str(goal))
-       
+
         if not rospy.has_param('rosgraph_manipulator/configs'):
             rospy.logwarn(
                 'No value in rosparam server for rosgraph_manipulator/configs, setting it to  [\'f1_v1_r1\',\'f1_v1_r2\',f1_v1_r3\']')
             rospy.set_param('rosgraph_manipulator/configs', ['f1_v1_r1','f1_v1_r2','f1_v1_r3'])
-        
+
         configurations_list = rospy.get_param('rosgraph_manipulator/configs')
 
         if (goal.desired_configuration_name in configurations_list):
@@ -146,11 +146,11 @@ class TestSendQAValue(unittest.TestCase):
             self._as.set_aborted(self.result)
             rospy.loginfo ('Unknown configuration request %s' % goal, log_level=rospy.ERROR)
             return
-        
+
         rospy.sleep(0.1)
         self._as.set_succeeded(self.result)
         return
 
-        
+
 if __name__ == '__main__':
     rostest.rosrun(PKG, NAME, TestSendQAValue, sys.argv)

@@ -2,7 +2,8 @@
 <launch>
 
   <arg name="onto" default="$(find mros1_reasoner)/owl/test1.owl"/>
-  <param name="/onto_file" type="string" value="$(arg onto)"/>
-  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner_node.py" output="screen"/>
+  <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner_node.py" output="screen">
+    <param name="onto_file" type="string" value="$(arg onto)"/>
+  </node>
 
 </launch>
