@@ -48,13 +48,15 @@ class Reasoner(object):
         return objectives
 
     def get_new_tomasys_objective(self, objetive_name, iri_seed):
-        #Load objective into the KB
+        """Creates Objective individual in the KB given a desired name and a string seed for the Function name
+        """
         objective = self.tomasys.Objective(str(objetive_name), namespace=self.onto,
         typeF=self.onto.search_one(iri=str(iri_seed)))
         return objective
 
     def get_new_tomasys_nrf(self, qa_value_name, iri_seed, nfr_value):
-        # Load NFRs in the KB
+        """Creates QAvalue individual in the KB given a desired name and a string seed for the QAtype name and the value
+        """
         new_nfr = self.tomasys.QAvalue(str(qa_value_name), namespace=self.onto, isQAtype=self.onto.search_one(
             iri=str(iri_seed)), hasValue=nfr_value)
         return new_nfr
