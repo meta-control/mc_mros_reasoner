@@ -1,16 +1,9 @@
 #!/usr/bin/env python
-"""
-author: c.h.corbato@tudelft.nl
-using Owlready2 to manipulate the ontology
-
-README
-- I created a python vrit env for this: $ pew new --python=python3 owlready2
-- installed owlready2 in my ws: $ pip install Owlready2
-- Make sure you are working in the Virtual environment: $ pew workon owlready2
-- run this script by: $ python owl_reasoner.py
-
-"""
-
+###########################################
+# 
+# authors:    M.A.GarzonOviedo@tudelft.nl
+#             c.h.corbato@tudelft.nl
+##########################################
 
 from collections import defaultdict
 

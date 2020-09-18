@@ -1,8 +1,13 @@
 from owlready2 import *
-"""
-author: c.h.corbato@tudelft.nl
-using Owlready2 to manage the ontology or KnowledgeBase (KB)
-"""
+###########################################
+# 
+# authors:  c.h.corbato@tudelft.nl
+#           M.A.GarzonOviedo@tudelft.nl
+#
+# DESCRIPTION:
+#  Python library implementing utilities to manipulate Knowledge Bases
+#  based on the tomasys metamodel (Tbox), using the owlready2 library
+##########################################
 
 
 # Returns
