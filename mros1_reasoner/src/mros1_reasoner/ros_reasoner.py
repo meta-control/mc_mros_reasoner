@@ -117,11 +117,12 @@ class RosReasoner(Reasoner):
             obj_navigate.hasNFR.append(nfr_safety)
 
             # # Function Groundings and Objectives
-            fg = self.tomasys.FunctionGrounding("fg_{}".format(self.grounded_configuration), namespace=self.onto, typeFD=self.onto.search_one(iri="*{}".format(self.grounded_configuration)), solvesO=obj_navigate)
+            self.set_new_grounding(self.grounded_configuration, obj_navigate)
 
         elif len(objectives) == 1:
             o = objectives[0]
-            fg = self.tomasys.FunctionGrounding("fg_" + o.name.replace('o_',''), namespace=self.onto, typeFD=obtainBestFunctionDesign(o, self.tomasys), solvesO=o)
+            fd = obtainBestFunctionDesign(o, self.tomasys)
+            self.set_new_grounding(fd.name, o)
             rospy.logwarn('Objective, NFRs and initial FG are generated from the OWL file')
         else:
             rospy.logerr('Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
