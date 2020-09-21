@@ -47,6 +47,8 @@ class RosReasoner(Reasoner):
         else:
                 return
 
+        rospy.sleep(0.5) # Wait for subscribers (only for the test_1_level_functional_architecture)
+
         # load ontology
         if model_file is not None:
             self.load_onto_from_file(model_file)
