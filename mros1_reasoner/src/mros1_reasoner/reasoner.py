@@ -105,15 +105,16 @@ class Reasoner(object):
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
     def perform_reasoning(self):
-        with self.lock:
-            try:
-                with self.onto:
+        return_value = False
+        if self.onto is not None:
+            with self.lock:
+                try:
                     sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
-            except Exception as err:
-                self.onto.save(file="error.owl", format="rdfxml")
-                return False
-        return True
-
+                    return_value = False
+                except Exception as err:
+                    raise err
+                    self.onto.save(file="error.owl", format="rdfxml")
+        return return_value
 
     # For debugging purposes: saves state of the KB in an ontology file
     # TODO move to library
