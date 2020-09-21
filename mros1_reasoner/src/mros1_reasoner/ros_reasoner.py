@@ -8,7 +8,7 @@ from metacontrol_msgs.msg import MvpReconfigurationAction, MvpReconfigurationGoa
                                 GraphManipulationMessage, SystemState
 
 from mros1_reasoner.reasoner import Reasoner
-from mros1_reasoner.tomasys import obtainBestFunctionDesign, print_ontology_status, evaluateObjectives, updateGrounding, resetKBstatuses
+from mros1_reasoner.tomasys import obtainBestFunctionDesign, print_ontology_status, evaluateObjectives, resetKBstatuses
 
 
 
@@ -117,11 +117,12 @@ class RosReasoner(Reasoner):
             obj_navigate.hasNFR.append(nfr_safety)
 
             # # Function Groundings and Objectives
-            fg = self.tomasys.FunctionGrounding("fg_{}".format(self.grounded_configuration), namespace=self.onto, typeFD=self.onto.search_one(iri="*{}".format(self.grounded_configuration)), solvesO=obj_navigate)
+            self.set_new_grounding(self.grounded_configuration, obj_navigate)
 
         elif len(objectives) == 1:
             o = objectives[0]
-            fg = self.tomasys.FunctionGrounding("fg_" + o.name.replace('o_',''), namespace=self.onto, typeFD=obtainBestFunctionDesign(o, self.tomasys), solvesO=o)
+            fd = obtainBestFunctionDesign(o, self.tomasys)
+            self.set_new_grounding(fd.name, o)
             rospy.logwarn('Objective, NFRs and initial FG are generated from the OWL file')
         else:
             rospy.logerr('Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
@@ -216,7 +217,7 @@ class RosReasoner(Reasoner):
         if result == 1: # reconfiguration executed ok
             rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
             # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-            grounded_configuration = updateGrounding(o, fd, self.tomasys, self.onto) # Set new grounded_configuration
+            self.grounded_configuration = self.set_new_grounding(fd.name, o) # Set new grounded_configuration
             resetKBstatuses(self.tomasys)
         elif result == -1:
             rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv

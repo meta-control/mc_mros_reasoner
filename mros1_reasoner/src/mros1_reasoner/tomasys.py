@@ -136,14 +136,22 @@ def obtainBestFunctionDesign(o, tbox):
         print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
 
-# creates a new fg individual of type fd to solve the given objective, and deletec the previous fg from the KB
-# return a string with the name of the fg individual
-def updateGrounding(objective, fd, tbox, abox):
-    fg = abox.search_one(solvesO=objective)
-    destroy_entity(fg)
+
+def ground_fd(fd, objective, tbox, abox):
+    """Given a FunctionDesign fd and an Objective objective, creates an individual FunctionGrounds with typeF fd and solve) objective
+        returns the fg
+    """
     fg = tbox.FunctionGrounding(
         "fg_"+fd.name.replace('fd_', ''), namespace=abox, typeFD=fd, solvesO=objective)
-    return str(fg.name)
+    # TODO: ground objectives required by FD
+    return fg
+
+def remove_objective_grounding(objective, tbox, abox):
+    """Given an objective individual, removes the grounded hierarchy (fg tree) that solves it.
+    """
+    fg = abox.search_one(solvesO=objective)
+    if fg:
+        destroy_entity(fg)
 
 
 # Returns all FunctionDesign individuals from a given set (fds) that comply with the NFRs of a giben Objective individual (o)

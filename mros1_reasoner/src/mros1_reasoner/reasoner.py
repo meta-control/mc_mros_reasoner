@@ -24,8 +24,8 @@ class Reasoner(object):
         self.tomasys = None    # owl model with the tomasys ontology
         self.onto = None       # owl model with the application model as individuals of tomasys classes
         self.mock = True       # whether we are running a mock system (True), so reasoning happens in isolation, or connected to the real system
-        self.grounded_configuration = None   # name of the current system configuration, as stored in KB
-
+        self.grounded_configuration = None  # name of the current system configuration, as stored in KB
+                                            # TODO move to RosReasoner or remove: there can be multiple configurations grounded (for multiple objectives)
         # This Lock is used to ensure safety of tQAvalues
         self.lock = Lock()
 
@@ -61,9 +61,13 @@ class Reasoner(object):
             iri=str(iri_seed)), hasValue=nfr_value)
         return new_nfr
 
-    def get_new_tomasys_fg(self, qa_value_name, iri_seed, nfr_value):
-        new_fg = self.tomasys.FunctionGrounding("fg_{}".format(self.grounded_configuration), namespace=self.onto, typeFD=self.onto.search_one(iri="*{}".format(self.grounded_configuration)), solvesO=obj_navigate)
-
+    def set_new_grounding(self, fd_name, objective):
+        """Given a string fd_name with the name of a FunctionDesign and an objective, removes the previous fg for the objective and ground a new fg of typeF fd
+        """
+        remove_objective_grounding(objective, self.tomasys, self.onto)
+        fd = self.onto.search_one(iri="*{}".format(fd_name), is_a = self.tomasys.FunctionDesign)       
+        ground_fd(fd, objective, self.tomasys, self.onto)
+        return str(fd.name)
 
     # the DiagnosticStatus message process contains, per field
     # - message: "binding_error"
