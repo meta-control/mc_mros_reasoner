@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="onto" default="$(find mros1_reasoner)/scripts/kb.owl"/>
+  <arg name="model" default="$(find mros1_reasoner)/scripts/kb.owl"/>
   <arg name="tomasys" default="$(find mc_mdl_tomasys)/tomasys.owl"/>
   <arg name="desired_configuration" default="f3_v3_r1"/>
 
 
 
   <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner_node.py" output="screen">
-    <param name="onto_file" type="string" value="$(arg onto)"/>
+    <param name="model_file" type="string" value="$(arg model)"/>
     <param name="tomasys_file" type="string" value="$(arg tomasys)"/>
     <param name="desired_configuration" type="string" value="$(arg desired_configuration)"/>
     <param name="nfr_energy" value="0.5"/>

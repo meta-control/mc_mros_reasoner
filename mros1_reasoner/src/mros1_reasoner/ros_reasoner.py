@@ -23,7 +23,7 @@ class RosReasoner(Reasoner):
 
         #### Read ROS parameters
         # Get ontology and tomasys file paths from parameters
-        onto_file = self.check_and_read_parameter('~onto_file')
+        model_file = self.check_and_read_parameter('~model_file')
         tomasys_file =  self.check_and_read_parameter('~tomasys_file')
         # Get desired_configuration_name from parameters
         self.grounded_configuration = self.check_and_read_parameter('~desired_configuration')
@@ -48,12 +48,12 @@ class RosReasoner(Reasoner):
                 return
 
         # load ontology
-        if onto_file is not None:
-            self.load_onto_from_file(onto_file)
+        if model_file is not None:
+            self.load_onto_from_file(model_file)
             if self.onto is not None:
-                rospy.loginfo("Loaded ontology: %s", str(onto_file))
+                rospy.loginfo("Loaded ontology: %s", str(model_file))
             else:
-                rospy.logerr("Failed to load ontology from: %s", str(onto_file))
+                rospy.logerr("Failed to load ontology from: %s", str(model_file))
                 return
         else:
                 return
