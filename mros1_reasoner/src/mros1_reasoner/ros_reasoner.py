@@ -133,25 +133,26 @@ class RosReasoner(Reasoner):
 
     # MVP: callback for diagnostic msg received from QA Observer
     def callbackDiagnostics(self, msg):
-        for diagnostic_status in msg.status:
-            # 2 types of diagnostics considered: about bindings in error (TODO not implemented yet) or about QAs
-            if diagnostic_status.message == "binding error":
-                rospy.loginfo("binding error received")
-                up_binding = self.updateBinding(diagnostic_status.name, diagnostic_status.level)
-                if up_binding == -1:
-                    rospy.logwarn("Unkown Function Grounding: %s", diagnostic_name)
-                elif up_binding == 0:
-                    rospy.logwarn("Diagnostics message received for %s with level %d, nothing done about it." % (diagnostic_name, diagnostic_level))
+        if self.onto is not None:
+            for diagnostic_status in msg.status:
+                # 2 types of diagnostics considered: about bindings in error (TODO not implemented yet) or about QAs
+                if diagnostic_status.message == "binding error":
+                    rospy.loginfo("binding error received")
+                    up_binding = self.updateBinding(diagnostic_status.name, diagnostic_status.level)
+                    if up_binding == -1:
+                        rospy.logwarn("Unkown Function Grounding: %s", diagnostic_name)
+                    elif up_binding == 0:
+                        rospy.logwarn("Diagnostics message received for %s with level %d, nothing done about it." % (diagnostic_name, diagnostic_level))
 
-            if diagnostic_status.message == "QA status":
-                rospy.logwarn("QA value received for\t{0} \tTYPE: {1}\tVALUE: {2}".format(diagnostic_status.name, diagnostic_status.values[0].key, diagnostic_status.values[0].value))
-                up_qa = self.updateQA(diagnostic_status)
-                if up_qa == -1:
-                    rospy.logwarn("QA message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
-                elif up_qa == 1:
-                    rospy.loginfo("QA value received!\tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
-                else:
-                    rospy.logwarn("Unsupported QA TYPE received: %s ", str(diagnostic_status.values[0].key))
+                if diagnostic_status.message == "QA status":
+                    rospy.logwarn("QA value received for\t{0} \tTYPE: {1}\tVALUE: {2}".format(diagnostic_status.name, diagnostic_status.values[0].key, diagnostic_status.values[0].value))
+                    up_qa = self.updateQA(diagnostic_status)
+                    if up_qa == -1:
+                        rospy.logwarn("QA message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
+                    elif up_qa == 1:
+                        rospy.loginfo("QA value received!\tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
+                    else:
+                        rospy.logwarn("Unsupported QA TYPE received: %s ", str(diagnostic_status.values[0].key))
     # for MVP with QAs - request the FD.name to reconfigure to
     def request_configuration(self, fd):
         rospy.logwarn_throttle(1., 'New Configuration requested: {}'.format(fd.name))
