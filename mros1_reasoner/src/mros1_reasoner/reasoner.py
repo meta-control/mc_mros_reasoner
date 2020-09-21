@@ -106,11 +106,11 @@ class Reasoner(object):
     # update reasoner facts
     def perform_reasoning(self):
         return_value = False
-        if self.onto is not None:
-            with self.lock:
+        with self.lock:
+            with self.onto:
                 try:
                     sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
-                    return_value = False
+                    return_value = True
                 except Exception as err:
                     raise err
                     self.onto.save(file="error.owl", format="rdfxml")
