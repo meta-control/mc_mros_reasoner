@@ -66,7 +66,6 @@ class Reasoner(object):
         """
         remove_objective_grounding(objective, self.tomasys, self.onto)
         fd = self.onto.search_one(iri="*{}".format(fd_name), is_a = self.tomasys.FunctionDesign)       
-        print(fd.name)
         ground_fd(fd, objective, self.tomasys, self.onto)
         return str(fd.name)
 
