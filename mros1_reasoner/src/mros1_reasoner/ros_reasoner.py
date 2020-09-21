@@ -8,7 +8,7 @@ from metacontrol_msgs.msg import MvpReconfigurationAction, MvpReconfigurationGoa
                                 GraphManipulationMessage, SystemState
 
 from mros1_reasoner.reasoner import Reasoner
-from mros1_reasoner.tomasys import obtainBestFunctionDesign, print_ontology_status, evaluateObjectives, updateGrounding, resetKBstatuses
+from mros1_reasoner.tomasys import obtainBestFunctionDesign, print_ontology_status, evaluateObjectives, resetKBstatuses
 
 
 
@@ -216,7 +216,7 @@ class RosReasoner(Reasoner):
         if result == 1: # reconfiguration executed ok
             rospy.logwarn("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
             # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-            grounded_configuration = updateGrounding(o, fd, self.tomasys, self.onto) # Set new grounded_configuration
+            self.grounded_configuration = self.set_new_grounding(fd.name, o) # Set new grounded_configuration
             resetKBstatuses(self.tomasys)
         elif result == -1:
             rospy.logerr("= RECONFIGURATION UNKNOWN =") # for DEBUGGING in csv
