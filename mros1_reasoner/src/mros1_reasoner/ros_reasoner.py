@@ -161,8 +161,17 @@ class RosReasoner(Reasoner):
 
         goal = MvpReconfigurationGoal()
         goal.desired_configuration_name = fd.name
+
+        action_server_up = self.rosgraph_manipulator_client.wait_for_server()
+        if not action_server_up:
+            rospy.logerr("Action server not found, Aborting reconfiguration!")
+            return
         self.rosgraph_manipulator_client.send_goal(goal)
-        self.rosgraph_manipulator_client.wait_for_result()
+        goal_completed = self.rosgraph_manipulator_client.wait_for_result()
+        if not goal_completed:
+            rospy.logwarn("result not found")
+            return
+
         result = self.rosgraph_manipulator_client.get_result().result
         rospy.loginfo('Result: {}'.format(result) )
         return result
