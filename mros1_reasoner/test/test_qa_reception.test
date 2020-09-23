@@ -1,18 +1,12 @@
 <?xml version="1.0"?>
 <launch>
-
   <arg name="model" default="$(find mros1_reasoner)/owl/test1.owl"/>
   <arg name="tomasys" default="$(find mc_mdl_tomasys)/tomasys.owl"/>
-  <arg name="desired_configuration" default="f3_v3_r1"/>
-  <arg name="nfr_energy" default="0.5"/>
-  <arg name="nfr_safety" default="0.8"/>
 
   <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner_node.py" output="screen">
     <param name="model_file" type="string" value="$(arg model)"/>
     <param name="tomasys_file" type="string" value="$(arg tomasys)"/>
-    <param name="desired_configuration" type="string" value="$(arg desired_configuration)"/>
-    <param name="nfr_energy" value="$(arg nfr_energy)"/>
-    <param name="nfr_safety" value="$(arg nfr_safety)"/>
   </node>
+  <test test-name="test_qa_reception" pkg="mros1_reasoner" type="test_qa_reception.py"/>
 
 </launch>
