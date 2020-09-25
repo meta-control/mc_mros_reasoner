@@ -42,7 +42,7 @@ def generate_launch_description():
     # Declare the launch arguments
     declare_model_file_cmd = DeclareLaunchArgument(
         'model_file',
-        default_value=os.path.join(mros2_reasoner_bringup_dir, 'test1.owl'),
+        default_value=os.path.join(mros2_reasoner_bringup_dir, 'kb.owl'),
         description='File name for the ontology model')
 
     declare_tomasys_file_cmd = DeclareLaunchArgument(
@@ -52,7 +52,7 @@ def generate_launch_description():
 
     declare_desired_configuration_cmd = DeclareLaunchArgument(
         'desired_configuration',
-        default_value='',
+        default_value='f3_v3_r1',
         description='Desired inital configuration (system mode)')
 
     declare_nfr_energy_cmd = DeclareLaunchArgument(
@@ -62,7 +62,7 @@ def generate_launch_description():
 
     declare_nfr_safety_cmd = DeclareLaunchArgument(
         'nfr_safety',
-        default_value='0.8',
+        default_value='0.5',
         description='Required value for Safety NFR')
 
 
