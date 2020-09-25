@@ -29,6 +29,7 @@ class RosReasoner(Node, Reasoner):
         self.declare_parameter("nfr_energy")
         self.declare_parameter("nfr_safety")
         self.declare_parameter("reasoning_rate")
+        self.declare_parameter("node_name")
 
 
         sleep_rate = self.create_rate(2.0)
@@ -38,6 +39,7 @@ class RosReasoner(Node, Reasoner):
         tomasys_file =  self.check_and_read_parameter('tomasys_file')
         # Get desired_configuration_name from parameters
         self.grounded_configuration = self.check_and_read_parameter('desired_configuration')
+        node_name = self.check_and_read_parameter('node_name', 'pilot')
 
         #Start interfaces
         # subscriptions for different message types (named, pins, angle)
@@ -53,8 +55,9 @@ class RosReasoner(Node, Reasoner):
 
         cb_group = ReentrantCallbackGroup()
 
-        self.system_modes_cli = self.create_client(
-            ChangeMode, '/turtlebot_pilot/change_mode', callback_group=cb_group)
+        self.system_modes_cli = self.create_client(ChangeMode,
+            '/' + node_name + '/change_mode',
+            callback_group=cb_group)
 
         # rosgraph_manipulator_client.wait_for_server()
 
@@ -102,7 +105,7 @@ class RosReasoner(Node, Reasoner):
 
     def start_wait_response_timer(self):
         if self.wait_response_timer is None:
-            self.wait_response_timer = self.create_timer(0.5, self.wait_response_timer_cb, callback_group=cb_group)
+            self.wait_response_timer = self.create_timer(0.5, self.wait_response_timer_cb)
         else:
             self.get_logger().warning('wait_response_timer already active')
 
@@ -167,12 +170,16 @@ class RosReasoner(Node, Reasoner):
 
             # # Function Groundings and Objectives
             self.set_new_grounding(self.grounded_configuration, obj_navigate)
+            self.request_configuration(self.grounded_configuration)
 
         elif len(objectives) == 1:
             o = objectives[0]
             fd = obtainBestFunctionDesign(o, self.tomasys)
-            self.set_new_grounding(fd.name, o)
             self.get_logger().warning('Objective, NFRs and initial FG are generated from the OWL file')
+            ## Make sure we are on the initial configuration
+            if fd.name != self.grounded_configuration:
+                self.get_logger().info('Requesting initial configuration: ' + str(fd.name))
+                self.request_configuration(fd.name)
         else:
             self.get_logger().error('Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
 
@@ -202,38 +209,47 @@ class RosReasoner(Node, Reasoner):
                         self.get_logger().info("QA value received!\tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
                     else:
                         self.get_logger().warning("Unsupported QA TYPE received: %s ", str(diagnostic_status.values[0].key))
-    # for MVP with QAs - request the FD.name to reconfigure to
-    def request_configuration(self, fd):
-        self.get_logger().warning('New Configuration requested: {}'.format(fd.name))
 
-        self.get_logger().info('MAPE: E xecute: --change mode to-- '+ fd.name)
+    # for MVP with QAs - request the FD.name to reconfigure to
+    def request_configuration(self, new_configuration):
+        self.get_logger().warning('New Configuration requested: {}'.format(new_configuration))
+
+        self.get_logger().info('MAPE: E xecute: --change mode to-- '+ new_configuration)
 
         while not self.system_modes_cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().warn('service /turtlebot_pilot/change_mode not available, waiting again...')
+            self.get_logger().warn('Mode change service not available, waiting again...')
 
         self.req = ChangeMode.Request()
 
-        self.req.mode_name = fd.name
+        self.req.mode_name = new_configuration
         # async call, but the follow up while loop BLOCKS execution till there is a response
-        self.mode_change_srv_call_future = self.system_modes_cli.call_async(self.req)
+        mode_change_srv_call_future = self.system_modes_cli.call_async(self.req)
+
+        rclpy.spin_until_future_complete(self, mode_change_srv_call_future)
+        if mode_change_srv_call_future.result() is not None:
+            self.get_logger().info('Mode change completed - Result ' + str(mode_change_srv_call_future.result().success))
+            return 1
+        else:
+            self.get_logger().error('Exception while calling service: %r' % mode_change_srv_call_future.exception())
+            return
         # Activate another timer to wait for the response.
-        self.start_wait_response_timer()
+        #self.start_wait_response_timer()
 
         return
 
     ## Loop to wait for an answer to service call
     def wait_response_timer_cb(self):
-        if node.mode_change_srv_call_future.done():
+        if self.mode_change_srv_call_future.done():
             try:
-                response = node.mode_change_srv_call_future.result()
+                response = self.mode_change_srv_call_future.result()
             except Exception as e:
-                node.get_logger().info(
+                self.get_logger().info(
                 'Service call failed %r' % (e,))
-                self.get_logger().error("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
+
             else:
-                node.get_logger().info(
-                'Result of change node %s to mode %s is %s' %
-                (node.req.node_name, node.req.mode_name, response.success))
+                self.get_logger().info(
+                'Result of change node to mode %s is %s' %
+                (self.req.mode_name, response.success))
                 self.get_logger().warning("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
                 # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
                 self.grounded_configuration = self.set_new_grounding(fd.name, o) # Set new grounded_configuration
@@ -295,5 +311,15 @@ class RosReasoner(Node, Reasoner):
 
         # request new configuration
         self.get_logger().info('  >> Started MAPE-K ** EXECUTION **')
-        self.request_configuration(fd)
+        result = self.request_configuration(fd.name)
+        self.get_logger().info('  >> Finished MAPE-K ** EXECUTION **')
+        # Process adaptation feedback to update KB:
+        if result == 1: # reconfiguration executed ok
+            self.get_logger().warning("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
+            # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
+            self.grounded_configuration = self.set_new_grounding(fd.name, o) # Set new grounded_configuration
+            resetKBstatuses(self.tomasys)
+        else:
+            self.get_logger().error("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
+
         self.get_logger().info('Exited timer_cb for metacontrol reasoning')

@@ -14,7 +14,7 @@ class MinimalPublisher(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
         self.qa_type = 'energy'
-        self.qa_value = 0.1
+        self.qa_value = 0.3
 
 
 
