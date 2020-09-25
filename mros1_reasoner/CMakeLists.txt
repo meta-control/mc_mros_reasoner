@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS catkin_virtualenv)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -183,8 +183,11 @@ install(FILES requirements.txt
 
 
 set(python_scripts
-  scripts/mros1_reasoner.py
+  scripts/mros1_reasoner_node.py
   scripts/rosmodel2owl.py
+  test/test_models_paper.py
+  test/test_qa_reception.py
+  test/test_level_1_functional_arch.py
 )
 
 
@@ -206,3 +209,14 @@ catkin_install_python(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest)
+  foreach(T
+      test/test_models_paper.test
+      test/test_qa_reception.test
+      test/test_level_1_functional_arch.test
+      )
+     add_rostest(${T})
+  endforeach()
+endif()
