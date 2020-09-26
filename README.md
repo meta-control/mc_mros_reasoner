@@ -1,6 +1,10 @@
 # mros_reasoner
 
-A meta-controller implementation for ROS1
+A meta-controller implementation for ROS2 foxy
+
+### Note:
+
+** This branch is highly experimental and unstable **
 
 ## Installation
 
@@ -15,59 +19,99 @@ Owlready2 by default uses the [HermiT reasoner](http://www.hermit-reasoner.com/)
 You can use this command **To install the Java Vitual Machine**
 
 ```console
-sudo apt-get install openjdk-11-jre
+sudo apt-get install openjdk-14-jre
 ```
 
 Under Linux, Owlready should automatically find Java.
 
-### Create reasoner_ws
+### Create reasoner_ws - ROS2  Foxy
 
-- We recommend you to create a workspace only for `mros1_reasoner`, for example:
-
-```console
-  mkdir -p ~/mros1_reasoner_ws/src
-  cd mros1_reasoner_ws
-```
-
-### Get mros1_reasoner and dependencies using wstool
-
-- You need to copy the `mros1_reasoner` and its dependencies into the reasoner workspace (ie: `mros1_reasoner_ws`).
+- We recommend you to create a workspace only for `mros_reasoner`, for example:
 
 ```console
-  cd ~/mros1_reasoner_ws
-  wstool init ~/mros1_reasoner_ws/src https://raw.githubusercontent.com/tud-cor/mc_mros_reasoner/master/mros1_reasoner/mros1_reasoner.rosinstall
-  rosdep install --from-paths ~/mros1_reasoner_ws/src -y -i -r
+  mkdir -p ~/mros_reasoner_ws/src
+  cd mros_reasoner_ws
 ```
 
-**Note** The above `rosdep install` uses the `-r` argument in order to ignore possible errors. Please check the console output to make sure all dependencies are installed correctly.
+### Get mros2_reasoner - ROS2  Foxy
 
-### Build the code
+- You need to clone the `mc_mros_reasoner` into the reasoner workspace (ie: `mros_reasoner_ws`).
+- Make sure to change to the branch `foxy_devel`
+
+```console
+  cd ~/mros_reasoner_ws/src
+  git clone --branch foxy_devel https://github.com/tud-cor/mc_mros_reasoner.git
+```
+### Get the Pilot URJC components - ROS2  Foxy
+
+- To test the code, get the Turtlebot3 Pilot from https://github.com/MROS-RobMoSys-ITP/Pilot-URJC
+- **Make sure you check the** metacontrol-test-integration **branch**
+- Put the packages in the same ws (i.e. `~/mros_reasoner_ws/`)
+- Follow the instructions on how to build the packages there
+
+
+### Build the code - ROS2  Foxy
 
 - Once you have the workspace setup, you can build the workspace
-- Do not forget to source ROS Melodic workspace before building your `mros1_reasoner_ws`
+- Do not forget to source ROS foxy workspace before building your `mros_reasoner_ws`
 
 ```console
-source /opt/ros/melodic/setup.bash
-catkin build
+cd ~/mros_reasoner_ws/src
+source /opt/ros/foxy/setup.bash
+colcon build --symlink-install
 ```
 
-## User instructions
+## Execution - ROS2  Foxy - with simulated turtlebot3
 
-The mros1_reasoner node needs the following elements:
 
-- an OWL model of the system to be metacontrolled. This can be manually created directly in OWL, e.g. using Protege, or it can be generated automatically from other models of the system ([rosin-experiments](https://github.com/rosin-project/rosin-experiments) provides a way to develop the model according to RosModel, and the script [`rosmodel2owl.py`](https://github.com/tud-cor/mc_mros_reasoner/blob/master/mros1_reasoner/scripts/rosmodel2owl.py) provides a way to transform it to OWL)
-- monitoring and reconfiguration infrastructure for the given platform, e.g. for ROS1 reconfiguration capabilities are provided by [`ros_manipulator.py`](https://github.com/rosin-project/metacontrol_sim/blob/master/scripts/rosgraph_manipulator.py) and by the launchfiles in [metacontrol_move_base_configurations](https://github.com/rosin-project/metacontrol_move_base_configurations)
+1. **Launch turtlebot3 world in gazebo sim**
 
-### Execution
+    ```console
+      export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:[ros2_ws]/src/turtlebot3/turtlebot3_simulations/turtlebot3_gazebo/models
+      export TURTLEBOT3_MODEL=${TB3_MODEL}
+      ros2 launch pilot_urjc_bringup tb3_sim_launch.py
+    ```
+  **After the last command, the Gazebo simulator is running in background. Don't worry if no window is opened.**
+2. **Turtlebot3 Navigation launcher**
 
-Source your ws and launch the reasoner:
+    This launcher includes rviz, nav2, amcl, map-server, **[system-modes](https://github.com/micro-ROS/system_modes)**, etc.
+    The **system_modes mode_manager** takes the modes description from `params/pilot_modes.yaml`.
 
-```console
-source mros1_reasoner_ws/devel/setup.bash
-roslaunch mros1_reasoner run.launch
-```
 
-### Testing
+    ```console
+      export TURTLEBOT3_MODEL=${TB3_MODEL}
+      ros2 launch pilot_urjc_bringup nav2_turtlebot3_launch.py
+    ```
+  **RVIz opens, and the navigation system is waiting for the activation of the laser_driver. It is not necessary to set an initial robot position with the 2D Pose Estimate tool. When the laser_driver is up, the pose will be set automatically.**
+
+
+3. **Launch the mros2 metacontroller**
+
+    This step launches the `mros2_metacontroller`, it launches by default the `kb.owl` ontology and connects to the
+    system_modes created by the pilot_urjc
+    - The names of the modes there have been changed to match the `fd` names of the `kb.owl` ontology.
+
+
+    ```console
+      ros2 launch mros2_reasoner launch_reasoner.launch.py
+    ```
+
+By default it sets the `f3_v3_r1` mode which corresponds to the NORMAL mode.
+
+With all the above, we will have enough to test some navigation actions and experiment changing the current mode and seeing how this change affects the navigation.
+
+
+4. **Publish energy values**
+
+- To get a reconfiguration, we need to Publish some fake qa_values. This node sends a [`DiagnosticArray`](http://docs.ros.org/api/diagnostic_msgs/html/msg/DiagnosticArray.html) message, with increasing energy value.
+
+
+    ```console
+      ros2 run mros2_reasoner mros2_publish_qa_node
+    ```
+
+
+### Testing  - ** does not work on ROS2 **
 
 Two [rostest](http://wiki.ros.org/rostest) have been created for this package:
 
