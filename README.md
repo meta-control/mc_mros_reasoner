@@ -4,7 +4,7 @@ A meta-controller implementation for ROS2 foxy
 
 ### Note:
 
-** This branch is highly experimental and unstable **
+**This branch is highly experimental and unstable**
 
 ## Installation
 
@@ -71,7 +71,8 @@ colcon build --symlink-install
       export TURTLEBOT3_MODEL=${TB3_MODEL}
       ros2 launch pilot_urjc_bringup tb3_sim_launch.py
     ```
-  **After the last command, the Gazebo simulator is running in background. Don't worry if no window is opened.**
+  - After the last command, the Gazebo simulator is running in background. Don't worry if no window is opened.
+  
 2. **Turtlebot3 Navigation launcher**
 
     This launcher includes rviz, nav2, amcl, map-server, **[system-modes](https://github.com/micro-ROS/system_modes)**, etc.
@@ -82,7 +83,7 @@ colcon build --symlink-install
       export TURTLEBOT3_MODEL=${TB3_MODEL}
       ros2 launch pilot_urjc_bringup nav2_turtlebot3_launch.py
     ```
-  **RVIz opens, and the navigation system is waiting for the activation of the laser_driver. It is not necessary to set an initial robot position with the 2D Pose Estimate tool. When the laser_driver is up, the pose will be set automatically.**
+  - RVIz opens, and the navigation system is waiting for the activation of the laser_driver. It is not necessary to set an initial robot position with the 2D Pose Estimate tool. When the laser_driver is up, the pose will be set automatically.
 
 
 3. **Launch the mros2 metacontroller**
@@ -111,7 +112,7 @@ With all the above, we will have enough to test some navigation actions and expe
     ```
 
 
-### Testing  - ** does not work on ROS2 **
+### Testing  - **Does not work on ROS2**
 
 Two [rostest](http://wiki.ros.org/rostest) have been created for this package:
 
