@@ -167,19 +167,19 @@ def meetNFRs(o, fds):
     for fd in fds:
         for nfr in o.hasNFR:
             qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
-        if len(qas) != 1:
-            print("FD has no expected value for this QA or multiple definitions (inconsistent)")
-            break
-        else:
-            if nfr.isQAtype.name == 'energy':
-                if qas[0].hasValue > nfr.hasValue: # specific semantics for energy
-                    break
-            elif nfr.isQAtype.name == 'safety':
-                if qas[0].hasValue < nfr.hasValue:  # specific semantics for energy
-                    break
+            if len(qas) != 1:
+                print("FD has no expected value for this QA or multiple definitions (inconsistent)")
+                break
             else:
-                print("No known criteria for FD selection for that QA")
-        filtered.append(fd)
+                if nfr.isQAtype.name == 'energy':
+                    if qas[0].hasValue > nfr.hasValue: # specific semantics for energy
+                        break
+                elif nfr.isQAtype.name == 'safety':
+                    if qas[0].hasValue < nfr.hasValue:  # specific semantics for energy
+                        break
+                else:
+                    print("No known criteria for FD selection for that QA")
+            filtered.append(fd)
     if filtered == []:
         print("No FDs meetf NFRs")
 
