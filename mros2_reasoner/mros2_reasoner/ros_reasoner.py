@@ -222,6 +222,10 @@ class RosReasoner(Node, Reasoner):
         self.req = ChangeMode.Request()
 
         self.req.mode_name = new_configuration
+
+        # node_name field is necessary in system_modes feature/rules branch but incompatible with master
+        self.req.node_name = self.node_name
+        
         # async call, but the follow up while loop BLOCKS execution till there is a response
         mode_change_srv_call_future = self.system_modes_cli.call_async(self.req)
 
