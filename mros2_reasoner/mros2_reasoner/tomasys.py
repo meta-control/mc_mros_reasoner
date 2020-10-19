@@ -1,6 +1,6 @@
 from owlready2 import *
 ###########################################
-# 
+#
 # authors:  c.h.corbato@tudelft.nl
 #           M.A.GarzonOviedo@tudelft.nl
 #
@@ -8,6 +8,9 @@ from owlready2 import *
 #  Python library implementing utilities to manipulate Knowledge Bases
 #  based on the tomasys metamodel (Tbox), using the owlready2 library
 ##########################################
+
+
+import logging
 
 
 # Returns
@@ -52,14 +55,13 @@ def print_ontology_status(kb_box):
     # for i in list(tomasys.Binding.instances()):
     #     print(i.name, i.b_status)
 
-    print("\nFGs:")
+    logging.warning("\nFGs:")
     for i in list(kb_box.FunctionGrounding.instances()):
-        print(i.name, "\tobjective: ", i.solvesO, "\tstatus: ", i.fg_status, "\tFD: ",
-        i.typeFD, "\tQAvalues: ", [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue])
+        logging.warning(" {0}\tobjective: {1}\tstatus: {2}\tFD: {3}, \tQAvalues: {4}".format(i.name, i.solvesO, i.fg_status, i.typeFD, [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
 
-    print("\nOBJECTIVE\t|  STATUS\t|  NFRs")
+    logging.warning("\nOBJECTIVE\t|  STATUS\t|  NFRs")
     for i in list(kb_box.Objective.instances()):
-        print(i.name,"\t|  ", i.o_status, "\t|  ", [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR])
+        logging.warning("{0}\t|  {1}\t|  {2}".format(i.name, i.o_status, [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
 
     # print("\nCC availability:")
     # for i in list(tomasys.ComponentClass.instances()):
@@ -107,8 +109,8 @@ def obtainBestFunctionDesign(o, tbox):
     for fd in list(tbox.FunctionDesign.instances()):
         if fd.solvesF == f:
             fds.append(fd)
-    print("== FunctionDesigns available for obj: %s", str([fd.name for fd in fds]))
-    print("Objective NFR ENERGY: %s", str(o.hasNFR))
+    logging.warning("== FunctionDesigns available for obj: %s", str([fd.name for fd in fds]))
+    logging.warning("Objective NFR ENERGY: %s", str(o.hasNFR))
 
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
@@ -121,7 +123,7 @@ def obtainBestFunctionDesign(o, tbox):
     fds_for_obj = meetNFRs(o, suitable_fds)
     # get best FD based on higher Utility/trade-off of QAs
     if fds_for_obj != []:
-        print("== FunctionDesigns also meeting NFRs: %s", [fd.name for fd in fds_for_obj])
+        logging.warning("== FunctionDesigns also meeting NFRs: %s", [fd.name for fd in fds_for_obj])
         aux = 0
         best_fd = fds_for_obj[0]
         for fd in fds_for_obj:
@@ -130,10 +132,10 @@ def obtainBestFunctionDesign(o, tbox):
                 best_fd = fd
                 aux = u
 
-        print("> Best FD available %s", str(best_fd.name))
+        logging.warning("> Best FD available %s", str(best_fd.name))
         return best_fd
     else:
-        print("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
+        logging.warning("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None
 
 
@@ -157,18 +159,18 @@ def remove_objective_grounding(objective, tbox, abox):
 # Returns all FunctionDesign individuals from a given set (fds) that comply with the NFRs of a giben Objective individual (o)
 def meetNFRs(o, fds):
     if fds == []:
-        print("Empty set of given FDs")
+        logging.warning("Empty set of given FDs")
         return []
     filtered = []
     if len(o.hasNFR) == 0:
-        print("== Objective has no NFRs, so a random FD is picked")
+        logging.warning("== Objective has no NFRs, so a random FD is picked")
         return [next(iter(fds))]
-    print("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
+    logging.warning("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
     for fd in fds:
         for nfr in o.hasNFR:
             qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
         if len(qas) != 1:
-            print("FD has no expected value for this QA or multiple definitions (inconsistent)")
+            logging.warning("FD has no expected value for this QA or multiple definitions (inconsistent)")
             break
         else:
             if nfr.isQAtype.name == 'energy':
@@ -178,10 +180,10 @@ def meetNFRs(o, fds):
                 if qas[0].hasValue < nfr.hasValue:  # specific semantics for energy
                     break
             else:
-                print("No known criteria for FD selection for that QA")
+                logging.warning("No known criteria for FD selection for that QA")
         filtered.append(fd)
     if filtered == []:
-        print("No FDs meetf NFRs")
+        logging.warning("No FDs meetf NFRs")
 
     return filtered
 
