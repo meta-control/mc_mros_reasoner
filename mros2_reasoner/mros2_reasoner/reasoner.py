@@ -30,8 +30,7 @@ class Reasoner(object):
         self.ontology_lock = Lock()
 
         signal.signal(signal.SIGINT, self.save_ontology_exit)
-
-        print("reasoner class init")
+        self.isInitialized = True
 
 
     def load_tomasys_from_file(self, tomasys_file):
