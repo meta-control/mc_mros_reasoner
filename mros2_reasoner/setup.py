@@ -12,9 +12,12 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name, ['owl/tomasys.owl']),
-        ('share/' + package_name, ['owl/test1.owl']),
-        ('share/' + package_name, ['owl/kb.owl']),
+        #('share/' + package_name, ['owl/tomasys.owl']),
+        #('share/' + package_name, ['owl/test1.owl']),
+        #('share/' + package_name, ['owl/kb.owl']),
+        #('share/' + package_name, ['owl/kb_hands_on.owl']),
+        # Include all launch files. This is the most important line here!
+        (os.path.join('share', package_name), glob('owl/*.owl')),
          # Include all launch files. This is the most important line here!
         (os.path.join('share', package_name), glob('launch/*.launch.py'))
     ],
