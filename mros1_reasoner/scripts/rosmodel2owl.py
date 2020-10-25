@@ -20,9 +20,6 @@ roslib.load_manifest('rosparam')
 import rosparam
 from owlready2 import *
 
-# File that contains the Domain model ontology
-onto_file ='ros_navigation.owl' # TODO: define as param which domain ontology to load
-
 ros_root = rospkg.get_ros_root()
 rospack = rospkg.RosPack()
 

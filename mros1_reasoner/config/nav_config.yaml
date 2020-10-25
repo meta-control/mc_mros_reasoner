@@ -2,7 +2,7 @@ ontology_pkg: mc_mdl_tomasys
 ontology_path: tomasys.owl
 # where is ros_navigation.owl ??
 domain_ontology_pkg: mros1_reasoner
-domain_ontology_path: config/ros_navigation.owl
+domain_ontology_path: owl/ros_navigation.owl
 
 function: f_navigate
 
