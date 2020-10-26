@@ -25,9 +25,10 @@ rospack = rospkg.RosPack()
 
 onto = None
 import os, sys
-if __name__ == '__main__':
+def rosmodel2owl(configFilePath):
     # the file path should be given as argument, alternatively a ns can be added
-    params = rosparam.load_file(rospack.get_path('mros1_reasoner')+'/config/nav_config.yaml', '')
+    #params = rosparam.load_file(rospack.get_path('mros1_reasoner')+'/config/nav_config.yaml', '')
+    params = rosparam.load_file(configFilePath)
     for param, ns in params:
         try:
             rosparam.upload_params(ns,param)
@@ -43,17 +44,14 @@ if __name__ == '__main__':
     configs = rospy.get_param('configs')
     result_file = rospy.get_param('result_file')
 
-    tomasys = get_ontology(ontology_file).load
-    onto = get_ontology(domain_ontology_file).load
-    print(onto)
+    tomasys = get_ontology(ontology_file)#.load
+    onto = get_ontology(domain_ontology_file)#.load
     rospy.loginfo('Loaded domain ontology: ' + domain_ontology_file)
+    function_ = onto.search_one(iri='*'+str(function))
 
-    # TODO: hardcoded here that all FDs from .rossystem files solve F navigate
-    #function_ = onto.search_one(iri='*'+str(function))
-
-    #if function_ == None:
-    #    print('The domain ontology provided does not contain a Function ',function)
-    #    sys.exit(0)
+    if function_ == None:
+        print('The domain ontology provided does not contain a Function ',function)
+        sys.exit(0)
     
     for config in configs:
         config_name = config
@@ -64,21 +62,21 @@ if __name__ == '__main__':
         sys_name = model.system_name[0]
 
         # create a FunctionDesign
-        fd = tomasys.FunctionDesign(sys_name, namespace=onto, solvesF=f_navigate)
+        fd = tomasys.FunctionDesign(sys_name, namespace=onto, solvesF=function_)
             
         # create a QualityAttribute expected value for the FunctionDesign with the type indicated by the name of the param in the RosSystem and the value of the param (e.g. 0.5)
-        # value is read from CSV file instead of rossystem file
         for qa_param in model.global_parameters:
             qa_string = qa_param.param_name[0].replace('qa_', '')
-            value = float(row[qa_string])
+            value = qa_param.param_value[0]
             qa = tomasys.QAvalue('{0}_{1}'.format(qa_param.param_name[0], sys_name), namespace=onto, isQAtype=onto.search_one(iri='*'+qa_string), hasValue=value)
             fd.hasQAestimation.append(qa)
-        
-        # add QA performance from csv even if not in rossystem model.global_parameters
-        value = float(row['performance'])
-        qa = tomasys.QAvalue('{0}_{1}'.format('qa_performance', sys_name),     namespace=onto, isQAtype=onto.search_one(iri='*performance'), hasValue=value)
-        fd.hasQAestimation.append(qa)
 
     # save the ontology to a file
     onto.save(file=result_file, format='rdfxml')
 
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("usage: rosrun mros1_reasoner rosmodel2owl.py /path/to/config/file")
+    else:
+        rosmodel2owl(sys.argv[1])
