@@ -42,7 +42,7 @@ def generate_launch_description():
     # Declare the launch arguments
     declare_model_file_cmd = DeclareLaunchArgument(
         'model_file',
-        default_value=os.path.join(mros2_reasoner_bringup_dir, 'kb_hands_on.owl'),
+        default_value=os.path.join(mros2_reasoner_bringup_dir, 'MROS_ontology.owl'),
         description='File name for the ontology model')
 
     declare_tomasys_file_cmd = DeclareLaunchArgument(

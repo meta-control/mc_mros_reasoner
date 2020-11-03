@@ -167,13 +167,19 @@ class RosReasoner(Node):
             obj_navigate.hasNFR.append(nfr_safety)
 
             # # Function Groundings and Objectives
-            self.reasoner.set_new_grounding(self.grounded_configuration, obj_navigate)
-            srv_call_future = self.request_configuration(self.grounded_configuration)
-            rclpy.spin_until_future_complete(self, srv_call_future)
+            new_grounded = self.reasoner.set_new_grounding(self.grounded_configuration, obj_navigate)
+            if new_grounded:
+                srv_call_future = self.request_configuration(self.grounded_configuration)
+                rclpy.spin_until_future_complete(self, srv_call_future)
 
         elif len(objectives) == 1:
+            self.get_logger().info('Objective {} found'.format(o.name))
             o = objectives[0]
             fd = obtainBestFunctionDesign(o, self.reasoner.tomasys)
+            if not fd:
+                self.get_logger().error(
+                    "No FD found to solve Objective {}".format(o.name)) # for DEBUGGING in csv
+            else:
             self.get_logger().warning('Objective, NFRs and initial FG are generated from the OWL file')
             ## Make sure we are on the initial configuration
             if fd.name != self.grounded_configuration:
@@ -200,7 +206,19 @@ class RosReasoner(Node):
                     elif up_binding == 0:
                         self.get_logger().warning("Diagnostics message received for %s with level %d, nothing done about it." % (diagnostic_name, diagnostic_level))
 
-                if diagnostic_status.message == "QA status":
+                # Component error
+                elif diagnostic_status.message == "Component status":
+                    self.get_logger().warning("Component status value received for\t{0} \tTYPE: {1}\tVALUE: {2}".format(diagnostic_status.name, diagnostic_status.values[0].key, diagnostic_status.values[0].value))
+                    up_cs = self.reasoner.updateComponentStatus(diagnostic_status)
+                    if up_cs == -1:
+                        self.get_logger().warning("CS message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
+                    elif up_cs == 1:
+                        self.get_logger().info("CS Message received!\tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
+                    else:
+                        self.get_logger().warning("Unsupported CS Message received: %s ", str(diagnostic_status.values[0].key))
+                
+                
+                elif diagnostic_status.message == "QA status":
                     self.get_logger().warning("QA value received for\t{0} \tTYPE: {1}\tVALUE: {2}".format(diagnostic_status.name, diagnostic_status.values[0].key, diagnostic_status.values[0].value))
                     up_qa = self.reasoner.updateQA(diagnostic_status)
                     if up_qa == -1:
@@ -209,6 +227,8 @@ class RosReasoner(Node):
                         self.get_logger().info("QA value received!\tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
                     else:
                         self.get_logger().warning("Unsupported QA TYPE received: %s ", str(diagnostic_status.values[0].key))
+                else:
+                    self.get_logger().warning("Unsupported Message received: %s ", str(diagnostic_status.values[0].key))
 
     # for MVP with QAs - request the FD.name to reconfigure to
     def request_configuration(self, new_configuration):

@@ -57,11 +57,11 @@ def print_ontology_status(kb_box):
 
     logging.warning("\nFGs:")
     for i in list(kb_box.FunctionGrounding.instances()):
-        logging.warning(" {0}\tobjective: {1}\tstatus: {2}\tFD: {3}, \tQAvalues: {4}".format(i.name, i.solvesO, i.fg_status, i.typeFD, [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
+        logging.warning("\n{0}\tobjective: {1}\tstatus: {2}\tFD: {3}, \tQAvalues: {4}".format(i.name, i.solvesO, i.fg_status, i.typeFD, [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
 
     logging.warning("\nOBJECTIVE\t|  STATUS\t|  NFRs")
     for i in list(kb_box.Objective.instances()):
-        logging.warning("{0}\t|  {1}\t|  {2}".format(i.name, i.o_status, [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
+        logging.warning("\n{0}\t|  {1}\t|  {2}".format(i.name, i.o_status, [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
 
     # print("\nCC availability:")
     # for i in list(tomasys.ComponentClass.instances()):
@@ -115,11 +115,12 @@ def obtainBestFunctionDesign(o, tbox):
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
     realisable_fds = [fd for fd in fds if fd.fd_realisability != False]
-    # print("== FunctionDesigns REALISABLE for obj: ", [fd.name for fd in realisable_fds])
+    logging.warning("== FunctionDesigns REALISABLE for obj: : %s", str([fd.name for fd in realisable_fds]))
     # discard FDs already grounded for this objective when objective in error
-    suitable_fds= [fd for fd in fds if (not o in fd.fd_error_log)]
-    # print("== FunctionDesigns suitable NOT IN ERROR LOG: ", [fd.name for fd in suitable_fds])
+    suitable_fds= [fd for fd in fds if ((not o in fd.fd_error_log) and (fd.fd_realisability != False))]
+    logging.warning("== FunctionDesigns Realisable NOT IN ERROR LOG: %s", str([fd.name for fd in suitable_fds]))
     # discard those FD that will not meet objective NFRs
+
     fds_for_obj = meetNFRs(o, suitable_fds)
     # get best FD based on higher Utility/trade-off of QAs
     if fds_for_obj != []:

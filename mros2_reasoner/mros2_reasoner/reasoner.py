@@ -67,13 +67,16 @@ class Reasoner(object):
         """
         remove_objective_grounding(objective, self.tomasys, self.onto)
         fd = self.onto.search_one(iri="*{}".format(fd_name), is_a = self.tomasys.FunctionDesign)
-        ground_fd(fd, objective, self.tomasys, self.onto)
-        return str(fd.name)
-
+        if fd:
+            ground_fd(fd, objective, self.tomasys, self.onto)
+            return str(fd.name)
+        else:
+            return None
+            
     # the DiagnosticStatus message process contains, per field
     # - message: "binding_error"
     # - name: name of the fg reported, as named in the OWL file
-    # - level: values 0 and 1 are mapped to nothing, values 2 or 3 are mapper to fg.status="INTERNAL_ERROR"
+    # - level: values 0 and 1 are mapped to nothing, values 2 or 3 are mapped to fg.status="INTERNAL_ERROR"
     def updateBinding(self, diagnostic_status):
         fg = onto.search_one(iri="*{}".format(diagnostic_status.name))
         if fg == None:
@@ -83,6 +86,27 @@ class Reasoner(object):
             return 1
         else:
             return 0
+
+    ## Converst a string to Boolean
+    @staticmethod
+    def str2bool(v):
+        return v.lower() in ("yes", "true", "t", "1")
+
+    # the DiagnosticStatus message process contains, per field
+    # - message: "Component status"
+    # - key: name of the Component Reported, as named in the OWL file
+    # - value: (True, False ) Meaning wheter or not the component is working OK
+    def updateComponentStatus(self, diagnostic_status):
+        # Find the Component with the same name that the one in the Component Status message (in diagnostic_status.key)
+        component_type = self.onto.search_one(iri="*{}".format(diagnostic_status.values[0].key))
+        if component_type != None:
+            value = self.str2bool(diagnostic_status.values[0].value)
+            with self.ontology_lock:
+                component_type.c_status = value
+            return_value = 1
+        else:
+            return_value = 0
+        return return_value
 
     # update QA value based on incoming diagnostic
     def updateQA(self, diagnostic_status):
