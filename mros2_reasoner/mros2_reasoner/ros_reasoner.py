@@ -180,7 +180,8 @@ class RosReasoner(Node):
                 self.get_logger().error(
                     "No FD found to solve Objective {}".format(o.name)) # for DEBUGGING in csv
             else:
-            self.get_logger().warning('Objective, NFRs and initial FG are generated from the OWL file')
+                self.get_logger().warning('Objective, NFRs and initial FG are generated from the OWL file')
+            
             ## Make sure we are on the initial configuration
             if fd.name != self.grounded_configuration:
                 self.get_logger().info('Requesting initial configuration: ' + str(fd.name))

@@ -56,3 +56,9 @@ qtcreator-*
 
 # Emacs
 .#*
+
+#Visual studio
+.vscode
+
+#log folder
+log/*

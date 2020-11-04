@@ -190,9 +190,9 @@
     
 
 
-    <!-- http://ros/navigation#laser -->
+    <!-- http://ros/navigation#laser_resender -->
 
-    <owl:NamedIndividual rdf:about="http://ros/navigation#laser">
+    <owl:NamedIndividual rdf:about="http://ros/navigation#laser_resender">
         <rdf:type rdf:resource="http://metacontrol.org/tomasys#Component"/>
         <rdf:type rdf:resource="http://metacontrol.org/tomasys#ComponentState"/>
         <requiredBy rdf:resource="http://ros/navigation#f_energy_saving_mode"/>
