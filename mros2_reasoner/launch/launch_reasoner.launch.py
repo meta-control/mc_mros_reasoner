@@ -28,16 +28,16 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Get the launch directory
     mros2_reasoner_bringup_dir = get_package_share_directory('mros2_reasoner')
-    mros2_reasoner_launch_dir = os.path.join(mros2_reasoner_bringup_dir, 'launch')
-    mros2_reasoner_owl_dir = os.path.join(mros2_reasoner_bringup_dir, 'owl')
-
-
+    modes_observer_dir = get_package_share_directory('mros_modes_observer')
+     
+    
     # Create the launch configuration variables
     model_file = LaunchConfiguration('model_file')
     tomasys_file = LaunchConfiguration('tomasys_file')
     desired_configuration = LaunchConfiguration('desired_configuration')
     nfr_energy = LaunchConfiguration('nfr_energy')
     nfr_safety = LaunchConfiguration('nfr_safety')
+    components_file = LaunchConfiguration('components_file')
 
     # Declare the launch arguments
     declare_model_file_cmd = DeclareLaunchArgument(
@@ -64,6 +64,11 @@ def generate_launch_description():
         'nfr_safety',
         default_value='0.5',
         description='Required value for Safety NFR')
+    
+    declare_components_file = DeclareLaunchArgument(
+        'components_file',
+        default_value=os.path.join(modes_observer_dir, 'params', 'components.yaml'),
+        description='File name for the obsreved components yaml')
 
 
     bringup_reasoner_cmd = Node(
@@ -80,16 +85,13 @@ def generate_launch_description():
             }],
     )
 
-    # shm_model_path = (get_package_share_directory('pilot_urjc_bringup') +
-    #     '/params/pilot_modes.yaml')
     #
-    # # Start as a normal node is currently not possible.
-    # # Path to SHM file should be passed as a ROS parameter.
-    # mode_manager_node = Node(
-    #     package='system_modes',
-    #     executable='mode_manager',
-    #     parameters=[{'modelfile': shm_model_path}],
-    #     output='screen')
+    modes_observer_node = Node(
+    package='mros_modes_observer',
+    executable='modes_observer_node',
+    parameters=[{'componentsfile': components_file}],
+    output='screen')
+
 
     # Create the launch description and populate
     ld = LaunchDescription()
@@ -100,12 +102,13 @@ def generate_launch_description():
     ld.add_action(declare_desired_configuration_cmd)
     ld.add_action(declare_nfr_energy_cmd)
     ld.add_action(declare_nfr_safety_cmd)
+    ld.add_action(declare_components_file)
 
     # Add the actions to launch the reasoner node
     ld.add_action(bringup_reasoner_cmd)
 
     # Add system modes manager
-    #ld.add_action(mode_manager_node)
+    ld.add_action(modes_observer_node)
 
 
     return ld
