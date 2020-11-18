@@ -78,7 +78,7 @@ class Reasoner(object):
     # - name: name of the fg reported, as named in the OWL file
     # - level: values 0 and 1 are mapped to nothing, values 2 or 3 are mapped to fg.status="INTERNAL_ERROR"
     def updateBinding(self, diagnostic_status):
-        fg = onto.search_one(iri="*{}".format(diagnostic_status.name))
+        fg = self.onto.search_one(iri="*{}".format(diagnostic_status.name))
         if fg == None:
             return -1
         if diagnostic_status.level > 1:
@@ -138,7 +138,7 @@ class Reasoner(object):
                     return_value = True
                 except Exception as err:
                     raise err
-                    self.onto.save(file="error.owl", format="rdfxml")
+                   
         return return_value
 
     # For debugging purposes: saves state of the KB in an ontology file

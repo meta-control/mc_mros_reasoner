@@ -125,13 +125,14 @@ def obtainBestFunctionDesign(o, tbox):
     # get best FD based on higher Utility/trade-off of QAs
     if fds_for_obj != []:
         logging.warning("== FunctionDesigns also meeting NFRs: %s", [fd.name for fd in fds_for_obj])
-        aux = 0
-        best_fd = fds_for_obj[0]
+        best_utility = 0
+        # best_fd = fds_for_obj[0]
         for fd in fds_for_obj:
-            u = utility(fd)
-            if  u > aux:
+            utility_fd = utility(fd)
+            logging.warning("== Utility for %s : %f", fd.name, utility_fd)
+            if  utility_fd > best_utility:
                 best_fd = fd
-                aux = u
+                best_utility = utility_fd
 
         logging.warning("> Best FD available %s", str(best_fd.name))
         return best_fd
@@ -191,10 +192,10 @@ def meetNFRs(o, fds):
 # Compute expected utility based on QA trade-off, the criteria to chose FDs/configurations
 # TODO utility is the selection criteria for FDs and it is hardcoded as QA performance
 def utility(fd):
-    # utility is equal to the expected time performance
-    utility = [
-        qa.hasValue for qa in fd.hasQAestimation if "perfomance" in qa.isQAtype.name]
-    if len(utility) == 0:
-        return 0.001    #if utility is not known it is assumed to be 0.001 (very low)
+    # utility is equal to the expected performance
+    utility = [qa for qa in fd.hasQAestimation if qa.isQAtype.name == "performance"]
+    if len(utility) != 1:
+        logging.warning("FD has no expected perfomance or multiple definitions (inconsistent)")
+        return 0.001
     else:
-        return utility[0]
+        return utility[0].hasValue
