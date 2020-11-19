@@ -6,7 +6,9 @@ from system_modes.srv import ChangeMode
 from diagnostic_msgs.msg import DiagnosticArray
 
 from mros2_reasoner.reasoner import Reasoner
-from mros2_reasoner.tomasys import obtainBestFunctionDesign, print_ontology_status, evaluateObjectives, resetKBstatuses
+from mros2_reasoner.tomasys import obtainBestFunctionDesign, loadKB_from_file
+from mros2_reasoner.tomasys import evaluateObjectives, print_ontology_status, resetKBstatuses
+
 
 
 
