@@ -28,10 +28,8 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Get the launch directory
     mros2_reasoner_bringup_dir = get_package_share_directory('mros2_reasoner')
-    mros2_reasoner_launch_dir = os.path.join(mros2_reasoner_bringup_dir, 'launch')
-    mros2_reasoner_owl_dir = os.path.join(mros2_reasoner_bringup_dir, 'owl')
-
-
+     
+    
     # Create the launch configuration variables
     model_file = LaunchConfiguration('model_file')
     tomasys_file = LaunchConfiguration('tomasys_file')
@@ -42,7 +40,7 @@ def generate_launch_description():
     # Declare the launch arguments
     declare_model_file_cmd = DeclareLaunchArgument(
         'model_file',
-        default_value=os.path.join(mros2_reasoner_bringup_dir, 'kb.owl'),
+        default_value=os.path.join(mros2_reasoner_bringup_dir, 'MROS_ontology.owl'),
         description='File name for the ontology model')
 
     declare_tomasys_file_cmd = DeclareLaunchArgument(
@@ -52,7 +50,7 @@ def generate_launch_description():
 
     declare_desired_configuration_cmd = DeclareLaunchArgument(
         'desired_configuration',
-        default_value='f3_v3_r1',
+        default_value='f_normal_mode',
         description='Desired inital configuration (system mode)')
 
     declare_nfr_energy_cmd = DeclareLaunchArgument(
@@ -64,8 +62,7 @@ def generate_launch_description():
         'nfr_safety',
         default_value='0.5',
         description='Required value for Safety NFR')
-
-
+    
     bringup_reasoner_cmd = Node(
         package='mros2_reasoner',
         executable='mros2_reasoner_node',
@@ -80,17 +77,6 @@ def generate_launch_description():
             }],
     )
 
-    # shm_model_path = (get_package_share_directory('pilot_urjc_bringup') +
-    #     '/params/pilot_modes.yaml')
-    #
-    # # Start as a normal node is currently not possible.
-    # # Path to SHM file should be passed as a ROS parameter.
-    # mode_manager_node = Node(
-    #     package='system_modes',
-    #     executable='mode_manager',
-    #     parameters=[{'modelfile': shm_model_path}],
-    #     output='screen')
-
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -104,8 +90,6 @@ def generate_launch_description():
     # Add the actions to launch the reasoner node
     ld.add_action(bringup_reasoner_cmd)
 
-    # Add system modes manager
-    #ld.add_action(mode_manager_node)
 
 
     return ld

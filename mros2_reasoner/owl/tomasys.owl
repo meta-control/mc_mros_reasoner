@@ -85,7 +85,6 @@
     <!-- http://metacontrol.org/tomasys#hasNFR -->
 
     <owl:ObjectProperty rdf:about="http://metacontrol.org/tomasys#hasNFR">
-        <rdfs:domain rdf:resource="http://metacontrol.org/tomasys#Objective"/>
         <rdfs:range rdf:resource="http://metacontrol.org/tomasys#QAvalue"/>
     </owl:ObjectProperty>
     
