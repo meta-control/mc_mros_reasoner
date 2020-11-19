@@ -20,7 +20,7 @@ class RosReasoner(Node):
         # This is really not very elegant, but what can we do?
         self.reasoner = Reasoner()
 
-        self.initialized = False
+        self.isInitialized = False
         self.mode_change_srv_call_future = None
         self.wait_response_timer = None
         self.req_reconfiguration_result = None
@@ -33,8 +33,6 @@ class RosReasoner(Node):
         self.declare_parameter("reasoning_rate")
         self.declare_parameter("node_name")
 
-
-        sleep_rate = self.create_rate(2.0)
         #### Read ROS parameters
         # Get ontology and tomasys file paths from parameters
         model_file_arr = self.check_and_read_parameter('model_file')
@@ -67,11 +65,12 @@ class RosReasoner(Node):
             if  self.reasoner.onto is None:
                 # load ontology from file
                 self.reasoner.onto = self.read_ontology_file(model_file)
-        else:
+            else:
                 self.reasoner.onto.imported_ontologies.append(self.read_ontology_file(model_file))
+            #self.get_logger().info('Ontology {}'.format(self.reasoner.onto.imported_ontologies))
         
         # Check if ontologies have been correctly loaded
-        if  self.reasoner.tomasys is None:
+        if  self.reasoner.onto is None:
             return
 
 
@@ -89,14 +88,6 @@ class RosReasoner(Node):
         self.isInitialized = True
         # Reasoner initialization completed
         self.get_logger().info("[RosReasoner] -- Reasoner Initialization Ok")
-
-
-    def start_wait_response_timer(self):
-        if self.wait_response_timer is None:
-            self.wait_response_timer = self.create_timer(0.5, self.wait_response_timer_cb)
-        else:
-            self.get_logger().warning('wait_response_timer already active')
-
 
 
     def read_ontology_file(self, ontology_file_name):
@@ -205,11 +196,11 @@ class RosReasoner(Node):
                 # 2 types of diagnostics considered: about bindings in error (TODO not implemented yet) or about QAs
                 if diagnostic_status.message == "binding error":
                     self.get_logger().info("binding error received")
-                    up_binding = self.reasoner.updateBinding(diagnostic_status.name, diagnostic_status.level)
+                    up_binding = self.reasoner.updateBinding(diagnostic_status)
                     if up_binding == -1:
-                        self.get_logger().warning("Unkown Function Grounding: %s", diagnostic_name)
+                        self.get_logger().warning("Unkown Function Grounding: %s", diagnostic_status.name)
                     elif up_binding == 0:
-                        self.get_logger().warning("Diagnostics message received for %s with level %d, nothing done about it." % (diagnostic_name, diagnostic_level))
+                        self.get_logger().warning("Diagnostics message received for %s with level %d, nothing done about it." % (diagnostic_status.name, diagnostic_status.level))
 
                 # Component error
                 elif diagnostic_status.message == "Component status":
@@ -263,28 +254,6 @@ class RosReasoner(Node):
             return None
         else:
             return mode_change_srv_call_future
-
-
-    ## Loop to wait for an answer to service call
-    def wait_response_timer_cb(self):
-        if self.mode_change_srv_call_future.done():
-            try:
-                response = self.mode_change_srv_call_future.result()
-            except Exception as e:
-                self.get_logger().info(
-                'Service call failed %r' % (e,))
-
-            else:
-                self.get_logger().info(
-                'Result of change node to mode %s is %s' %
-                (self.req.mode_name, response.success))
-                self.get_logger().warning("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
-                # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-                self.grounded_configuration = self.set_new_grounding(fd.name, o) # Set new grounded_configuration
-                resetKBstatuses(self.reasoner.tomasys)
-            finally:
-                self.stop_wait_response_timer()
-
 
 
     ## main metacontrol loop

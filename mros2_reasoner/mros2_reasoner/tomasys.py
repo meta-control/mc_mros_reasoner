@@ -26,6 +26,7 @@ def loadKB_from_file(kb_file):
     try:
         kb_box = get_ontology(kb_file).load()
     except Exception as e:
+        logging.exception("\n Exception {0}".format(e))
         return None
     return kb_box
 # # Returns
