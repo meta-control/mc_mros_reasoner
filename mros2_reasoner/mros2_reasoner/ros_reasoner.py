@@ -35,7 +35,7 @@ class RosReasoner(Node):
         sleep_rate = self.create_rate(2.0)
         #### Read ROS parameters
         # Get ontology and tomasys file paths from parameters
-        model_file = self.check_and_read_parameter('model_file')
+        model_file_arr = self.check_and_read_parameter('model_file')
         tomasys_file =  self.check_and_read_parameter('tomasys_file')
         # Get desired_configuration_name from parameters
         self.grounded_configuration = self.check_and_read_parameter('desired_configuration')
@@ -56,36 +56,24 @@ class RosReasoner(Node):
         # from being processed until the timer callback finished, but the timer callback in this
         # example is waiting for the client response
 
-
-        # rosgraph_manipulator_client.wait_for_server()
-
         # load tomasysreasoner
-        if tomasys_file is not None:
-            self.reasoner.load_tomasys_from_file(tomasys_file)
-            if self.reasoner.tomasys is not None:
-                self.get_logger().info("Loaded tomasys: " + str(tomasys_file))
-            else:
-                self.get_logger().error("Failed to load tomasys from: " + str(tomasys_file))
-                return
-        else:
-            self.get_logger().warning("No tomasys file provided!")
+        self.reasoner.tomasys = self.read_ontology_file(tomasys_file)
+        if  self.reasoner.tomasys is None:
             return
 
-        #sleep_rate.sleep() # Wait for subscribers (only for the test_1_level_functional_architecture)
-
-        # load ontology
-        if model_file is not None:
-            self.reasoner.load_onto_from_file(model_file)
-            if self.reasoner.onto is not None:
-                self.get_logger().info("Loaded ontology: " + str(model_file))
-            else:
-                self.get_logger().error("Failed to load ontology from: " + str(model_file))
-                return
+        for model_file in list(model_file_arr):
+            if  self.reasoner.onto is None:
+                # load ontology from file
+                self.reasoner.onto = self.read_ontology_file(model_file)
         else:
-            self.get_logger().warning("No ontology file provided!")
+                self.reasoner.onto.imported_ontologies.append(self.read_ontology_file(model_file))
+        
+        # Check if ontologies have been correctly loaded
+        if  self.reasoner.tomasys is None:
             return
 
 
+        
         if self.grounded_configuration is not None:
             self.get_logger().info('grounded_configuration initialized to: ' + str(self.grounded_configuration))
         else:
@@ -108,12 +96,26 @@ class RosReasoner(Node):
             self.get_logger().warning('wait_response_timer already active')
 
 
-    def stop_wait_response_timer(self):
-        if self.wait_response_timer is not None:
-            # Stop the timer
-            self.wait_response_timer.destroy()
-            # Delete the variable
-            self.wait_response_timer = None
+
+    def read_ontology_file(self, ontology_file_name):
+        """ Checks if an ontology file exists and reads its value
+            Args:
+                    ontology_file_name (string): The name of the parameter.
+                    is_base_ontology (bool): True if it's the base ontology (Tomasys).
+            Returns:
+                    The ontology if it's readed correctly, None otherwise.
+        """
+        if ontology_file_name is not None:
+            ontology = loadKB_from_file(ontology_file_name)
+            if ontology is not None:
+                self.get_logger().info("Loaded ontology: " + str(ontology_file_name))
+            else:
+                self.get_logger().error("Failed to load ontology from: " + str(ontology_file_name))
+                return None
+        else:
+            self.get_logger().warning("No ontology file provided!")
+            return None
+        return ontology
 
 
     def check_and_read_parameter(self, param_name, default_value=None):
