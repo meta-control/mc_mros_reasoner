@@ -241,7 +241,6 @@ class RosReasoner(Node):
 
         while not system_modes_cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().warn('Mode change service not available, waiting again...')
-            
         try:
             req = ChangeMode.Request()
             req.mode_name = new_configuration
@@ -256,7 +255,7 @@ class RosReasoner(Node):
             #     self.get_logger().info('Result of reconfiguration %d' % (mode_change_srv_call_future.result().success))
         except Exception as e:
             self.get_logger().info('Request creation failed %r' % (e,))
-            return None 
+            return None
         else:
             return mode_change_srv_call_future
 
