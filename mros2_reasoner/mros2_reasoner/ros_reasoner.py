@@ -241,21 +241,22 @@ class RosReasoner(Node):
 
         while not system_modes_cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().warn('Mode change service not available, waiting again...')
-
-        self.req = ChangeMode.Request()
-
-        self.req.mode_name = new_configuration
-
-        # node_name field is necessary in system_modes feature/rules branch but incompatible with master
-        self.req.node_name = self.node_name
-        
-        # async call, but the follow up while loop BLOCKS execution till there is a response
-        mode_change_srv_call_future = self.system_modes_cli.call_async(self.req)
-
-        rclpy.spin_until_future_complete(self, mode_change_srv_call_future)
-        if mode_change_srv_call_future.result() is not None:
-            self.get_logger().info('Mode change completed - Result ' + str(mode_change_srv_call_future.result().success))
-            return 1
+            
+        try:
+            req = ChangeMode.Request()
+            req.mode_name = new_configuration
+            # async call, but the follow up while loop BLOCKS execution till there is a response
+            mode_change_srv_call_future = system_modes_cli.call_async(req)
+            # try:
+            #     rclpy.spin_until_future_complete(self, mode_change_srv_call_future)
+            #     #call_result = await mode_change_srv_call_future
+            # except Exception as e:
+            #     self.get_logger().info('Service call failed %r' % (e,))
+            # else:
+            #     self.get_logger().info('Result of reconfiguration %d' % (mode_change_srv_call_future.result().success))
+        except Exception as e:
+            self.get_logger().info('Request creation failed %r' % (e,))
+            return None 
         else:
             return mode_change_srv_call_future
 
