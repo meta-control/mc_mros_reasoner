@@ -28,20 +28,16 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Get the launch directory
     mros2_reasoner_bringup_dir = get_package_share_directory('mros2_reasoner')
-     
+    
     
     # Create the launch configuration variables
-    model_file = LaunchConfiguration('model_file')
     tomasys_file = LaunchConfiguration('tomasys_file')
     desired_configuration = LaunchConfiguration('desired_configuration')
     nfr_energy = LaunchConfiguration('nfr_energy')
     nfr_safety = LaunchConfiguration('nfr_safety')
 
-    # Declare the launch arguments
-    declare_model_file_cmd = DeclareLaunchArgument(
-        'model_file',
-        default_value=os.path.join(mros2_reasoner_bringup_dir, 'MROS_ontology.owl'),
-        description='File name for the ontology model')
+
+    model_files_array = [os.path.join(mros2_reasoner_bringup_dir, 'MROS_ontology.owl')]
 
     declare_tomasys_file_cmd = DeclareLaunchArgument(
         'tomasys_file',
@@ -69,7 +65,7 @@ def generate_launch_description():
         name='mros2_reasoner_node',
         output='screen',
         parameters=[{
-            'model_file': model_file,
+            'model_file': model_files_array,
             'tomasys_file': tomasys_file,
             'desired_configuration': desired_configuration,
             'nfr_energy': nfr_energy,
@@ -81,7 +77,6 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     # Declare the launch options
-    ld.add_action(declare_model_file_cmd)
     ld.add_action(declare_tomasys_file_cmd)
     ld.add_action(declare_desired_configuration_cmd)
     ld.add_action(declare_nfr_energy_cmd)
