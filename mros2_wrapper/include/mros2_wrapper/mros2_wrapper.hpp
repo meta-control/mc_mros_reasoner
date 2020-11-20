@@ -15,6 +15,7 @@
 #ifndef MROS2_WRAPPER__MROS2_WRAPPER_HPP_
 #define MROS2_WRAPPER__MROS2_WRAPPER_HPP_
 
+#include "mros2_wrapper/simple_action_server.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -30,9 +31,6 @@ template<class Ros2ActionT, class Mros2ActionT>
 class Mros2Wrapper : public rclcpp_lifecycle::LifecycleNode
 {
 public:
-  using Ptr = std::shared_ptr<Mros2Wrapper<Ros2ActionT, Mros2ActionT>>;
-  using GoalHandleMros2 = rclcpp_action::ServerGoalHandle<Mros2ActionT>;
-
   Mros2Wrapper(
     const std::string & node_name,
     const std::string & action_name,
@@ -43,33 +41,11 @@ public:
   }
 
 protected:
-  std::shared_ptr<rclcpp_action::ServerGoalHandle<Mros2ActionT>> current_handle_;
-  std::shared_future<std::shared_ptr<rclcpp_action::ClientGoalHandle<Ros2ActionT>>> forwarded_handle_;
-  std::future<void> execution_future_;
+  using Mros2ActionServer = SimpleActionServer<Mros2ActionT>;
+  using Ros2ActionClient = SimpleActionClient<Ros2ActionT>;
+  std::unique_ptr<Mros2ActionServer> mros_action_server_;
+
   std::string action_name_;
-
-  typename rclcpp_action::Server<Mros2ActionT>::SharedPtr mros2_action_server_;
-  typename rclcpp_action::Client<Ros2ActionT>::SharedPtr ros2_action_client_;
-
-  rclcpp_action::GoalResponse handle_goal(
-    const rclcpp_action::GoalUUID & /*uuid*/,
-    std::shared_ptr<const typename Mros2ActionT::Goal> /*goal*/)
-  {
-    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-  }
-
-  rclcpp_action::CancelResponse handle_cancel(
-    const std::shared_ptr<GoalHandleMros2>/*goal_handle*/)
-  {
-    RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
-    return rclcpp_action::CancelResponse::ACCEPT;
-  }
-
-  void handle_accepted(const std::shared_ptr<GoalHandleMros2> goal_handle)
-  {
-    current_handle_ = goal_handle;
-    execution_future_ = std::async(std::launch::async, [this]() {work();});
-  }  
 
   virtual std::shared_ptr<typename Ros2ActionT::Goal>
   fromMrosGoal(std::shared_ptr<const typename Mros2ActionT::Goal> mros2_goal)
@@ -79,37 +55,33 @@ protected:
     return nullptr;
   }
 
-  void work()
+  void manageMrosAction()
   {
-    ros2_action_client_ = rclcpp_action::create_client<Ros2ActionT>(
-      shared_from_this(), action_name_);
+    std::cerr << "Performing action" << std::endl;
+    bool mros_action_finished = false;
+  
+    auto on_ros2_feedback = [&]() {
+      std::cerr << "Got feedback" << std::endl;
+    }
 
-    bool goal_result_available_ = false;
-    typename rclcpp_action::ClientGoalHandle<Ros2ActionT>::WrappedResult action_result;
+    auto on_ros2_result = [&]() {
+      std::cerr << "Got result" << std::endl;
+      mros_action_finished = true;
+      mros_action_server_->succeeded_current();
+    }
 
-    auto goal_msg = fromMrosGoal(current_handle_->get_goal());
+    auto ros_action_client = std::make_unique<Ros2ActionClient>(
+      get_node_base_interface(),
+      get_node_graph_interface(),
+      get_node_logging_interface(),
+      get_node_waitables_interface(),
+      action_name_, on_ros2_feedback, on_ros2_result);
 
-    auto send_goal_options = typename rclcpp_action::Client<Ros2ActionT>::SendGoalOptions();
-    send_goal_options.result_callback = 
-      [this, &goal_result_available_, &action_result]
-      (const typename rclcpp_action::ClientGoalHandle<Ros2ActionT>::WrappedResult & result) {
-        //if (this->forwarded_handle_->get_goal_id() == result.goal_id) {
-          goal_result_available_ = true;
-          action_result = result;
-        //}
-      };
+    ros_action_client->call_server();
 
-    forwarded_handle_ = ros2_action_client_->async_send_goal(*goal_msg, send_goal_options);
+    while (!mros_action_finished) {
 
-    auto start = now();
-    while (rclcpp::ok() && !goal_result_available_ && is_active(current_handle_)) {}
-    std::cerr << "Finished action" << std::endl;
-  }
-
-  constexpr bool is_active(
-    const std::shared_ptr<GoalHandleMros2> handle) const
-  {
-    return handle != nullptr && handle->is_active();
+    }
   }
 
   using CallbackReturnT =
@@ -117,19 +89,21 @@ protected:
 
   CallbackReturnT on_configure(const rclcpp_lifecycle::State &)
   {
+    mros_action_server_ = std::make_unique<Mros2ActionServer>(
+      get_node_base_interface(),
+      get_node_clock_interface(),
+      get_node_logging_interface(),
+      get_node_waitables_interface(),
+      action_name_ + "_qos", std::bind(&Mros2Wrapper::manageMrosAction, this), false);
+
     return CallbackReturnT::SUCCESS;
   }
 
   CallbackReturnT on_activate(const rclcpp_lifecycle::State &)
-  {
-    mros2_action_server_ = rclcpp_action::create_server<Mros2ActionT>(
-      shared_from_this(),
-      action_name_ + "_qos",
-      std::bind(&Mros2Wrapper::handle_goal, this, _1, _2),
-      std::bind(&Mros2Wrapper::handle_cancel, this, _1),
-      std::bind(&Mros2Wrapper::handle_accepted, this, _1));
+  {      
+    mros_action_server_->activate();
+    std::cerr << "Action server active" << std::endl;
 
-    std::cerr << "Action server created" << std::endl;
     return CallbackReturnT::SUCCESS;
   }
 

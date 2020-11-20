@@ -16,7 +16,9 @@
 #include "mros2_msgs/action/navigate_to_pose_qos.hpp"
 #include "lifecycle_msgs/msg/transition.hpp"
 
-#include "mros2_wrapper/mros2_wrapper.hpp"
+// #include "mros2_wrapper/mros2_wrapper.hpp"
+#include "mros2_wrapper/simple_action_client.hpp"
+#include "mros2_wrapper/simple_action_server.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -24,138 +26,7 @@
 #include "gtest/gtest.h"
 
 
-using std::placeholders::_1;
-using std::placeholders::_2;
-
-
-template<class ActionT>
-class TestActionClient : public rclcpp::Node
-{
-public:
-  TestActionClient(const std::string & action_name)
-  : Node("test_action_client"), action_name_(action_name)
-  {
-  }
-
-  void call_server()
-  {
-    std::cerr << "Calling server...";
-    action_client_ = rclcpp_action::create_client<ActionT>(
-      shared_from_this(), action_name_);
-
-    auto goal_msg = typename ActionT::Goal();
-
-    auto send_goal_options = typename rclcpp_action::Client<ActionT>::SendGoalOptions();
-    send_goal_options.feedback_callback =
-      std::bind(&TestActionClient::feedback_callback, this, _1, _2);
-    send_goal_options.result_callback =
-      std::bind(&TestActionClient::result_callback, this, _1);
-
-    auto goal_handle_future_ = action_client_->async_send_goal(goal_msg, send_goal_options);
-
-    std::cerr << "done" << std::endl;
-  }
-
-  void feedback_callback(
-    typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr,
-    const std::shared_ptr<const typename ActionT::Feedback> feedback)
-  {
-    RCLCPP_INFO(get_logger(), "Feedback");
-  }
-
-  void result_callback(const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & result)
-  {
-    switch (result.code) {
-      case rclcpp_action::ResultCode::SUCCEEDED:
-        break;
-      case rclcpp_action::ResultCode::ABORTED:
-        RCLCPP_ERROR(get_logger(), "Goal was aborted");
-        return;
-      case rclcpp_action::ResultCode::CANCELED:
-        RCLCPP_ERROR(get_logger(), "Goal was canceled");
-        return;
-      default:
-        RCLCPP_ERROR(get_logger(), "Unknown result code");
-        return;
-    }
-  }
-
-private:
-  typename rclcpp_action::Client<ActionT>::SharedPtr action_client_;
-  std::string action_name_;
-};
-
-template<class ActionT>
-class TestActionServer : public rclcpp::Node
-{
-public:
-  TestActionServer(const std::string & action_name)
-  : Node("test_action_server"), action_name_(action_name)
-  {
-  }
-
-  void start_server()
-  {
-    action_server_ = rclcpp_action::create_server<ActionT>(
-      shared_from_this(),
-      action_name_,
-      std::bind(&TestActionServer::handle_goal, this, _1, _2),
-      std::bind(&TestActionServer::handle_cancel, this, _1),
-      std::bind(&TestActionServer::handle_accepted, this, _1));
-
-      std::cerr << "server started" << std::endl;
-  }
-
-  rclcpp_action::GoalResponse handle_goal(
-    const rclcpp_action::GoalUUID & uuid,
-    std::shared_ptr<const typename ActionT::Goal> goal)
-  {
-    std::cerr << "Received action request in ROS2 action server" << std::endl;
-    current_goal_ = *goal;
-    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-  }
-
-  rclcpp_action::CancelResponse handle_cancel(
-    const std::shared_ptr<typename rclcpp_action::ServerGoalHandle<ActionT>> goal_handle)
-  {
-    return rclcpp_action::CancelResponse::ACCEPT;
-  }
-
-  void handle_accepted(const std::shared_ptr<typename rclcpp_action::ServerGoalHandle<ActionT>> goal_handle)
-  {
-    current_handle_ = goal_handle;
-    execution_future_ = std::async(std::launch::async, [this]() {work();});
-  }
-
-  void work()
-  {
-    auto feedback = std::make_shared<typename ActionT::Feedback>();
-    auto result = std::make_shared<typename ActionT::Result>();
-
-    rclcpp::Rate loop_rate(1);
-    int current_times = 0;
-    while (rclcpp::ok() && current_times < 3) {
-      current_times++;
-
-      std::cerr << current_times << std::endl;
-
-      current_handle_->publish_feedback(feedback);
-      loop_rate.sleep();
-    }
-
-  current_handle_->publish_feedback(feedback);
-  }
-
-private:
-  typename rclcpp_action::Server<ActionT>::SharedPtr action_server_;
-  typename ActionT::Goal current_goal_;
-  std::shared_ptr<rclcpp_action::ServerGoalHandle<ActionT>> current_handle_;
-  std::string action_name_;
-  std::future<void> execution_future_;
-};
-
-
-class NavigateToPoseWrapper : public mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>
+/*class NavigateToPoseWrapper : public mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>
 {
   using mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>::Mros2Wrapper; 
 
@@ -172,12 +43,80 @@ protected:
     return ret;
   }
 };
+*/
 
-TEST(ActionTest, test_wrapper)
+TEST(WrapperTest, client_server_tests)
+{
+  auto node = rclcpp_lifecycle::LifecycleNode::make_shared("test_node");
+  
+  node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
+  rclcpp::spin_some(node->get_node_base_interface());
+  node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
+  rclcpp::spin_some(node->get_node_base_interface());
+
+  using Ros2ActionServer =
+    mros2_wrapper::SimpleActionServer<nav2_msgs::action::NavigateToPose, rclcpp_lifecycle::LifecycleNode>;
+  using Ros2ActionClient =
+    mros2_wrapper::SimpleActionClient<nav2_msgs::action::NavigateToPose, rclcpp_lifecycle::LifecycleNode>;
+
+  std::unique_ptr<Ros2ActionServer> nav2_server;
+  std::unique_ptr<Ros2ActionClient> nav2_client;
+
+  int counter = 0;
+  double distance_remaining = 5.0;
+  double result_obtained = false;
+
+  auto action_server_loop = [&]() {    
+    rclcpp::Rate rate(10);
+    while (rclcpp::ok() && counter++ < 5) {
+      std::shared_ptr<nav2_msgs::action::NavigateToPose::Feedback> feedback_msg = 
+        std::make_shared<nav2_msgs::action::NavigateToPose::Feedback>();
+
+      feedback_msg->distance_remaining = 5.0 - counter;
+      nav2_server->publish_feedback(feedback_msg);
+
+      rate.sleep();
+    }
+
+    nav2_server->succeeded_current();
+  };
+
+  auto feedback_callback = [&](
+    rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr,
+    const std::shared_ptr<const nav2_msgs::action::NavigateToPose::Feedback> feedback) {
+      distance_remaining = feedback->distance_remaining;
+    };
+
+  auto result_callback = [&](
+    const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::WrappedResult & result) {
+      result_obtained = true;
+    };  
+
+  nav2_server = std::make_unique<Ros2ActionServer>(node, "navigate_to_pose", action_server_loop);
+  nav2_client = std::make_unique<Ros2ActionClient>(
+    node, "navigate_to_pose", feedback_callback, result_callback);
+
+  nav2_server->activate();
+  rclcpp::spin_some(node->get_node_base_interface());
+
+  nav2_msgs::action::NavigateToPose::Goal goal;
+  nav2_client->call_server(goal);
+
+  auto start = node->now();
+  while (rclcpp::ok() && (node->now() - start).seconds() <  2.0) {
+    rclcpp::spin_some(node->get_node_base_interface());
+  }
+
+  ASSERT_EQ(counter, 6);
+  ASSERT_LT(distance_remaining, 1.0f);
+  ASSERT_TRUE(result_obtained);
+}
+
+/*TEST(ActionTest, test_wrapper)
 {
   auto node = std::make_shared<NavigateToPoseWrapper>("nav2_wrapper", "navigate_to_pose");
   auto test_client_node = std::make_shared<TestActionClient<mros2_msgs::action::NavigateToPoseQos>>("navigate_to_pose_qos");
-  auto test_server_node = std::make_shared<TestActionServer<nav2_msgs::action::NavigateToPose>>("navigate_to_pose");
+  //auto test_server_node = std::make_shared<TestActionServer<nav2_msgs::action::NavigateToPose>>("navigate_to_pose");
 
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
@@ -188,23 +127,23 @@ TEST(ActionTest, test_wrapper)
   node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
   executor.spin_some();
 
-  test_server_node->start_server();
-  
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start).seconds() <  1.0) {
-    executor.spin_some();
-  }
+//  test_server_node->start_server();
+//  
+//  auto start = node->now();
+//  while (rclcpp::ok() && (node->now() - start).seconds() <  1.0) {
+//    executor.spin_some();
+//  }
 
 
   test_client_node->call_server();
 
-  start = node->now();
+  auto start = node->now();
   while (rclcpp::ok() && (node->now() - start).seconds() <  5.0) {
     executor.spin_some();
   }
 
 }
-
+*/
 
 
 int main(int argc, char ** argv)

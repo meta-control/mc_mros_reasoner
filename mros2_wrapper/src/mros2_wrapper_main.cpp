@@ -15,11 +15,12 @@
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "mros2_msgs/action/navigate_to_pose_qos.hpp"
 
-#include "mros2_wrapper/mros2_wrapper.hpp"
+// #include "mros2_wrapper/mros2_wrapper.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 
+/*
 class NavigateToPoseWrapper : public mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>
 {
   using mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>::Mros2Wrapper; 
@@ -39,7 +40,7 @@ protected:
   }
 
 };
-
+*/
 
 int main(int argc, char ** argv)
 {
