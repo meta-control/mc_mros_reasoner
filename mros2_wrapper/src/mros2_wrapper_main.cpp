@@ -20,19 +20,40 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 
+class NavigateToPoseWrapper : public mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>
+{
+  using mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>::Mros2Wrapper; 
+
+protected:
+  std::shared_ptr<nav2_msgs::action::NavigateToPose::Goal>
+  fromMrosGoal(std::shared_ptr<const mros2_msgs::action::NavigateToPoseQos::Goal> mros2_goal) override
+  {
+    //auto ret = std::make_shared<nav2_msgs::action::NavigateToPose::Goal>();
+//
+    //ret->pose = mros2_goal->pose;
+    //ret->behavior_tree = mros2_goal->behavior_tree;
+//
+    //return ret;
+
+    return nullptr;
+  }
+
+};
+
+
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 
-  using Nav2Wrapper = 
-    mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>;
-  
-  auto node = std::make_shared<Nav2Wrapper>("nav2_wrapper", "navigate_to_pose");
-  
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-
-  executor.spin();
+  //using Nav2Wrapper = 
+  //  mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>;
+  //
+  //auto node = std::make_shared<Nav2Wrapper>("nav2_wrapper", "navigate_to_pose");
+  //
+  //rclcpp::executors::SingleThreadedExecutor executor;
+  //executor.add_node(node->get_node_base_interface());
+//
+  //executor.spin();
 
   rclcpp::shutdown();
 

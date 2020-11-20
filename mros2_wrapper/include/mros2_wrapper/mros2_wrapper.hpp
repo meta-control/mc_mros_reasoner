@@ -32,36 +32,24 @@ class Mros2Wrapper : public rclcpp_lifecycle::LifecycleNode
 public:
   using Ptr = std::shared_ptr<Mros2Wrapper<Ros2ActionT, Mros2ActionT>>;
   using GoalHandleMros2 = rclcpp_action::ServerGoalHandle<Mros2ActionT>;
-  typedef std::function<void ()> ExecuteCallback;
 
   Mros2Wrapper(
     const std::string & node_name,
     const std::string & action_name,
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
   : LifecycleNode(node_name, options),
-    action_name_(action_name),
-    execute_callback_([]{})
-  {
-  }
-
-  Mros2Wrapper(
-    const std::string & node_name,
-    const std::string & action_name,
-    ExecuteCallback execute_callback,
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-  : LifecycleNode(node_name, options),
-    action_name_(action_name), 
-    execute_callback_(execute_callback)
+    action_name_(action_name)
   {
   }
 
 protected:
   std::shared_ptr<rclcpp_action::ServerGoalHandle<Mros2ActionT>> current_handle_;
+  std::shared_future<std::shared_ptr<rclcpp_action::ClientGoalHandle<Ros2ActionT>>> forwarded_handle_;
   std::future<void> execution_future_;
   std::string action_name_;
-  ExecuteCallback execute_callback_;
 
   typename rclcpp_action::Server<Mros2ActionT>::SharedPtr mros2_action_server_;
+  typename rclcpp_action::Client<Ros2ActionT>::SharedPtr ros2_action_client_;
 
   rclcpp_action::GoalResponse handle_goal(
     const rclcpp_action::GoalUUID & /*uuid*/,
@@ -83,13 +71,39 @@ protected:
     execution_future_ = std::async(std::launch::async, [this]() {work();});
   }  
 
+  virtual std::shared_ptr<typename Ros2ActionT::Goal>
+  fromMrosGoal(std::shared_ptr<const typename Mros2ActionT::Goal> mros2_goal)
+  {
+    RCLCPP_ERROR(get_logger(), "You must provide a fromMrosGoal method for %s <- %s", 
+      typeid(typename Ros2ActionT::Goal()).name(), typeid(typename Mros2ActionT::Goal).name());
+    return nullptr;
+  }
+
   void work()
   {
+    ros2_action_client_ = rclcpp_action::create_client<Ros2ActionT>(
+      shared_from_this(), action_name_);
+
+    bool goal_result_available_ = false;
+    typename rclcpp_action::ClientGoalHandle<Ros2ActionT>::WrappedResult action_result;
+
+    auto goal_msg = fromMrosGoal(current_handle_->get_goal());
+
+    auto send_goal_options = typename rclcpp_action::Client<Ros2ActionT>::SendGoalOptions();
+    send_goal_options.result_callback = 
+      [this, &goal_result_available_, &action_result]
+      (const typename rclcpp_action::ClientGoalHandle<Ros2ActionT>::WrappedResult & result) {
+        //if (this->forwarded_handle_->get_goal_id() == result.goal_id) {
+          goal_result_available_ = true;
+          action_result = result;
+        //}
+      };
+
+    forwarded_handle_ = ros2_action_client_->async_send_goal(*goal_msg, send_goal_options);
+
     auto start = now();
-    while (rclcpp::ok() && (now() - start).seconds() < 1 && is_active(current_handle_)) {
-      execute_callback_();
-    }
-    std::cerr << "Finished action" << std::endl;  
+    while (rclcpp::ok() && !goal_result_available_ && is_active(current_handle_)) {}
+    std::cerr << "Finished action" << std::endl;
   }
 
   constexpr bool is_active(
