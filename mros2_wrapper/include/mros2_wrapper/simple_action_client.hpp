@@ -10,6 +10,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef MROS2_WRAPPER__SIMPLE_ACTION_CLIENT_HPP_
 #define MROS2_WRAPPER__SIMPLE_ACTION_CLIENT_HPP_
@@ -32,12 +33,13 @@ class SimpleActionClient
 {
 public:
   using GoalHandleAction = typename rclcpp_action::ClientGoalHandle<ActionT>;
-  using GoalHandleActionWrappedResult = typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult;
+  using GoalHandleActionWrappedResult =
+    typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult;
 
   typedef std::function<void (
-    std::shared_ptr<GoalHandleAction>, 
-    const std::shared_ptr<const typename ActionT::Feedback>
-    )> FeedbackCallback;
+        std::shared_ptr<GoalHandleAction>,
+        const std::shared_ptr<const typename ActionT::Feedback>
+      )> FeedbackCallback;
 
   typedef std::function<void (const GoalHandleActionWrappedResult &)> ResultCallback;
 
@@ -74,34 +76,41 @@ public:
       node_logging_interface_,
       node_waitables_interface_,
       action_name_);
-    
+
     client_goal_options_.feedback_callback = feedback_callback;
     client_goal_options_.result_callback = result_callback;
   }
 
-  void call_server(const typename ActionT::Goal & goal)
+  void send_goal(const typename ActionT::Goal & goal)
   {
     execution_future_ = std::async(std::launch::async, [goal, this]() {work(goal);});
+  }
+
+  void abort_action()
+  {
+    action_client_->async_cancel_goal(goal_handle_future_.get());
   }
 
   void work(const typename ActionT::Goal & goal)
   {
     if (!action_client_->wait_for_action_server(std::chrono::seconds(10))) {
-      RCLCPP_ERROR(node_logging_interface_->get_logger(), "Action server not available after waiting");
+      RCLCPP_ERROR(
+        node_logging_interface_->get_logger(),
+        "Action server not available after waiting");
       return;
     }
 
-    auto goal_handle_future = action_client_->async_send_goal(
+    goal_handle_future_ = action_client_->async_send_goal(
       goal, client_goal_options_);
-    
-    while (!goal_handle_future.valid())
-    {
+
+    while (!goal_handle_future_.valid()) {
     }
 
-    auto goal_handle = goal_handle_future.get();
+    auto goal_handle = goal_handle_future_.get();
     if (!goal_handle) {
       RCLCPP_ERROR(
-        node_logging_interface_->get_logger(), "ExecutorClient: Execution was rejected by the action server");
+        node_logging_interface_->get_logger(),
+        "ExecutorClient: Execution was rejected by the action server");
       return;
     }
   }
@@ -117,6 +126,8 @@ protected:
   typename rclcpp_action::Client<ActionT>::SharedPtr action_client_;
 
   std::future<void> execution_future_;
+  std::shared_future<typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr>
+  goal_handle_future_;
 };
 
 }  // namespace mros2_wrapper

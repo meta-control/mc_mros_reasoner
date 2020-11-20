@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "mros2_msgs/action/navigate_to_pose_qos.hpp"
+#include "mros2_msgs/action/control_qos.hpp"
 #include "lifecycle_msgs/msg/transition.hpp"
 
-// #include "mros2_wrapper/mros2_wrapper.hpp"
+#include "mros2_wrapper/mros2_wrapper.hpp"
 #include "mros2_wrapper/simple_action_client.hpp"
 #include "mros2_wrapper/simple_action_server.hpp"
 
@@ -26,38 +30,54 @@
 #include "gtest/gtest.h"
 
 
-/*class NavigateToPoseWrapper : public mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>
+class NavigateToPoseWrapper : public mros2_wrapper::Mros2Wrapper<
+    nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>
 {
-  using mros2_wrapper::Mros2Wrapper<nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>::Mros2Wrapper; 
+  using mros2_wrapper::Mros2Wrapper<
+    nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>::Mros2Wrapper;
 
 protected:
-
   std::shared_ptr<nav2_msgs::action::NavigateToPose::Goal>
-  fromMrosGoal(std::shared_ptr<const mros2_msgs::action::NavigateToPoseQos::Goal> mros2_goal)
+  fromMrosGoal(std::shared_ptr<const mros2_msgs::action::NavigateToPoseQos::Goal> mros_goal)
   {
     auto ret = std::make_shared<nav2_msgs::action::NavigateToPose::Goal>();
 
-    ret->pose = mros2_goal->pose;
-    ret->behavior_tree = mros2_goal->behavior_tree;
+    ret->pose = mros_goal->pose;
+    ret->behavior_tree = mros_goal->behavior_tree;
+
+    return ret;
+  }
+
+  std::shared_ptr<mros2_msgs::action::NavigateToPoseQos::Feedback>
+  fromRos2Feedback(
+    std::shared_ptr<const nav2_msgs::action::NavigateToPose::Feedback> ros2_feedback)
+  {
+    auto ret = std::make_shared<mros2_msgs::action::NavigateToPoseQos::Feedback>();
+
+    ret->current_pose = ros2_feedback->current_pose;
+    ret->distance_remaining = ros2_feedback->distance_remaining;
+    ret->navigation_time = ros2_feedback->navigation_time;
+    ret->number_of_recoveries = ros2_feedback->number_of_recoveries;
 
     return ret;
   }
 };
-*/
 
 TEST(WrapperTest, client_server_tests)
 {
   auto node = rclcpp_lifecycle::LifecycleNode::make_shared("test_node");
-  
+
   node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
   rclcpp::spin_some(node->get_node_base_interface());
   node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
   rclcpp::spin_some(node->get_node_base_interface());
 
   using Ros2ActionServer =
-    mros2_wrapper::SimpleActionServer<nav2_msgs::action::NavigateToPose, rclcpp_lifecycle::LifecycleNode>;
+    mros2_wrapper::SimpleActionServer<
+    nav2_msgs::action::NavigateToPose, rclcpp_lifecycle::LifecycleNode>;
   using Ros2ActionClient =
-    mros2_wrapper::SimpleActionClient<nav2_msgs::action::NavigateToPose, rclcpp_lifecycle::LifecycleNode>;
+    mros2_wrapper::SimpleActionClient<
+    nav2_msgs::action::NavigateToPose, rclcpp_lifecycle::LifecycleNode>;
 
   std::unique_ptr<Ros2ActionServer> nav2_server;
   std::unique_ptr<Ros2ActionClient> nav2_client;
@@ -66,20 +86,20 @@ TEST(WrapperTest, client_server_tests)
   double distance_remaining = 5.0;
   double result_obtained = false;
 
-  auto action_server_loop = [&]() {    
-    rclcpp::Rate rate(10);
-    while (rclcpp::ok() && counter++ < 5) {
-      std::shared_ptr<nav2_msgs::action::NavigateToPose::Feedback> feedback_msg = 
-        std::make_shared<nav2_msgs::action::NavigateToPose::Feedback>();
+  auto action_server_loop = [&]() {
+      rclcpp::Rate rate(10);
+      while (rclcpp::ok() && counter++ < 5) {
+        std::shared_ptr<nav2_msgs::action::NavigateToPose::Feedback> feedback_msg =
+          std::make_shared<nav2_msgs::action::NavigateToPose::Feedback>();
 
-      feedback_msg->distance_remaining = 5.0 - counter;
-      nav2_server->publish_feedback(feedback_msg);
+        feedback_msg->distance_remaining = 5.0 - counter;
+        nav2_server->publish_feedback(feedback_msg);
 
-      rate.sleep();
-    }
+        rate.sleep();
+      }
 
-    nav2_server->succeeded_current();
-  };
+      nav2_server->succeeded_current();
+    };
 
   auto feedback_callback = [&](
     rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr,
@@ -88,9 +108,9 @@ TEST(WrapperTest, client_server_tests)
     };
 
   auto result_callback = [&](
-    const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::WrappedResult & result) {
+    const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::WrappedResult &) {
       result_obtained = true;
-    };  
+    };
 
   nav2_server = std::make_unique<Ros2ActionServer>(node, "navigate_to_pose", action_server_loop);
   nav2_client = std::make_unique<Ros2ActionClient>(
@@ -100,10 +120,10 @@ TEST(WrapperTest, client_server_tests)
   rclcpp::spin_some(node->get_node_base_interface());
 
   nav2_msgs::action::NavigateToPose::Goal goal;
-  nav2_client->call_server(goal);
+  nav2_client->send_goal(goal);
 
   auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start).seconds() <  2.0) {
+  while (rclcpp::ok() && (node->now() - start).seconds() < 2.0) {
     rclcpp::spin_some(node->get_node_base_interface());
   }
 
@@ -112,47 +132,119 @@ TEST(WrapperTest, client_server_tests)
   ASSERT_TRUE(result_obtained);
 }
 
-/*TEST(ActionTest, test_wrapper)
+TEST(ActionTest, test_wrapper)
 {
-  auto node = std::make_shared<NavigateToPoseWrapper>("nav2_wrapper", "navigate_to_pose");
-  auto test_client_node = std::make_shared<TestActionClient<mros2_msgs::action::NavigateToPoseQos>>("navigate_to_pose_qos");
-  //auto test_server_node = std::make_shared<TestActionServer<nav2_msgs::action::NavigateToPose>>("navigate_to_pose");
+  using MissionClientT =
+    mros2_wrapper::SimpleActionClient<mros2_msgs::action::NavigateToPoseQos, rclcpp::Node>;
+  using NavigationServerT =
+    mros2_wrapper::SimpleActionServer<nav2_msgs::action::NavigateToPose, rclcpp::Node>;
+  using MetacontrollerServerT =
+    mros2_wrapper::SimpleActionServer<mros2_msgs::action::ControlQos, rclcpp::Node>;
 
+  std::unique_ptr<MissionClientT> mission_client;
+  std::unique_ptr<NavigationServerT> navigation_server;
+  std::unique_ptr<MetacontrollerServerT> metacontroller_server;
+
+  auto wrapper_node = std::make_shared<NavigateToPoseWrapper>("nav2_wrapper", "navigate_to_pose");
+  auto mission_node = rclcpp::Node::make_shared("mission_node");
+  auto metacontroller_node = rclcpp::Node::make_shared("metacontroller_node");
+  auto nav2_node = rclcpp::Node::make_shared("nav2_node");
+
+  double last_feedback_mission = 0;
+  bool result_received = false;
+  // Mission component
+  auto mission_feedback = [&](
+    rclcpp_action::ClientGoalHandle<mros2_msgs::action::NavigateToPoseQos>::SharedPtr,
+    const std::shared_ptr<const mros2_msgs::action::NavigateToPoseQos::Feedback> feedback) {
+      std::cerr << "Mission: received feedback " << feedback->distance_remaining << std::endl;
+      last_feedback_mission = feedback->distance_remaining;
+    };
+  auto mission_result = [&](
+    const rclcpp_action::ClientGoalHandle<mros2_msgs::action::NavigateToPoseQos>::WrappedResult &) {
+      std::cerr << "Mission: received result " << std::endl;
+      result_received = true;
+    };
+
+  mission_client = std::make_unique<MissionClientT>(
+    mission_node, "navigate_to_pose_qos", mission_feedback, mission_result);
+
+  // Navigation component
+  auto nav2_server_loop = [&]() {
+      int counter = 0;
+      rclcpp::Rate rate(1);
+      while (rclcpp::ok() && counter++ < 5) {
+        std::shared_ptr<nav2_msgs::action::NavigateToPose::Feedback> feedback_msg =
+          std::make_shared<nav2_msgs::action::NavigateToPose::Feedback>();
+
+        feedback_msg->distance_remaining = counter;
+
+        std::cerr << "Nav2: Sending feedback " << counter << std::endl;
+        navigation_server->publish_feedback(feedback_msg);
+
+        rate.sleep();
+      }
+      std::cerr << "Nav2: Sending result" << std::endl;
+      navigation_server->succeeded_current();
+    };
+
+  navigation_server = std::make_unique<NavigationServerT>(
+    nav2_node, "navigate_to_pose", nav2_server_loop);
+
+  // Metacontroller component
+  auto mc_server_loop = [&]() {
+      rclcpp::Rate rate(10);
+      while (rclcpp::ok() && !metacontroller_server->is_cancel_requested()) {
+        std::shared_ptr<mros2_msgs::action::ControlQos::Feedback> feedback_msg =
+          std::make_shared<mros2_msgs::action::ControlQos::Feedback>();
+
+        std::cerr << "Metacontroller: Sending feedback" << std::endl;
+        metacontroller_server->publish_feedback(feedback_msg);
+
+        rate.sleep();
+      }
+
+      metacontroller_server->succeeded_current();
+    };
+
+  metacontroller_server = std::make_unique<MetacontrollerServerT>(
+    nav2_node, "control_qos", mc_server_loop);
+
+  // Start system
   rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.add_node(test_client_node->get_node_base_interface());
+  executor.add_node(wrapper_node->get_node_base_interface());
+  executor.add_node(mission_node->get_node_base_interface());
+  executor.add_node(metacontroller_node->get_node_base_interface());
+  executor.add_node(nav2_node->get_node_base_interface());
 
-  node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
+  wrapper_node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
   executor.spin_some();
-  node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
+  wrapper_node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
   executor.spin_some();
 
-//  test_server_node->start_server();
-//  
-//  auto start = node->now();
-//  while (rclcpp::ok() && (node->now() - start).seconds() <  1.0) {
-//    executor.spin_some();
-//  }
+  metacontroller_server->activate();
+  navigation_server->activate();
 
+  executor.spin_some();
 
-  test_client_node->call_server();
+  mros2_msgs::action::NavigateToPoseQos::Goal goal;
+  mission_client->send_goal(goal);
 
-  auto start = node->now();
-  while (rclcpp::ok() && (node->now() - start).seconds() <  5.0) {
+  auto start = wrapper_node->now();
+  while (rclcpp::ok() && (wrapper_node->now() - start).seconds() < 12.0) {
     executor.spin_some();
   }
 
+  ASSERT_NEAR(last_feedback_mission, 5, 0.0001);
+  ASSERT_TRUE(result_received);
 }
-*/
-
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   testing::InitGoogleTest(&argc, argv);
-  
+
   auto result = RUN_ALL_TESTS();
-  
+
   rclcpp::shutdown();
   rclcpp::Rate(1).sleep();
   return result;
