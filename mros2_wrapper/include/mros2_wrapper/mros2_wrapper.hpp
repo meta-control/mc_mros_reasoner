@@ -74,10 +74,9 @@ protected:
 
   void manageMrosAction()
   {
-    std::cerr << "Performing action" << std::endl;
     bool mros_action_finished = false;
 
-    mros2_msgs::msg::QoS::SharedPtr qos = nullptr;
+    mros2_msgs::msg::QoS::SharedPtr last_qos_status = nullptr;
 
     // Call to Controlled System
     auto on_ros2_feedback = [&](
@@ -86,8 +85,8 @@ protected:
       {
         auto ret_feedback = fromRos2Feedback(feedback);
 
-        if (qos != nullptr) {  // No feedback from Metacontroller yet
-          ret_feedback->qos = *qos;
+        if (last_qos_status != nullptr) {  // No feedback from Metacontroller yet
+          ret_feedback->qos_status = *last_qos_status;
         }
         mros_action_server_->publish_feedback(ret_feedback);
       };
@@ -115,8 +114,8 @@ protected:
       rclcpp_action::ClientGoalHandle<mros2_msgs::action::ControlQos>::SharedPtr,
       const std::shared_ptr<const mros2_msgs::action::ControlQos::Feedback> feedback)
       {
-        qos = std::make_shared<mros2_msgs::msg::QoS>();
-        *qos = feedback->qos;
+        last_qos_status = std::make_shared<mros2_msgs::msg::QoS>();
+        *last_qos_status = feedback->qos_status;
       };
 
     auto on_mros_result = [&](
@@ -132,7 +131,7 @@ protected:
       "control_qos", on_mros_feedback, on_mros_result);
 
     auto mros_goal = std::make_shared<mros2_msgs::action::ControlQos::Goal>();
-    mros_goal->qos = mros_action_server_->get_current_goal()->qos;
+    mros_goal->qos_expected = mros_action_server_->get_current_goal()->qos_expected;
 
     mros_action_client->send_goal(*mros_goal);
 

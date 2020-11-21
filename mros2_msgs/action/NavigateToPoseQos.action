@@ -1,7 +1,7 @@
 #goal definition
 geometry_msgs/PoseStamped pose
 string behavior_tree
-QoS qos
+QoS qos_expected
 ---
 #result definition
 std_msgs/Empty result
@@ -10,4 +10,4 @@ geometry_msgs/PoseStamped current_pose
 builtin_interfaces/Duration navigation_time
 int16 number_of_recoveries
 float32 distance_remaining
-QoS qos
+QoS qos_status

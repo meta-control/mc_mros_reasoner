@@ -1,5 +1,5 @@
 #goal definition
-QoS qos
+QoS qos_expected
 ---
 ---
-QoS qos
+QoS qos_status
