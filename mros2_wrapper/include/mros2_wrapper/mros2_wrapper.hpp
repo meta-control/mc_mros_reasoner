@@ -94,7 +94,6 @@ protected:
     auto on_ros2_result = [&](
       const typename rclcpp_action::ClientGoalHandle<Ros2ActionT>::WrappedResult &)
       {
-        std::cerr << "Got result" << std::endl;
         mros_action_finished = true;
         mros_action_server_->succeeded_current();
       };
@@ -161,7 +160,6 @@ protected:
   CallbackReturnT on_activate(const rclcpp_lifecycle::State &)
   {
     mros_action_server_->activate();
-    std::cerr << "Action server active" << std::endl;
 
     return CallbackReturnT::SUCCESS;
   }
