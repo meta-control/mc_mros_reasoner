@@ -173,8 +173,8 @@ class RosReasoner(Node):
                 rclpy.spin_until_future_complete(self, srv_call_future)
 
         elif len(objectives) == 1:
-            self.get_logger().info('Objective {} found'.format(o.name))
             o = objectives[0]
+            self.get_logger().info('Objective {} found'.format(o.name))
             fd = obtainBestFunctionDesign(o, self.reasoner.tomasys)
             if not fd:
                 self.get_logger().error(
