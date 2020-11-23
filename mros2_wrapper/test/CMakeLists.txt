@@ -1,0 +1,2 @@
+ament_add_gtest(test_mros2_wrapper test_mros2_wrapper.cpp)
+ament_target_dependencies(test_mros2_wrapper ${dependencies})

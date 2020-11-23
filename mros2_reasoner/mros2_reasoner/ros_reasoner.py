@@ -241,7 +241,6 @@ class RosReasoner(Node):
 
         while not system_modes_cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().warn('Mode change service not available, waiting again...')
-
         try:
             req = ChangeMode.Request()
             req.mode_name = new_configuration
