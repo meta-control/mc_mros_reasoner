@@ -29,12 +29,8 @@ def generate_launch_description():
     # Get the launch directory
     mros2_reasoner_bringup_dir = get_package_share_directory('mros2_reasoner')
     
-    
     # Create the launch configuration variables
     tomasys_file = LaunchConfiguration('tomasys_file')
-    desired_configuration = LaunchConfiguration('desired_configuration')
-    nfr_energy = LaunchConfiguration('nfr_energy')
-    nfr_safety = LaunchConfiguration('nfr_safety')
 
 
     model_files_array = [os.path.join(mros2_reasoner_bringup_dir, 'MROS_ontology.owl')]
@@ -67,9 +63,6 @@ def generate_launch_description():
         parameters=[{
             'model_file': model_files_array,
             'tomasys_file': tomasys_file,
-            'desired_configuration': desired_configuration,
-            'nfr_energy': nfr_energy,
-            'nfr_safety': nfr_safety,
             }],
     )
 
