@@ -45,6 +45,10 @@ def loadKB_from_file(kb_file):
 def resetKBstatuses(tbox):
     for o in list(tbox.Objective.instances()):
         o.o_status = None
+    # Also remove remaing QA Values
+    for fg in list(tbox.FunctionGrounding.instances()):
+        if fg.i.solvesO == o:
+            fg.hasQAvalue = []
 
 # For debugging purposes
 def print_ontology_status(kb_box):
