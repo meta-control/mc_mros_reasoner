@@ -48,7 +48,7 @@ class RosReasoner(Node):
         tomasys_file =  self.check_and_read_parameter('tomasys_file')
         
         self.node_name = self.check_and_read_parameter('node_name', 'pilot')
-        self.reconfigure_from_reasoner = self.check_and_read_parameter('reconfigure_from_reasoner', False)
+        self.reconfigure_from_reasoner = self.check_and_read_parameter('reconfigure_from_reasoner', True)
 
         self.cb_group = ReentrantCallbackGroup()
 
@@ -288,7 +288,6 @@ class RosReasoner(Node):
     ## main metacontrol loop
     async def timer_cb(self):
 
-        self.get_logger().info('Entered timer_cb for metacontrol reasoning')
         # If we're waiting for a response from the reconfiguration, nothing should be done
         if self.reasoner.isInitialized is not True:
             self.get_logger().info('Waiting to initialize Reasoner -  Nothing else will be done')
