@@ -38,6 +38,7 @@ class RosReasoner(Node):
         self.declare_parameter("nfr_safety")
         self.declare_parameter("reasoning_rate")
         self.declare_parameter("node_name")
+        self.declare_parameter("reconfigure_from_reasoner")
 
 
 
@@ -47,6 +48,7 @@ class RosReasoner(Node):
         tomasys_file =  self.check_and_read_parameter('tomasys_file')
         
         self.node_name = self.check_and_read_parameter('node_name', 'pilot')
+        self.reconfigure_from_reasoner = self.check_and_read_parameter('reconfigure_from_reasoner', False)
 
         self.cb_group = ReentrantCallbackGroup()
 
@@ -351,22 +353,27 @@ class RosReasoner(Node):
         # request new configuration
         self.get_logger().info('  >> Started MAPE-K ** EXECUTION **')
 
-        rec_result = self.request_configuration(new_grounded)
+        if self.reconfigure_from_reasoner:
+            rec_result = self.request_configuration(new_grounded)
 
-        try:
-            call_result = await rec_result
-        except Exception as e:
-            self.get_logger().info('request call failed %r' % (e,))
+            try:
+                call_result = await rec_result
+            except Exception as e:
+                self.get_logger().info('request call failed %r' % (e,))
 
-        self.get_logger().info('Got service result {}'.format(call_result.success))
-        # Process adaptation feedback to update KB:
-        if (call_result.success is not None) and (call_result.success is True): # reconfiguration executed ok
-            # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-            self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
-            resetKBstatuses(self.reasoner.tomasys)
-            self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
+            self.get_logger().info('Got service result {}'.format(call_result.success))
+            # Process adaptation feedback to update KB:
+            if (call_result.success is not None) and (call_result.success is True): # reconfiguration executed ok
+                # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
+                self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
+                resetKBstatuses(self.reasoner.tomasys)
+                self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
+            else:
+                self.get_logger().error("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
         else:
-            self.get_logger().error("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
+                self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
+                resetKBstatuses(self.reasoner.tomasys)
+                self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
 
         self.get_logger().info('  >> Finished MAPE-K ** EXECUTION **')
 
