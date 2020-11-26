@@ -207,7 +207,7 @@ TEST(ActionTest, test_wrapper)
     };
 
   metacontroller_server = std::make_unique<MetacontrollerServerT>(
-    nav2_node, "control_qos", mc_server_loop);
+    nav2_node, "metacontrol_objective", mc_server_loop);
 
   // Start system
   rclcpp::executors::SingleThreadedExecutor executor;
