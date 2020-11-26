@@ -68,7 +68,7 @@ class RosReasoner(Node):
         self.objective_action_server = ActionServer(
             self,
             ControlQos,
-            'mros_objective',
+            'mros_objectvie',
             self.objective_action_callback,
             callback_group=self.cb_group)
 
@@ -180,6 +180,7 @@ class RosReasoner(Node):
 
     def create_objective(self, goal_request):
         ##
+
         new_objective = self.reasoner.get_new_tomasys_objective("obj_" + goal_request.qos_expected.objective_type, "*" + goal_request.qos_expected.objective_type)
         self.get_logger().info("Creating Objective {0}".format(new_objective))
         for nrf_key in goal_request.qos_expected.qos:
@@ -288,7 +289,6 @@ class RosReasoner(Node):
     ## main metacontrol loop
     async def timer_cb(self):
 
-        self.get_logger().info('Entered timer_cb for metacontrol reasoning')
         # If we're waiting for a response from the reconfiguration, nothing should be done
         if self.reasoner.isInitialized is not True:
             self.get_logger().info('Waiting to initialize Reasoner -  Nothing else will be done')
