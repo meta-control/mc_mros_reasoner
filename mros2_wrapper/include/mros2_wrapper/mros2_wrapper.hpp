@@ -72,6 +72,8 @@ protected:
     return nullptr;
   }
 
+  virtual void process_feedback_mech(mros2_msgs::msg::QoS feedback){}
+
   void manageMrosAction()
   {
     bool mros_action_finished = false;
@@ -87,6 +89,7 @@ protected:
 
         if (last_qos_status != nullptr) {  // No feedback from Metacontroller yet
           ret_feedback->qos_status = *last_qos_status;
+          process_feedback_mech(ret_feedback->qos_status);
         }
         mros_action_server_->publish_feedback(ret_feedback);
       };
@@ -106,8 +109,6 @@ protected:
       action_name_, on_ros2_feedback, on_ros2_result);
 
     auto ros2_goal = fromMrosGoal(mros_action_server_->get_current_goal());
-    ros2_action_client->send_goal(*ros2_goal);
-
     // Call to Metracontroller
     auto on_mros_feedback = [&](
       rclcpp_action::ClientGoalHandle<mros2_msgs::action::ControlQos>::SharedPtr,
@@ -115,6 +116,8 @@ protected:
       {
         last_qos_status = std::make_shared<mros2_msgs::msg::QoS>();
         *last_qos_status = feedback->qos_status;
+
+        process_feedback_mech(feedback->qos_status);
       };
 
     auto on_mros_result = [&](
@@ -127,15 +130,26 @@ protected:
       get_node_graph_interface(),
       get_node_logging_interface(),
       get_node_waitables_interface(),
-      "control_qos", on_mros_feedback, on_mros_result);
+
+      "mros_objective", on_mros_feedback, on_mros_result);
 
     auto mros_goal = std::make_shared<mros2_msgs::action::ControlQos::Goal>();
     mros_goal->qos_expected = mros_action_server_->get_current_goal()->qos_expected;
-
+    mros_goal->qos_expected.objective_id = mros_action_server_->get_uuid();
     mros_action_client->send_goal(*mros_goal);
+
+    while(!ros2_action_client->get_goal_status()) {
+      ros2_action_client->send_goal(*ros2_goal);
+      RCLCPP_ERROR(get_logger(), "Trying again...");
+      rclcpp::Rate(0.5).sleep();
+    }
 
     // Main loop, waiting to finish the action
     while (!mros_action_finished) {
+      if (mros_action_server_->is_cancel_requested()) {
+        ros2_action_client->abort_action();
+      }
+      rclcpp::Rate(3).sleep();
     }
 
     mros_action_client->abort_action();

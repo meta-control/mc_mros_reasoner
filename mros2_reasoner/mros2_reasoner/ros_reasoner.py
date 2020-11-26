@@ -119,7 +119,7 @@ class RosReasoner(Node):
                 ontology_instance = list(self.reasoner.tomasys.FunctionGrounding.instances())
                 if len(ontology_instance) == 1:
                     feedback_msg.qos_status.selected_mode = ontology_instance[0].typeFD.name
-                    feedback_msg.qos_status.objective_id = ontology_instance[0].solvesO.name
+                    feedback_msg.qos_status.objective_type = ontology_instance[0].solvesO.name
                     for qa in ontology_instance[0].hasQAvalue:
                         QAValue = KeyValue()
                         QAValue.key = str(qa.isQAtype.name)
@@ -178,7 +178,8 @@ class RosReasoner(Node):
 
     def create_objective(self, goal_request):
         ##
-        new_objective = self.reasoner.get_new_tomasys_objective("obj_" + goal_request.qos_expected.objective_id, "*" + goal_request.qos_expected.objective_id)
+
+        new_objective = self.reasoner.get_new_tomasys_objective("obj_" + goal_request.qos_expected.objective_type, "*" + goal_request.qos_expected.objective_type)
         self.get_logger().info("Creating Objective {0}".format(new_objective))
         for nrf_key in goal_request.qos_expected.qos:
             new_nfr = self.reasoner.get_new_tomasys_nrf("nfr_" + nrf_key.key, "*" + nrf_key.key, float(nrf_key.value))

@@ -22,7 +22,8 @@ class MinimalPublisher(Node):
 
     def send_goal(self):
         goal_msg = ControlQos.Goal()
-        goal_msg.qos_expected.objective_id = "f_navigate"
+
+        goal_msg.qos_expected.objective_type = "f_navigate"
         goal_msg.qos_expected.selected_mode = ""
         nfr = KeyValue()
         nfr.key = "energy"
@@ -35,7 +36,8 @@ class MinimalPublisher(Node):
         
         self.get_logger().info('Waiting for server')
         self._action_client.wait_for_server()
-        self.get_logger().info('Sending goal  {0}'.format(goal_msg.qos_expected.objective_id))
+        
+        self.get_logger().info('Sending goal  {0}'.format(goal_msg.qos_expected.objective_type))
         self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         self.get_logger().info('Goal Sent!!!')
 
@@ -43,7 +45,8 @@ class MinimalPublisher(Node):
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
         self.get_logger().info('Best mode: {0}'.format(feedback.qos_status.selected_mode))
-        self.get_logger().info('Solvinge: {0}'.format(feedback.qos_status.objective_id))
+
+        self.get_logger().info('Solvinge: {0}'.format(feedback.qos_status.objective_type))
         for qos in feedback.qos_status.qos:
             self.get_logger().info('QoS Status: Key: {0} - Value {1}'.format(qos.key, qos.value))
 
