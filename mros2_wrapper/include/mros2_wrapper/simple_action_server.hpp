@@ -83,10 +83,12 @@ public:
   }
 
   rclcpp_action::GoalResponse handle_goal(
-    const rclcpp_action::GoalUUID & /*uuid*/,
+
+    const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const typename ActionT::Goal>/*goal*/)
   {
     std::lock_guard<std::recursive_mutex> lock(update_mutex_);
+    uuid_ = rclcpp_action::to_string(uuid);
 
     if (!server_active_) {
       return rclcpp_action::GoalResponse::REJECT;
@@ -257,6 +259,10 @@ public:
     return current_handle_->get_goal();
   }
 
+  const std::string get_uuid() {
+    return uuid_;
+  }
+
   const std::shared_ptr<const typename ActionT::Goal> get_current_goal() const
   {
     std::lock_guard<std::recursive_mutex> lock(update_mutex_);
@@ -349,6 +355,8 @@ protected:
   std::shared_ptr<rclcpp_action::ServerGoalHandle<ActionT>> pending_handle_;
 
   typename rclcpp_action::Server<ActionT>::SharedPtr action_server_;
+
+  std::string uuid_;
 
   constexpr auto empty_result() const
   {

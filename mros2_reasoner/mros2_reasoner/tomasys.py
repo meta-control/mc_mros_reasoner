@@ -1,4 +1,3 @@
-from owlready2 import *
 ###########################################
 #
 # authors:  c.h.corbato@tudelft.nl
@@ -9,7 +8,7 @@ from owlready2 import *
 #  based on the tomasys metamodel (Tbox), using the owlready2 library
 ##########################################
 
-
+from owlready2 import get_ontology, destroy_entity
 import logging
 
 
@@ -23,9 +22,11 @@ def loadKB_from_file(kb_file):
         Returns:
                 kb_box (ontology): Ontology readed, None: if there is an error.
     """
+
     try:
         kb_box = get_ontology(kb_file).load()
     except Exception as e:
+        logging.exception("{0}".format(e))
         return None
     return kb_box
 # # Returns
@@ -44,6 +45,10 @@ def loadKB_from_file(kb_file):
 def resetKBstatuses(tbox):
     for o in list(tbox.Objective.instances()):
         o.o_status = None
+    # Also remove remaing QA Values
+    for fg in list(tbox.FunctionGrounding.instances()):
+        if fg.i.solvesO == o:
+            fg.hasQAvalue = []
 
 # For debugging purposes
 def print_ontology_status(kb_box):
@@ -57,11 +62,11 @@ def print_ontology_status(kb_box):
 
     logging.warning("\nFGs:")
     for i in list(kb_box.FunctionGrounding.instances()):
-        logging.warning("\n{0}\tobjective: {1}\tstatus: {2}\tFD: {3}, \tQAvalues: {4}".format(i.name, i.solvesO, i.fg_status, i.typeFD, [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
+        logging.warning("\n{0} \tSolves: {1},\tFG status: {2},\tFD: {3}, \tQAvalues: {4}".format(i.name, i.solvesO.name, i.fg_status, i.typeFD.name, [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
 
     logging.warning("\nOBJECTIVE\t|  STATUS\t|  NFRs")
     for i in list(kb_box.Objective.instances()):
-        logging.warning("\n{0}\t|  {1}\t|  {2}".format(i.name, i.o_status, [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
+        logging.warning("\n{0}\t|  {1} \t|  {2}".format(i.name, i.o_status, [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
 
     # print("\nCC availability:")
     # for i in list(tomasys.ComponentClass.instances()):
@@ -94,7 +99,11 @@ def updateQAvalue(fg, qa_type, value, tbox, abox):
 def evaluateObjectives(tbox):
     objectives_internal_error = []
     for o in list(tbox.Objective.instances() ):
-        if o.o_status == "INTERNAL_ERROR":
+        if o.o_status in ["INTERNAL_ERROR"]:
+            objectives_internal_error.append(o)
+        elif len(list(tbox.FunctionGrounding.instances())) == 0:
+            # No function groundings, so Obj not solved
+            #TODO: This will work only for the case of a single objective
             objectives_internal_error.append(o)
     return objectives_internal_error
 
@@ -109,8 +118,7 @@ def obtainBestFunctionDesign(o, tbox):
     for fd in list(tbox.FunctionDesign.instances()):
         if fd.solvesF == f:
             fds.append(fd)
-    logging.warning("== FunctionDesigns available for obj: %s", str([fd.name for fd in fds]))
-    logging.warning("Objective NFR ENERGY: %s", str(o.hasNFR))
+    logging.warning("== FunctionDesigns AVAILABLE for obj: %s", str([fd.name for fd in fds]))
 
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
@@ -118,7 +126,7 @@ def obtainBestFunctionDesign(o, tbox):
     logging.warning("== FunctionDesigns REALISABLE for obj: : %s", str([fd.name for fd in realisable_fds]))
     # discard FDs already grounded for this objective when objective in error
     suitable_fds= [fd for fd in fds if ((not o in fd.fd_error_log) and (fd.fd_realisability != False))]
-    logging.warning("== FunctionDesigns Realisable NOT IN ERROR LOG: %s", str([fd.name for fd in suitable_fds]))
+    logging.warning("== Realisable FunctionDesigns NOT IN ERROR LOG: %s", str([fd.name for fd in suitable_fds]))
     # discard those FD that will not meet objective NFRs
 
     fds_for_obj = meetNFRs(o, suitable_fds)
@@ -135,7 +143,7 @@ def obtainBestFunctionDesign(o, tbox):
                 best_utility = utility_fd
 
         logging.warning("> Best FD available %s", str(best_fd.name))
-        return best_fd
+        return best_fd.name
     else:
         logging.warning("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
         return None

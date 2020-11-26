@@ -13,7 +13,10 @@ from decimal import Decimal
 import signal, sys
 from threading import Lock
 
-from mros2_reasoner.tomasys import *
+from mros2_reasoner.tomasys import remove_objective_grounding, ground_fd
+from mros2_reasoner.tomasys import updateQAvalue
+
+from owlready2 import sync_reasoner_pellet
 
 class Reasoner(object):
     """docstring for Reasoner."""
@@ -32,16 +35,6 @@ class Reasoner(object):
         signal.signal(signal.SIGINT, self.save_ontology_exit)
         self.isInitialized = True
 
-
-    def load_tomasys_from_file(self, tomasys_file):
-        """ Loads tomays ontology from a given file path
-        """
-        self.tomasys = loadKB_from_file(tomasys_file)
-
-    def load_onto_from_file(self, onto_file):
-        """ Loads ontology from a given file path
-        """
-        self.onto = loadKB_from_file(onto_file)
 
     def search_objectives(self):
         #Root objectives
@@ -72,7 +65,7 @@ class Reasoner(object):
             return str(fd.name)
         else:
             return None
-            
+
     # the DiagnosticStatus message process contains, per field
     # - message: "binding_error"
     # - name: name of the fg reported, as named in the OWL file
@@ -138,7 +131,7 @@ class Reasoner(object):
                     return_value = True
                 except Exception as err:
                     raise err
-                   
+
         return return_value
 
     # For debugging purposes: saves state of the KB in an ontology file
