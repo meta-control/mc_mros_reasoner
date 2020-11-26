@@ -38,7 +38,6 @@ class RosReasoner(Node):
         self.declare_parameter("nfr_safety")
         self.declare_parameter("reasoning_rate")
         self.declare_parameter("node_name")
-        self.declare_parameter("reconfigure_from_reasoner")
 
 
 
@@ -46,9 +45,8 @@ class RosReasoner(Node):
         # Get ontology and tomasys file paths from parameters
         model_file_arr = self.check_and_read_parameter('model_file')
         tomasys_file =  self.check_and_read_parameter('tomasys_file')
-        
+
         self.node_name = self.check_and_read_parameter('node_name', 'pilot')
-        self.reconfigure_from_reasoner = self.check_and_read_parameter('reconfigure_from_reasoner', True)
 
         self.cb_group = ReentrantCallbackGroup()
 
@@ -87,7 +85,7 @@ class RosReasoner(Node):
         # Check if ontologies have been correctly loaded
         if  self.reasoner.onto is None:
             return
-        
+
         # Get desired_configuration_name from parameters
         self.set_initial_fd(self.check_and_read_parameter('desired_configuration'))
 
@@ -209,25 +207,8 @@ class RosReasoner(Node):
             self.get_logger().info('No objectives found, waiting for new Objective')
             # # # Function Groundings and Objectives
         elif len(objectives) == 1:
-<<<<<<< HEAD
-            o = objectives[0]
-            self.get_logger().info('Objective {} found'.format(o.name))
-            fd = obtainBestFunctionDesign(o, self.reasoner.tomasys)
-            if not fd:
-                self.get_logger().error(
-                    "No FD found to solve Objective {}".format(o.name)) # for DEBUGGING in csv
-            else:
-                self.get_logger().warning('Objective, NFRs and initial FG are generated from the OWL file')
-            
-            ## Make sure we are on the initial configuration
-            if fd.name != self.grounded_configuration:
-                self.get_logger().info('Requesting initial configuration: ' + str(fd.name))
-                srv_call_future = self.request_configuration(fd.name)
-                rclpy.spin_until_future_complete(self, srv_call_future)
-=======
             self.get_logger().info('Objective {} found'.format(objectives[0].name))
             self.hasObjective = True
->>>>>>> Adds action server to manage objective creation in runtime
         else:
             self.get_logger().error('Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
 
@@ -304,6 +285,7 @@ class RosReasoner(Node):
     ## main metacontrol loop
     async def timer_cb(self):
 
+        self.get_logger().info('Entered timer_cb for metacontrol reasoning')
         # If we're waiting for a response from the reconfiguration, nothing should be done
         if self.reasoner.isInitialized is not True:
             self.get_logger().info('Waiting to initialize Reasoner -  Nothing else will be done')
@@ -353,11 +335,11 @@ class RosReasoner(Node):
             self.get_logger().info(" Try to set FD {0} for objective: {1}".format(
                 self.grounded_configuration, o.name) )
             new_grounded = self.reasoner.set_new_grounding(self.grounded_configuration, o)
-        
+
         if not new_grounded:
             self.get_logger().info("=> Reasoner searches FD for objective: {}".format(o.name) )
             new_grounded = obtainBestFunctionDesign(o, self.reasoner.tomasys)
-        
+
         if not new_grounded:
             self.get_logger().error(
                 "No FD found to solve Objective {}".format(o.name)) # for DEBUGGING in csv
@@ -368,27 +350,22 @@ class RosReasoner(Node):
         # request new configuration
         self.get_logger().info('  >> Started MAPE-K ** EXECUTION **')
 
-        if self.reconfigure_from_reasoner:
-            rec_result = self.request_configuration(new_grounded)
+        rec_result = self.request_configuration(new_grounded)
 
-            try:
-                call_result = await rec_result
-            except Exception as e:
-                self.get_logger().info('request call failed %r' % (e,))
+        try:
+            call_result = await rec_result
+        except Exception as e:
+            self.get_logger().info('request call failed %r' % (e,))
 
-            self.get_logger().info('Got service result {}'.format(call_result.success))
-            # Process adaptation feedback to update KB:
-            if (call_result.success is not None) and (call_result.success is True): # reconfiguration executed ok
-                # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-                self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
-                resetKBstatuses(self.reasoner.tomasys)
-                self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
-            else:
-                self.get_logger().error("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
+        self.get_logger().info('Got service result {}'.format(call_result.success))
+        # Process adaptation feedback to update KB:
+        if (call_result.success is not None) and (call_result.success is True): # reconfiguration executed ok
+            # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
+            self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
+            resetKBstatuses(self.reasoner.tomasys)
+            self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
         else:
-                self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
-                resetKBstatuses(self.reasoner.tomasys)
-                self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
+            self.get_logger().error("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
 
         self.get_logger().info('  >> Finished MAPE-K ** EXECUTION **')
 
