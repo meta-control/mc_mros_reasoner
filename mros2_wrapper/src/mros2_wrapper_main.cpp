@@ -16,6 +16,7 @@
 
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "mros2_msgs/action/navigate_to_pose_qos.hpp"
+
 #include "nav2_msgs/srv/manage_lifecycle_nodes.hpp"
 
 #include "mros2_wrapper/mros2_wrapper.hpp"
@@ -23,13 +24,14 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 
-using namespace std::chrono_literals;
 
+using namespace std::chrono_literals;
 class NavigateToPoseWrapper : public mros2_wrapper::Mros2Wrapper<
     nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>
 {
   using mros2_wrapper::Mros2Wrapper<
     nav2_msgs::action::NavigateToPose, mros2_msgs::action::NavigateToPoseQos>::Mros2Wrapper;
+
 public:
   void init()
   {
@@ -109,6 +111,7 @@ private:
   rclcpp::Client<nav2_msgs::srv::ManageLifecycleNodes>::SharedPtr navigation_manage_client_;
   rclcpp::Client<nav2_msgs::srv::ManageLifecycleNodes>::SharedPtr localization_manage_client_;
   std::string previous_mode_;
+
 };
 
 int main(int argc, char ** argv)
@@ -117,6 +120,7 @@ int main(int argc, char ** argv)
 
   auto node = std::make_shared<NavigateToPoseWrapper>("nav2_wrapper", "navigate_to_pose");
   node->init();
+
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
 

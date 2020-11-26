@@ -79,11 +79,14 @@ public:
 
     client_goal_options_.feedback_callback = feedback_callback;
     client_goal_options_.result_callback = result_callback;
+
     goal_sended_ok_= false;
+
   }
 
   void send_goal(const typename ActionT::Goal & goal)
   {
+
     goal_sended_ok_ = false;
     execution_future_ = std::async(std::launch::async, [goal, this]() {work(goal);});
   }
@@ -120,6 +123,7 @@ public:
 
   bool get_goal_status() {return goal_sended_ok_;}
 
+
 protected:
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_interface_;
@@ -133,7 +137,9 @@ protected:
   std::future<void> execution_future_;
   std::shared_future<typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr>
   goal_handle_future_;
+
   bool goal_sended_ok_;
+
 };
 
 }  // namespace mros2_wrapper
