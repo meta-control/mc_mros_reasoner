@@ -27,18 +27,19 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     # Get the launch directory
-    mros2_reasoner_bringup_dir = get_package_share_directory('mros2_reasoner')
+    mros_ontology_bringup_dir = get_package_share_directory('mros_ontology')
     
     # Create the launch configuration variables
-    tomasys_file = LaunchConfiguration('tomasys_file')
+    working_ontology_file = LaunchConfiguration('model_file')
 
+    tomasys_files_array = [os.path.join(mros_ontology_bringup_dir, 'ontologies', 'tomasys.owl'),
+                        os.path.join(mros_ontology_bringup_dir, 'ontologies', 'MROS_ontology.owl'),
+                        os.path.join(mros_ontology_bringup_dir, 'ontologies', 'navigation_domain_ont.owl')]
 
-    model_files_array = [os.path.join(mros2_reasoner_bringup_dir, 'MROS_ontology.owl')]
-
-    declare_tomasys_file_cmd = DeclareLaunchArgument(
-        'tomasys_file',
-        default_value=os.path.join(mros2_reasoner_bringup_dir, 'tomasys.owl'),
-        description='File name for the Tomasys ontology')
+    declare_working_ontology_cmd = DeclareLaunchArgument(
+        'model_file',
+        default_value=os.path.join(mros_ontology_bringup_dir, 'ontologies', 'URJCpilot.owl'),
+        description='File name for the Working ontology file')
 
     declare_desired_configuration_cmd = DeclareLaunchArgument(
         'desired_configuration',
@@ -61,8 +62,8 @@ def generate_launch_description():
         name='mros2_reasoner_node',
         output='screen',
         parameters=[{
-            'model_file': model_files_array,
-            'tomasys_file': tomasys_file,
+            'tomasys_file': tomasys_files_array,
+            'model_file': working_ontology_file,
             }],
     )
 
@@ -70,7 +71,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     # Declare the launch options
-    ld.add_action(declare_tomasys_file_cmd)
+    ld.add_action(declare_working_ontology_cmd)
     ld.add_action(declare_desired_configuration_cmd)
     ld.add_action(declare_nfr_energy_cmd)
     ld.add_action(declare_nfr_safety_cmd)

@@ -14,9 +14,11 @@ import signal, sys
 from threading import Lock
 
 from mros2_reasoner.tomasys import remove_objective_grounding, ground_fd
-from mros2_reasoner.tomasys import updateQAvalue
+from mros2_reasoner.tomasys import updateQAvalue, resetFDRealisability, resetObjStatus
 
-from owlready2 import sync_reasoner_pellet
+from owlready2 import sync_reasoner_pellet, destroy_entity
+
+import logging
 
 class Reasoner(object):
     """docstring for Reasoner."""
@@ -34,6 +36,20 @@ class Reasoner(object):
 
         signal.signal(signal.SIGINT, self.save_ontology_exit)
         self.isInitialized = True
+    
+    def remove_objective(self, objective_id):
+        # Checks if there are previously defined objectives.
+        old_objective = self.onto.search_one(iri="*{}".format(objective_id))
+        if old_objective:
+            old_fg_instance = self.onto.search_one(solvesO=old_objective)
+            with self.ontology_lock:
+                destroy_entity(old_fg_instance)
+                destroy_entity(old_objective)
+            return True
+        else:
+            return False
+
+
 
 
     def search_objectives(self):
@@ -61,7 +77,9 @@ class Reasoner(object):
         remove_objective_grounding(objective, self.tomasys, self.onto)
         fd = self.onto.search_one(iri="*{}".format(fd_name), is_a = self.tomasys.FunctionDesign)
         if fd:
-            ground_fd(fd, objective, self.tomasys, self.onto)
+            with self.ontology_lock:
+                ground_fd(fd, objective, self.tomasys, self.onto)
+                resetObjStatus(objective)
             return str(fd.name)
         else:
             return None
@@ -93,8 +111,9 @@ class Reasoner(object):
         # Find the Component with the same name that the one in the Component Status message (in diagnostic_status.key)
         component_type = self.onto.search_one(iri="*{}".format(diagnostic_status.values[0].key))
         if component_type != None:
-            value = self.str2bool(diagnostic_status.values[0].value)
+            value = diagnostic_status.values[0].value
             with self.ontology_lock:
+                resetFDRealisability(self.tomasys, self.onto, diagnostic_status.values[0].key)
                 component_type.c_status = value
             return_value = 1
         else:
@@ -130,7 +149,9 @@ class Reasoner(object):
                     sync_reasoner_pellet(infer_property_values = True, infer_data_property_values = True)
                     return_value = True
                 except Exception as err:
-                    raise err
+                    logging.exception("{0}".format(err))
+                    return False
+                    # raise err
 
         return return_value
 

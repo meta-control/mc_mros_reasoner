@@ -11,19 +11,21 @@ class MinimalPublisher(Node):
     def __init__(self):
         super().__init__('mros2_publish_qa_node')
         self.publisher_ = self.create_publisher(DiagnosticArray, '/diagnostics', 10)
-        #timer_period = 2.0  # seconds
-        #self.timer = self.create_timer(timer_period, self.timer_callback)
+        # timer_period = 2.0  # seconds
+        # self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
         self.qa_type = 'energy'
         self.qa_value = 0.3
         self._action_client = ActionClient(self, ControlQos, 'mros_objectvie')
         self.reconf = False
+        self.recover = False
 
 
     def send_goal(self):
         goal_msg = ControlQos.Goal()
 
         goal_msg.qos_expected.objective_type = "f_navigate"
+        goal_msg.qos_expected.objective_id = "obj_navigate_{:.0f}".format(ROSClock().now().to_msg().sec/10)
         goal_msg.qos_expected.selected_mode = ""
         nfr = KeyValue()
         nfr.key = "energy"
@@ -45,8 +47,9 @@ class MinimalPublisher(Node):
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
         self.get_logger().info('Best mode: {0}'.format(feedback.qos_status.selected_mode))
-
-        self.get_logger().info('Solvinge: {0}'.format(feedback.qos_status.objective_type))
+        self.get_logger().info('Solving: {0} of type {1}'.format(
+            feedback.qos_status.objective_id, feedback.qos_status.objective_type))
+        self.get_logger().info('obj status: {0}'.format(feedback.qos_status.objective_status))
         for qos in feedback.qos_status.qos:
             self.get_logger().info('QoS Status: Key: {0} - Value {1}'.format(qos.key, qos.value))
 
@@ -57,7 +60,7 @@ class MinimalPublisher(Node):
             return
 
         diag_msg = DiagnosticArray()
-        #now = self.clock.now().seconds_nanoseconds
+        # now = self.clock.now().seconds_nanoseconds
         diag_msg.header.stamp = ROSClock().now().to_msg()
         status_msg = DiagnosticStatus()
         status_msg.level = DiagnosticStatus.OK
@@ -70,25 +73,47 @@ class MinimalPublisher(Node):
         diag_msg.status.append(status_msg)
 
         self.publisher_.publish(diag_msg)
+             
+
         self.qa_value += 0.015
+        # self.get_logger().info('qa: {0}'.format(self.qa_value))
         if self.qa_value > 0.52:
             self.qa_value = 0.4
-            self.reconf = True
-        if self.reconf is True and self.qa_value > 0.45:
-            status_msg = DiagnosticStatus()
-            status_msg.level = DiagnosticStatus.OK
-            status_msg.name = ""
-            key_value = KeyValue()
-            key_value.key = "laser_resender"
-            key_value.value = "False"
-            status_msg.values.append(key_value)
-            status_msg.message = "Component status"
-            diag_msg.status.append(status_msg)
-            self.publisher_.publish(diag_msg)
-            self.reconf = False
+
+        if self.qa_value > 0.34:
+            if self.recover is False:
+                self.get_logger().info('\n\nSENDING COMPO STATUS FALSE\n\n')
+                diag_msg_2 = DiagnosticArray()
+                diag_msg_2.header.stamp = ROSClock().now().to_msg()
+                status_msg_2 = DiagnosticStatus()
+                status_msg_2.level = DiagnosticStatus.OK
+                status_msg_2.name = ""
+                status_msg_2.message = "Component status"
+                key_value_2 = KeyValue()
+                key_value_2.key = "laser_resender"
+                key_value_2.value = "FALSE"
+                status_msg_2.values.append(key_value_2)
+                diag_msg_2.status.append(status_msg_2)
+                self.publisher_.publish(diag_msg_2)
+                self.recover = True
+        if self.qa_value > 0.42:
+            if self.reconf is False:
+                self.get_logger().info('\n\nSENDING COMPO STATUS RECOVEREDn\n\n')
+                diag_msg_2 = DiagnosticArray()
+                diag_msg_2.header.stamp = ROSClock().now().to_msg()
+                status_msg_2 = DiagnosticStatus()
+                status_msg_2.level = DiagnosticStatus.OK
+                status_msg_2.name = ""
+                status_msg_2.message = "Component status"
+                key_value_2 = KeyValue()
+                key_value_2.key = "laser_resender"
+                key_value_2.value = "RECOVERED"
+                status_msg_2.values.append(key_value_2)
+                diag_msg_2.status.append(status_msg_2)
+                self.publisher_.publish(diag_msg_2)
+                self.reconf = True
+           
             
-
-
 def main(args=None):
     rclpy.init(args=args)
 

@@ -42,40 +42,50 @@ def loadKB_from_file(kb_file):
 # To reset the individuals that no longer hold due to adaptation
 # for the moment, only Objective individuals statuses
 # - tomasys: ontology holding the Tbox
-def resetKBstatuses(tbox):
-    for o in list(tbox.Objective.instances()):
-        o.o_status = None
-    # Also remove remaing QA Values
-    for fg in list(tbox.FunctionGrounding.instances()):
-        if fg.i.solvesO == o:
-            fg.hasQAvalue = []
+def resetObjStatus(objective, status=None):
+    # logging.warning("\nReseting obj {0}".format(objective.name))
+    objective.o_status = status
+
+
+def resetFDRealisability(tbox, abox, c_name):
+    logging.warning("\nReset realisability:\n")
+    component = abox.search_one(iri="*{}".format(c_name))
+    if component is None:
+        # logging.warning("C not found Return\n\n\n")
+        return
+        
+    if component.c_status is None:
+        # logging.warning("C status None Return\n\n\n")
+        return
+    else:
+        if component.c_status in ["FALSE"]:
+            logging.warning("component statis is {} - Set to None\n".format(component.c_status))
+            for fd in list(tbox.FunctionDesign.instances()):
+                if fd.fd_realisability is None:
+                    continue
+                else:
+                    logging.warning("FD {0} realisability: {1} -  Set to None".format(fd.name, fd.fd_realisability))
+                    fd.fd_realisability = None
+    
 
 # For debugging purposes
 def print_ontology_status(kb_box):
-    # print("\nComponents Statuses:")
-    # for i in list(tomasys.ComponentState.instances()):
-    #     print(i.name, i.c_status)
 
-    # print("\nBindings Statuses:")
-    # for i in list(tomasys.Binding.instances()):
-    #     print(i.name, i.b_status)
+    logging.warning("\t\t\t >>> Ontology Status   <<<")
 
-    logging.warning("\nFGs:")
+    logging.warning("\n\tComponent Status:\t{0}".format([(c.name, c.c_status) for c in list(kb_box.ComponentState.instances())]))
+    
+    # logging.warning("\nFD Realizability Statuses:\n")
+    # for fd in list(kb_box.FunctionDesign.instances()):
+    #     logging.warning("FD {0} realisability: {1}".format(fd.name, fd.fd_realisability))
+
     for i in list(kb_box.FunctionGrounding.instances()):
-        logging.warning("\n{0} \tSolves: {1},\tFG status: {2},\tFD: {3}, \tQAvalues: {4}".format(i.name, i.solvesO.name, i.fg_status, i.typeFD.name, [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
+        logging.warning("\n\tFG: {0}  Status: {1}  Solves: {2}  FD: {3}  QAvalues: {4}".format(i.name, i.fg_status, i.solvesO.name,  i.typeFD.name, [(qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
 
-    logging.warning("\nOBJECTIVE\t|  STATUS\t|  NFRs")
     for i in list(kb_box.Objective.instances()):
-        logging.warning("\n{0}\t|  {1} \t|  {2}".format(i.name, i.o_status, [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
+        logging.warning("\n\tOBJECTIVE: {0}   Status: {1}   NFRs:  {2}".format(i.name, i.o_status, [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
+    logging.warning("\t\t\t >>>>>>>>>>>>> <<<<<<<<<<<")
 
-    # print("\nCC availability:")
-    # for i in list(tomasys.ComponentClass.instances()):
-    #     print(i.name, i.cc_availability)
-
-    # print("\nFDs information:\n NAME \t")
-    # for i in list(tomasys.FunctionDesign.instances()):
-    #     print(i.name, "\t", i.fd_realisability, "\t", [
-    #           (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAestimation])
 
 # update the QA value for an FG with the value received
 def updateQAvalue(fg, qa_type, value, tbox, abox):
@@ -96,14 +106,13 @@ def updateQAvalue(fg, qa_type, value, tbox, abox):
         fg.hasQAvalue.append(qav)
 
 # Evaluates the Objective individuals in the KB and returns a list with those in error
-def evaluateObjectives(tbox):
+def evaluateObjectives(objectives):
     objectives_internal_error = []
-    for o in list(tbox.Objective.instances() ):
-        if o.o_status in ["INTERNAL_ERROR"]:
-            objectives_internal_error.append(o)
-        elif len(list(tbox.FunctionGrounding.instances())) == 0:
-            # No function groundings, so Obj not solved
-            #TODO: This will work only for the case of a single objective
+    for o in objectives:
+        if o.o_status in ["UNGROUNDED",
+                         "UPDATABLE",
+                         "IN_ERROR_NFR",
+                         "IN_ERROR_COMPONENT"]:
             objectives_internal_error.append(o)
     return objectives_internal_error
 
@@ -112,21 +121,22 @@ def evaluateObjectives(tbox):
 # - o: individual of tomasys:Objective
 # - tomasys ontology that contains the tomasys tbox
 def obtainBestFunctionDesign(o, tbox):
+    logging.warning("\t\t\t == Obatin Best Function Design ==")
     f = o.typeF
     # get fds for Function F
     fds = []
     for fd in list(tbox.FunctionDesign.instances()):
         if fd.solvesF == f:
             fds.append(fd)
-    logging.warning("== FunctionDesigns AVAILABLE for obj: %s", str([fd.name for fd in fds]))
+    logging.warning("== FunctionDesigns AVAILABLE: %s", str([fd.name for fd in fds]))
 
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are complete for this)
     realisable_fds = [fd for fd in fds if fd.fd_realisability != False]
-    logging.warning("== FunctionDesigns REALISABLE for obj: : %s", str([fd.name for fd in realisable_fds]))
+    logging.warning("== FunctionDesigns REALISABLE: %s", str([fd.name for fd in realisable_fds]))
     # discard FDs already grounded for this objective when objective in error
     suitable_fds= [fd for fd in fds if ((not o in fd.fd_error_log) and (fd.fd_realisability != False))]
-    logging.warning("== Realisable FunctionDesigns NOT IN ERROR LOG: %s", str([fd.name for fd in suitable_fds]))
+    logging.warning("== FunctionDesigns NOT IN ERROR LOG: %s", str([fd.name for fd in suitable_fds]))
     # discard those FD that will not meet objective NFRs
 
     fds_for_obj = meetNFRs(o, suitable_fds)
@@ -142,10 +152,10 @@ def obtainBestFunctionDesign(o, tbox):
                 best_fd = fd
                 best_utility = utility_fd
 
-        logging.warning("> Best FD available %s", str(best_fd.name))
+        logging.warning("\t\t\t == Best FD available %s", str(best_fd.name))
         return best_fd.name
     else:
-        logging.warning("*** OPERATOR NEEDED, NO SOLUTION FOUND ***")
+        logging.warning("\t\t\t == *** NO SOLUTION FOUND ***")
         return None
 
 
@@ -175,7 +185,7 @@ def meetNFRs(o, fds):
     if len(o.hasNFR) == 0:
         logging.warning("== Objective has no NFRs, so a random FD is picked")
         return [next(iter(fds))]
-    logging.warning("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
+    # logging.warning("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
     for fd in fds:
         for nfr in o.hasNFR:
             qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
