@@ -27,7 +27,8 @@ onto = None
 import os, sys
 def rosmodel2owl(configFilePath):
     # the file path should be given as argument, alternatively a ns can be added
-    #params = rosparam.load_file(rospack.get_path('mros1_reasoner')+'/config/nav_config.yaml', '')
+    # params = rosparam.load_file(rospack.get_path('mros1_reasoner')+'/config/nav_config.yaml', '')
+    # loads individuals to specify a single function and QalityAttributeTypes from the domain_ontology_file
     params = rosparam.load_file(configFilePath)
     for param, ns in params:
         try:
@@ -44,10 +45,11 @@ def rosmodel2owl(configFilePath):
     configs = rospy.get_param('configs')
     result_file = rospy.get_param('result_file')
 
-    tomasys = get_ontology(ontology_file)#.load
-    onto = get_ontology(domain_ontology_file)#.load
+    tomasys = get_ontology(ontology_file).load()
+    onto = get_ontology(domain_ontology_file).load()
     rospy.loginfo('Loaded domain ontology: ' + domain_ontology_file)
-    function_ = onto.search_one(iri='*'+str(function))
+    function_ = onto.search_one(iri='*'+function+'*')
+
 
     if function_ == None:
         print('The domain ontology provided does not contain a Function ',function)
