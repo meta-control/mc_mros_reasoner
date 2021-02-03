@@ -67,6 +67,13 @@ def generate_launch_description():
             }],
     )
 
+    wrapper_cmd = Node(
+        package='mros2_wrapper',
+        executable='mros2_wrapper',
+        name='mros2_wrapper',
+        output='screen'
+    )
+
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -78,7 +85,6 @@ def generate_launch_description():
 
     # Add the actions to launch the reasoner node
     ld.add_action(bringup_reasoner_cmd)
-
-
+    ld.add_action(wrapper_cmd)
 
     return ld

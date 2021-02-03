@@ -70,7 +70,7 @@ class RosReasoner(Node):
         self.objective_action_server = ActionServer(
             self,
             ControlQos,
-            'mros_objectvie',
+            'mros_objective',
             self.objective_action_callback,
             callback_group=self.cb_group,
             cancel_callback=self.objective_cancel_goal_callback)
