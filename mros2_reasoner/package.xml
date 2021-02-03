@@ -9,6 +9,9 @@
   <license>Apache License 2.0</license>
 
   <build_depend>system_modes</build_depend>
+  
+  <run_depend>python3-owlready2-pip</run_depend>
+  <run_depend>java</run_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
