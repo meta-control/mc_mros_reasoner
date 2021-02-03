@@ -71,7 +71,7 @@ protected:
     return nullptr;
   }
 
-  virtual void process_feedback_mech(mros2_msgs::msg::QoS feedback){}
+  virtual void process_feedback_mech(mros2_msgs::msg::QoS /*feedback*/){}
 
   void manageMrosAction()
   {
@@ -135,7 +135,7 @@ protected:
 
     while(!ros2_action_client->get_goal_status()) {
       ros2_action_client->send_goal(*ros2_goal);
-      RCLCPP_ERROR(get_logger(), "Trying again...");
+      RCLCPP_WARN(get_logger(), "Trying again...");
       rclcpp::Rate(0.5).sleep();
     }
 
