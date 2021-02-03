@@ -38,7 +38,6 @@ class RosReasoner(Node):
         self.declare_parameter("nfr_safety")
         self.declare_parameter("reasoning_rate")
         self.declare_parameter("node_name")
-        self.declare_parameter("reconfigure_from_reasoner")
 
 
 
@@ -46,9 +45,8 @@ class RosReasoner(Node):
         # Get ontology and tomasys file paths from parameters
         model_file_arr = self.check_and_read_parameter('model_file')
         tomasys_file =  self.check_and_read_parameter('tomasys_file')
-        
+
         self.node_name = self.check_and_read_parameter('node_name', 'pilot')
-        self.reconfigure_from_reasoner = self.check_and_read_parameter('reconfigure_from_reasoner', True)
 
         self.cb_group = ReentrantCallbackGroup()
 
@@ -68,7 +66,7 @@ class RosReasoner(Node):
         self.objective_action_server = ActionServer(
             self,
             ControlQos,
-            'mros_objective',
+            'mros_objectvie',
             self.objective_action_callback,
             callback_group=self.cb_group)
 
@@ -87,7 +85,7 @@ class RosReasoner(Node):
         # Check if ontologies have been correctly loaded
         if  self.reasoner.onto is None:
             return
-        
+
         # Get desired_configuration_name from parameters
         self.set_initial_fd(self.check_and_read_parameter('desired_configuration'))
 
@@ -180,6 +178,7 @@ class RosReasoner(Node):
 
     def create_objective(self, goal_request):
         ##
+
         new_objective = self.reasoner.get_new_tomasys_objective("obj_" + goal_request.qos_expected.objective_type, "*" + goal_request.qos_expected.objective_type)
         self.get_logger().info("Creating Objective {0}".format(new_objective))
         for nrf_key in goal_request.qos_expected.qos:
@@ -265,7 +264,6 @@ class RosReasoner(Node):
 
         while not system_modes_cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().warn('Mode change service not available, waiting again...')
-
         try:
             req = ChangeMode.Request()
             req.mode_name = new_configuration
@@ -338,11 +336,11 @@ class RosReasoner(Node):
             self.get_logger().info(" Try to set FD {0} for objective: {1}".format(
                 self.grounded_configuration, o.name) )
             new_grounded = self.reasoner.set_new_grounding(self.grounded_configuration, o)
-        
+
         if not new_grounded:
             self.get_logger().info("=> Reasoner searches FD for objective: {}".format(o.name) )
             new_grounded = obtainBestFunctionDesign(o, self.reasoner.tomasys)
-        
+
         if not new_grounded:
             self.get_logger().error(
                 "No FD found to solve Objective {}".format(o.name)) # for DEBUGGING in csv
@@ -353,27 +351,22 @@ class RosReasoner(Node):
         # request new configuration
         self.get_logger().info('  >> Started MAPE-K ** EXECUTION **')
 
-        if self.reconfigure_from_reasoner:
-            rec_result = self.request_configuration(new_grounded)
+        rec_result = self.request_configuration(new_grounded)
 
-            try:
-                call_result = await rec_result
-            except Exception as e:
-                self.get_logger().info('request call failed %r' % (e,))
+        try:
+            call_result = await rec_result
+        except Exception as e:
+            self.get_logger().info('request call failed %r' % (e,))
 
-            self.get_logger().info('Got service result {}'.format(call_result.success))
-            # Process adaptation feedback to update KB:
-            if (call_result.success is not None) and (call_result.success is True): # reconfiguration executed ok
-                # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
-                self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
-                resetKBstatuses(self.reasoner.tomasys)
-                self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
-            else:
-                self.get_logger().error("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
+        self.get_logger().info('Got service result {}'.format(call_result.success))
+        # Process adaptation feedback to update KB:
+        if (call_result.success is not None) and (call_result.success is True): # reconfiguration executed ok
+            # updates the ontology according to the result of the adaptation action - destroy fg for Obj and create the newly grounded one
+            self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
+            resetKBstatuses(self.reasoner.tomasys)
+            self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
         else:
-                self.grounded_configuration = self.reasoner.set_new_grounding(new_grounded, o) # Set new grounded_configuration
-                resetKBstatuses(self.reasoner.tomasys)
-                self.get_logger().info("= RECONFIGURATION SUCCEEDED =") # for DEBUGGING in csv
+            self.get_logger().error("= RECONFIGURATION FAILED =") # for DEBUGGING in csv
 
         self.get_logger().info('  >> Finished MAPE-K ** EXECUTION **')
 

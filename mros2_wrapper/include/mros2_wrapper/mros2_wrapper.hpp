@@ -52,6 +52,7 @@ protected:
   std::unique_ptr<Mros2ActionServer> mros_action_server_;
 
   std::string action_name_;
+
   virtual std::shared_ptr<typename Ros2ActionT::Goal>
   fromMrosGoal(std::shared_ptr<const typename MrosActionT::Goal>)
   {
@@ -76,6 +77,7 @@ protected:
   void manageMrosAction()
   {
     bool mros_action_finished = false;
+
     mros2_msgs::msg::QoS::SharedPtr last_qos_status = nullptr;
 
     // Call to Controlled System
@@ -84,6 +86,7 @@ protected:
       const std::shared_ptr<const typename Ros2ActionT::Feedback> feedback)
       {
         auto ret_feedback = fromRos2Feedback(feedback);
+
         if (last_qos_status != nullptr) {  // No feedback from Metacontroller yet
           ret_feedback->qos_status = *last_qos_status;
           process_feedback_mech(ret_feedback->qos_status);
@@ -104,8 +107,8 @@ protected:
       get_node_logging_interface(),
       get_node_waitables_interface(),
       action_name_, on_ros2_feedback, on_ros2_result);
-    auto ros2_goal = fromMrosGoal(mros_action_server_->get_current_goal());
 
+    auto ros2_goal = fromMrosGoal(mros_action_server_->get_current_goal());
     // Call to Metracontroller
     auto on_mros_feedback = [&](
       rclcpp_action::ClientGoalHandle<mros2_msgs::action::ControlQos>::SharedPtr,
@@ -113,6 +116,7 @@ protected:
       {
         last_qos_status = std::make_shared<mros2_msgs::msg::QoS>();
         *last_qos_status = feedback->qos_status;
+
         process_feedback_mech(feedback->qos_status);
       };
 
@@ -126,6 +130,7 @@ protected:
       get_node_graph_interface(),
       get_node_logging_interface(),
       get_node_waitables_interface(),
+
       "mros_objective", on_mros_feedback, on_mros_result);
 
     auto mros_goal = std::make_shared<mros2_msgs::action::ControlQos::Goal>();
