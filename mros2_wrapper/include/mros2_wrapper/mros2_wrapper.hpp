@@ -143,6 +143,7 @@ protected:
       RCLCPP_WARN(get_logger(), "Trying again...");
       rclcpp::Rate(0.5).sleep();
     }
+    RCLCPP_WARN(get_logger(), "Nav goal sent ");
 
     // Main loop, waiting to finish the action
     while (!mros_action_finished) {
