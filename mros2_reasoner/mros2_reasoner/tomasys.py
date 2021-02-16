@@ -58,14 +58,15 @@ def resetFDRealisability(tbox, abox, c_name):
         # logging.warning("C status None Return\n\n\n")
         return
     else:
-        if component.c_status in ["FALSE"]:
-            logging.warning("component statis is {} - Set to None\n".format(component.c_status))
+        if component.c_status in ["FALSE", "RECOVERED"]:
+            logging.warning("component status is {} - Set to None\n".format(component.c_status))
             for fd in list(tbox.FunctionDesign.instances()):
                 if fd.fd_realisability is None:
                     continue
                 else:
                     logging.warning("FD {0} realisability: {1} -  Set to None".format(fd.name, fd.fd_realisability))
                     fd.fd_realisability = None
+            component.c_status = None
     
 
 # For debugging purposes
