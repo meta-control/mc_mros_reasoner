@@ -116,7 +116,6 @@ protected:
       {
         last_qos_status = std::make_shared<mros2_msgs::msg::QoS>();
         *last_qos_status = feedback->qos_status;
-
         process_feedback_mech(feedback->qos_status);
       };
 
@@ -137,12 +136,20 @@ protected:
     mros_goal->qos_expected = mros_action_server_->get_current_goal()->qos_expected;
     mros_goal->qos_expected.objective_id = mros_action_server_->get_uuid();
     mros_action_client->send_goal(*mros_goal);
-
-    while(!ros2_action_client->get_goal_status()) {
-      ros2_action_client->send_goal(*ros2_goal);
+    while(!ros2_action_client->get_goal_status()) 
+    {
+      try
+      {
+        ros2_action_client->send_goal(*ros2_goal);
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << e.what() << '\n';
+      }
       RCLCPP_WARN(get_logger(), "Trying again...");
       rclcpp::Rate(0.5).sleep();
     }
+
     RCLCPP_WARN(get_logger(), "Nav goal sent ");
 
     // Main loop, waiting to finish the action
