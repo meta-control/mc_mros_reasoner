@@ -33,6 +33,7 @@ setup(
     entry_points={
         'console_scripts': [
             'mros2_reasoner_node = mros2_reasoner.mros2_reasoner_node:main',
+            'mros2_fake_reasoner_node = mros2_reasoner.mros2_fake_reasoner_node:main',
             'mros2_publish_qa_node = mros2_reasoner.mros2_publish_qa_node:main'
         ],
     },
