@@ -160,20 +160,21 @@ class FakeRosReasoner(Node):
                 value = diagnostic_status.values[0].value
                 self.get_logger().info("Component: {0} - Value {1}".format(component, value))
                 if component == "battery":
-                    self.get_logger().info("CS Message Battery") 
                 # request new configuration
-                    if value == "FALSE":
-                        self.get_logger().info("CS Message Battery -  false") 
+                    if value.upper() == "FALSE":
+                        self.get_logger().info("CS Message Battery -  False") 
                 # request new configuration
                         self.grounded_configuration = "f_energy_saving_mode"
-                    elif value == "RECOVERED":
-                        self.get_logger().info("CS Message Battery -  true")
+                    elif value.upper() == "RECOVERED":
+                        self.get_logger().info("CS Message Battery -  True")
                         self.grounded_configuration = self.check_and_read_parameter('desired_configuration')
                             # request new configuration
                 elif component == "laser_resender":
-                    if value == "FALSE":
+                    if value.upper() == "FALSE":
+                        self.get_logger().info("CS Messagge laser - False") 
                         self.grounded_configuration = "f_degraded_mode"
-                    elif value == "RECOVERED":
+                    elif value.upper() == "RECOVERED":
+                        self.get_logger().info("CS Messagge laser - True") 
                         self.grounded_configuration = self.check_and_read_parameter('desired_configuration')
                 else:
                     self.get_logger().warning("Unsupported CS Message received: %s ", str(diagnostic_status.values[0].key))
