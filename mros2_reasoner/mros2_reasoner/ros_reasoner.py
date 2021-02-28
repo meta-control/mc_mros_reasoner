@@ -115,12 +115,18 @@ class RosReasoner(Node):
     def objective_cancel_goal_callback(self, cancel_request):
         self.get_logger().info("Cancel Action Callback!")
 
-        if self.reasoner.remove_objective(cancel_request.qos_expected.objective_id):
-            self.get_logger().info("Objective Cancelled")
-            return CancelResponse.ACCEPT
+        if (cancel_request.qos_expected is None):
+            # Checks if there are previously defined objectives.
+            for old_objective in self.reasoner.search_objectives():
+                self.reasoner.remove_objective(old_objective.name)
+                return CancelResponse.ACCEPT
         else:
-            self.get_logger().info("Not found")
-            return CancelResponse.REJECT
+            if self.reasoner.remove_objective(cancel_request.qos_expected.objective_id):
+                self.get_logger().info("Objective Cancelled")
+                return CancelResponse.ACCEPT
+            else:
+                self.get_logger().info("Not found")
+                return CancelResponse.REJECT
 
 
 
