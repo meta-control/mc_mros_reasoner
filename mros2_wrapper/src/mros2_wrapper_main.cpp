@@ -43,12 +43,12 @@ public:
   }
 protected:
   std::shared_ptr<nav2_msgs::action::NavigateToPose::Goal>
-  fromMrosGoal(std::shared_ptr<const mros2_msgs::action::NavigateToPoseQos::Goal> mros_goal)
+  fromMrosGoal(std::shared_ptr<const mros2_msgs::action::NavigateToPoseQos::Goal> mros_goal_nav)
   {
     auto ret = std::make_shared<nav2_msgs::action::NavigateToPose::Goal>();
 
-    ret->pose = mros_goal->pose;
-    ret->behavior_tree = mros_goal->behavior_tree;
+    ret->pose = mros_goal_nav->pose;
+    ret->behavior_tree = mros_goal_nav->behavior_tree;
 
     return ret;
   }

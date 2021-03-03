@@ -90,8 +90,9 @@ protected:
         if (last_qos_status != nullptr) {  // No feedback from Metacontroller yet
           ret_feedback->qos_status = *last_qos_status;
           process_feedback_mech(ret_feedback->qos_status);
+          mros_action_server_->publish_feedback(ret_feedback);
+          last_qos_status.reset();
         }
-        mros_action_server_->publish_feedback(ret_feedback);
       };
 
     auto on_ros2_result = [&](
