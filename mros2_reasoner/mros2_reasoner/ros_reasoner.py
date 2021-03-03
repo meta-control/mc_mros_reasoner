@@ -114,7 +114,8 @@ class RosReasoner(Node):
     
     def objective_cancel_goal_callback(self, cancel_request):
         self.get_logger().info("Cancel Action Callback!")
-
+        # Stop reasoning
+        self.hasObjective = False
         if (cancel_request.qos_expected is None):
             # Checks if there are previously defined objectives.
             for old_objective in self.reasoner.search_objectives():
