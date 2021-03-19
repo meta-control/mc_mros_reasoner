@@ -133,8 +133,12 @@ class TestSendQAValue(unittest.TestCase):
 
         if not rospy.has_param('rosgraph_manipulator/configs'):
             rospy.logwarn(
-                'No value in rosparam server for rosgraph_manipulator/configs, setting it to  [\'f1_v1_r1\',\'f1_v1_r2\',f1_v1_r3\']')
-            rospy.set_param('rosgraph_manipulator/configs', ['f1_v1_r1','f1_v1_r2','f1_v1_r3'])
+                'No value in ros param server for rosgraph_manipulator/configs,' +
+                'setting it to  [' +
+                'f_normal_mode, f_performance_mode, f_slow_mode' +
+                'f_degraded_mode, f_energy_saving_mode]')
+            rospy.set_param('rosgraph_manipulator/configs', ['f_normal_mode', 'f_performance_mode', 
+            'f_slow_mode', 'f_degraded_mode', 'f_energy_saving_mode'])
 
         configurations_list = rospy.get_param('rosgraph_manipulator/configs')
 
@@ -144,7 +148,7 @@ class TestSendQAValue(unittest.TestCase):
         else:
             self.result.result = -1
             self._as.set_aborted(self.result)
-            rospy.loginfo ('Unknown configuration request %s' % goal, log_level=rospy.ERROR)
+            rospy.loginfo ('Unknown configuration request %s' % goal)
             return
 
         rospy.sleep(0.1)

@@ -41,7 +41,8 @@ NAME = 'test_qa_reception'
 MSG_DELAY = 0.2
 TIMEOUT = 5.0
 
-QA_TYPE = 'performance'
+QA_TYPE_NOT_SUPPORTED = 'not_a_qa'
+QA_TYPE_SUPPORTED = 'energy'
 QA_VALUE = 0.2
 import sys
 import unittest
@@ -56,31 +57,44 @@ from rosgraph_msgs.msg import Log
 class TestSendQAValue(unittest.TestCase):
     def __init__(self, *args):
         super(TestSendQAValue, self).__init__(*args)
-        self.success = False
+        self.success_us = False
+        self.success_s = False
+        
 
     ############################################################################## 
-    def log_callback(self, log_data):
+    def log_unsupported_callback(self, log_data):
     ##############################################################################
 
         if log_data.name == '/reasoner':
-            if log_data.level == 2:
-                if (log_data.msg == "QA value received!\tTYPE: {0}\tVALUE: {1}".format(QA_TYPE, QA_VALUE)):
+            if log_data.level == Log.WARN:
+                if (log_data.msg == "Unsupported QA TYPE received: {}".format(QA_TYPE_NOT_SUPPORTED)):
+                    rospy.loginfo("send_qa_test heard: %s"%log_data.msg)
+                    rospy.loginfo("That's the correct unsupported qa_type")
+                    self.success_us = True
+    
+    ############################################################################## 
+    def log_supported_callback(self, log_data):
+    ##############################################################################
+
+        if log_data.name == '/reasoner':
+            if log_data.level == Log.INFO:
+                if (log_data.msg == "QA value received!\tTYPE: {0}\tVALUE: {1}".format(QA_TYPE_SUPPORTED, QA_VALUE)):
                     rospy.loginfo("send_qa_test heard: %s"%log_data.msg)
                     rospy.loginfo("That's the correct qa_type and value! ")
-                    self.success = True
-
+                    self.success_s = True
+    
     ############################################################################## 
-    def send_qa_value_msgs(self, timeout=5.0):
+    def send_unsupported_qa_value_msgs(self, timeout=5.0):
     ############################################################################## 
         
         rospy.init_node(NAME, anonymous=True)
         self.message_pub = rospy.Publisher(
                 '/diagnostics', DiagnosticArray, queue_size=1)
-        rospy.Subscriber("/rosout", Log, self.log_callback)
+        rospy.Subscriber("/rosout", Log, self.log_unsupported_callback)
 
         timeout_t = time.time() + timeout # Default timeout 5 sec.
 
-        while not rospy.is_shutdown() and not self.success and time.time() < timeout_t:
+        while not rospy.is_shutdown() and not self.success_us and time.time() < timeout_t:
     
             diag_msg = DiagnosticArray()
             diag_msg.header.stamp = rospy.get_rostime()
@@ -88,7 +102,33 @@ class TestSendQAValue(unittest.TestCase):
             status_msg.level = DiagnosticStatus.OK
             status_msg.name = "fg_print"
             status_msg.values.append(
-                KeyValue(str(QA_TYPE), str(QA_VALUE)))            
+                KeyValue(str(QA_TYPE_NOT_SUPPORTED), str(QA_VALUE)))            
+            status_msg.message = "QA status"
+            diag_msg.status.append(status_msg)
+
+            self.message_pub.publish(diag_msg)
+            time.sleep(MSG_DELAY)
+    
+    ############################################################################## 
+    def send_supported_qa_value_msgs(self, timeout=5.0):
+    ############################################################################## 
+        
+        rospy.init_node(NAME, anonymous=True)
+        self.message_pub = rospy.Publisher(
+                '/diagnostics', DiagnosticArray, queue_size=1)
+        rospy.Subscriber("/rosout", Log, self.log_supported_callback)
+
+        timeout_t = time.time() + timeout # Default timeout 5 sec.
+
+        while not rospy.is_shutdown() and not self.success_s and time.time() < timeout_t:
+    
+            diag_msg = DiagnosticArray()
+            diag_msg.header.stamp = rospy.get_rostime()
+            status_msg = DiagnosticStatus()
+            status_msg.level = DiagnosticStatus.OK
+            status_msg.name = "fg_print"
+            status_msg.values.append(
+                KeyValue(str(QA_TYPE_SUPPORTED), str(QA_VALUE)))            
             status_msg.message = "QA status"
             diag_msg.status.append(status_msg)
 
@@ -96,12 +136,20 @@ class TestSendQAValue(unittest.TestCase):
             time.sleep(MSG_DELAY)
         
     ############################################################################## 
-    def test_publish_qa_value(self):
+    def test_publish_unsupported_qa_value(self):
     ############################################################################## 
-        self.success = False
-        self.send_qa_value_msgs()
+        self.success_us = False
+        self.send_unsupported_qa_value_msgs()
         rospy.sleep(MSG_DELAY)
-        self.assertTrue(self.success)
+        self.assertTrue(self.success_us)
+    
+    ############################################################################## 
+    def test_publish_supported_qa_value(self):
+    ############################################################################## 
+        self.success_s = False
+        self.send_supported_qa_value_msgs()
+        rospy.sleep(MSG_DELAY)
+        self.assertTrue(self.success_s)
 
 if __name__ == '__main__':
     rostest.rosrun(PKG, NAME, TestSendQAValue, sys.argv)

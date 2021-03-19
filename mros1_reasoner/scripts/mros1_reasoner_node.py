@@ -14,10 +14,9 @@ if __name__ == '__main__':
 
     ros_reasoner = RosReasoner()
 
-    if ros_reasoner.initialized:
+    if ros_reasoner.isInitialized is True:
         # initialize KB with the ontology
         ros_reasoner.initKB()
-        ros_reasoner.start_timer()
         rospy.spin()
     else:
         rospy.logerr("There was an error in the reasoner initialization")
