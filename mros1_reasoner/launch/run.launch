@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="model" default="$(find mros1_reasoner)/owl/URJCpilot.owl"/>
-  <arg name="tomasys" default="[$(find mros1_reasoner)/owl/tomasys.owl,
-                               $(find mros1_reasoner)/owl/MROS_ontology.owl,
-                               $(find mros1_reasoner)/owl/navigation_domain_ont.owl]"/>
+  <arg name="model" default="$(find mc_mdl_tomasys)/owl/urjc_pilot.owl"/>
+  <arg name="tomasys" default="[$(find mc_mdl_tomasys)/owl/tomasys.owl,
+                               $(find mc_mdl_tomasys)/owl/mros.owl,
+                               $(find mc_mdl_tomasys)/owl/navigation_domain.owl]"/>
 
   <arg name="desired_configuration" default="f_normal_mode"/>
   <arg name="nfr_energy" default="0.5"/>
