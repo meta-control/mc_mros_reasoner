@@ -1,18 +1,28 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="model" default="$(find mros1_reasoner)/owl/test1.owl"/>
-  <arg name="tomasys" default="$(find mc_mdl_tomasys)/tomasys.owl"/>
-  <arg name="desired_configuration" default="f3_v3_r1"/>
+  <arg name="model" default="$(find mc_mdl_tomasys)/owl/urjc_pilot.owl"/>
+  <arg name="tomasys" default="[$(find mc_mdl_tomasys)/owl/tomasys.owl,
+                               $(find mc_mdl_tomasys)/owl/mros.owl,
+                               $(find mc_mdl_tomasys)/owl/navigation_domain.owl]"/>
+
+  <arg name="desired_configuration" default="f_normal_mode"/>
   <arg name="nfr_energy" default="0.5"/>
-  <arg name="nfr_safety" default="0.8"/>
+  <arg name="nfr_safety" default="0.5"/>
+  <arg name="reasoning_rate" default="2.0"/>
+  <arg name="use_reconfigure_srv" default="True"/>
+  <arg name="reconfigure_srv_name" default="rosgraph_manipulator_action_server"/>
 
   <node name="reasoner" pkg="mros1_reasoner" type="mros1_reasoner_node.py" output="screen">
     <param name="model_file" type="string" value="$(arg model)"/>
-    <param name="tomasys_file" type="string" value="$(arg tomasys)"/>
+    <rosparam param="tomasys_file" subst_value="True">$(arg tomasys)</rosparam>
     <param name="desired_configuration" type="string" value="$(arg desired_configuration)"/>
     <param name="nfr_energy" value="$(arg nfr_energy)"/>
     <param name="nfr_safety" value="$(arg nfr_safety)"/>
+    <param name="reasoning_rate" value="$(arg reasoning_rate)"/>
+    <param name="use_reconfigure_srv" value="$(arg use_reconfigure_srv)"/>
+    <param name="reconfigure_srv_name" value="$(arg reconfigure_srv_name)"/>
+    
   </node>
 
 </launch>

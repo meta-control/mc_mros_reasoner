@@ -56,8 +56,6 @@ class TestLevel1Functions(unittest.TestCase):
         super(TestLevel1Functions, self).__init__(*args)
         self.success = False
         self.success_level_1 = 0
-
-
     
     ############################################################################## 
     def test_one_equals_one(self):
@@ -69,6 +67,7 @@ class TestLevel1Functions(unittest.TestCase):
     def test_1_level_functional_architecture(self):
     ############################################################################## 
         self.success = False
+        self.success_level_1 = 0
         self.susbcriber_functional_architecture(TIMEOUT)
         rospy.sleep(MSG_DELAY)
         self.assertTrue(self.success)
@@ -81,17 +80,24 @@ class TestLevel1Functions(unittest.TestCase):
             if log_data.level == Log.INFO:
                 if (log_data.msg.startswith("Loaded ontology:")):
                     rospy.loginfo("OWL file loaded into KB: %s"%log_data.msg)
+            if log_data.level == Log.INFO:
+                if (log_data.msg.startswith("[RosReasoner] -- Reasoner Initialization Ok")):
+                    rospy.loginfo("Reasoner initialized ok: %s"%log_data.msg)
                     self.success_level_1 = self.success_level_1 + 1
-            if log_data.level == Log.WARN:
-                if (log_data.msg.startswith("Objective, NFRs and initial FG are generated from the OWL file")):
-                    rospy.loginfo("KB initialized: %s"%log_data.msg)
+            if log_data.level == Log.INFO:
+                if (log_data.msg.startswith("Objective created and set to ungrounded")):
+                    rospy.loginfo("Objective created: %s"%log_data.msg)
                     self.success_level_1 = self.success_level_1 + 1
-            if (self.success_level_1 == 2):
+            if log_data.level == Log.INFO:
+                if (log_data.msg.startswith("Exited timer_cb after successful reconfiguration")):
+                    rospy.loginfo("Objective reconfigured: %s"%log_data.msg)
+                    self.success_level_1 = self.success_level_1 + 1
+            if (self.success_level_1 == 3):
                 rospy.loginfo("Got the 3 correct messages! - level_functional test OK!")
                 self.success = True
                 
     ############################################################################## 
-    def susbcriber_functional_architecture(self, timeout=5.0):
+    def susbcriber_functional_architecture(self, timeout=10.0):
     ############################################################################## 
         
         rospy.init_node(NAME, anonymous=True)
