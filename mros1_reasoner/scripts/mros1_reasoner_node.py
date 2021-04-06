@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###########################################
-# 
+#
 # authors:    M.A.GarzonOviedo@tudelft.nl
 #             c.h.corbato@tudelft.nl
 ##########################################

@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 <launch>
+
   <!-- Launch reasoner -->
-  <include file="$(find mros1_reasoner)/launch/run.launch"/>
+  <include file="$(find mros1_reasoner)/launch/run.launch">
+    <arg name="use_reconfigure_srv" value="False" />
+  </include>
 
   <!-- Run test -->
   <test test-name="test_qa_reception" pkg="mros1_reasoner" type="test_qa_reception.py"/>
