@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="model" default="$(find mc_mdl_tomasys)/owl/urjc_pilot.owl"/>
+  <arg name="model" default="$(find mc_mdl_tomasys)/owl/models21_test.owl"/>
   <arg name="tomasys" default="[$(find mc_mdl_tomasys)/owl/tomasys.owl,
                                $(find mc_mdl_tomasys)/owl/mros.owl,
                                $(find mc_mdl_tomasys)/owl/navigation_domain.owl]"/>
