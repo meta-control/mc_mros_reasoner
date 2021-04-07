@@ -6,7 +6,7 @@
                                $(find mc_mdl_tomasys)/owl/mros.owl,
                                $(find mc_mdl_tomasys)/owl/navigation_domain.owl]"/>
 
-  <arg name="desired_configuration" default="f_normal_mode"/>
+  <arg name="desired_configuration" default=""/>
   <arg name="nfr_energy" default="0.5"/>
   <arg name="nfr_safety" default="0.5"/>
   <arg name="reasoning_rate" default="2.0"/>

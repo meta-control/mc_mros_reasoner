@@ -207,17 +207,9 @@ def meetNFRs(objective, fds):
                     + "or multiple definitions (inconsistent)")
             break
         else:
-            if nfr.isQAtype.name == 'energy':
-                # specific semantics for energy
-                if qas[0].hasValue > nfr.hasValue:
-                    break
-            elif nfr.isQAtype.name == 'safety':
-                # specific semantics for safety
-                if qas[0].hasValue < nfr.hasValue:
-                    break
-            else:
-                loginfo("No known criteria for that FD - QA selection")
-        filtered.append(fd)
+            # Check if qa is meet
+            if qas[0].hasValue < nfr.hasValue:
+                filtered.append(fd)
     if filtered == []:
         loginfo("No FDs meet NFRs")
 

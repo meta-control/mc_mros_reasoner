@@ -1,9 +1,15 @@
 <?xml version="1.0"?>
 <launch>
 
+  <rosparam ns="rosgraph_manipulator" command="load" file="$(find metacontrol_sim)/yaml/rosgraph_manipulator_config.yaml"/>
+
+
   <!-- Launch reasoner -->
   <include file="$(find mros1_reasoner)/launch/run.launch">
     <arg name="use_reconfigure_srv" value="True" />
+    <arg name="desired_configuration" value="f2_v2_r2" />
+    <arg name="nfr_energy" default="0.6"/>
+    <arg name="nfr_safety" default="0.6"/>
   </include>
   
   <!-- Run test -->
