@@ -250,7 +250,7 @@ class RosReasoner(object):
                                       .format(diagnostic_status.values[0].key))
                 else:
                     rospy.logwarn("Unsupported Message received: {}"
-                                  .format(diagnostic_status.values[0].key))
+                                  .format(diagnostic_status.message))
 
     # for MVP with QAs - request the FD.name to reconfigure to
     def request_configuration(self, new_configuration):
