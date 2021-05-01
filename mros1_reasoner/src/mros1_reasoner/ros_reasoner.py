@@ -226,22 +226,22 @@ class RosReasoner(object):
                             .format(diagnostic_status.values[0].key,
                                     diagnostic_status.values[0].value))
                     else:
-                        rospy.logwarn("Unsupported CS Message received: %s ",
+                        rospy.logdebug("Unsupported CS Message received: %s ",
                                       str(diagnostic_status.values[0].key))
 
                 # QA Status update
                 elif diagnostic_status.message == "QA status":
-                    rospy.loginfo(
-                        "QA value received for: {0}\tTYPE: {1}\tVALUE: {2}"
-                        .format(diagnostic_status.name,
-                                diagnostic_status.values[0].key,
-                                diagnostic_status.values[0].value))
+                    # rospy.loginfo(
+                    #     "QA value received for: {0}\tTYPE: {1}\tVALUE: {2}"
+                    #     .format(diagnostic_status.name,
+                    #             diagnostic_status.values[0].key,
+                    #             diagnostic_status.values[0].value))
 
                     up_qa = self.reasoner.updateQA(diagnostic_status)
                     if up_qa == -1:
                         rospy.logwarn("No FG found - Discarding QA message")
                     elif up_qa == 1:
-                        rospy.loginfo(
+                        rospy.logdebug(
                             "QA value received!\tTYPE: {0}\tVALUE: {1}"
                             .format(diagnostic_status.values[0].key,
                                     diagnostic_status.values[0].value))
@@ -249,7 +249,7 @@ class RosReasoner(object):
                         rospy.logwarn("Unsupported QA TYPE received: {}"
                                       .format(diagnostic_status.values[0].key))
                 else:
-                    rospy.logwarn("Unsupported Message received: {}"
+                    rospy.logdebug("Unsupported Message received: {}"
                                   .format(diagnostic_status.message))
 
     # for MVP with QAs - request the FD.name to reconfigure to
