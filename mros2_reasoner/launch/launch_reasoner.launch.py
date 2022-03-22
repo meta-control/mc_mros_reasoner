@@ -27,18 +27,19 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     # Get the launch directory
+    tomasys_ontology_bringup_dir = get_package_share_directory('mc_mdl_tomasys')
     mros_ontology_bringup_dir = get_package_share_directory('mros_ontology')
     
     # Create the launch configuration variables
     working_ontology_file = LaunchConfiguration('model_file')
 
-    tomasys_files_array = [os.path.join(mros_ontology_bringup_dir, 'ontologies', 'tomasys.owl'),
-                        os.path.join(mros_ontology_bringup_dir, 'ontologies', 'MROS_ontology.owl'),
-                        os.path.join(mros_ontology_bringup_dir, 'ontologies', 'navigation_domain_ont.owl')]
+    tomasys_files_array = [os.path.join(tomasys_ontology_bringup_dir, 'owl', 'tomasys.owl'),
+                        os.path.join(mros_ontology_bringup_dir, 'owl', 'mros.owl'),
+                        os.path.join(mros_ontology_bringup_dir, 'owl', 'navigation_domain.owl')]
 
     declare_working_ontology_cmd = DeclareLaunchArgument(
         'model_file',
-        default_value=os.path.join(mros_ontology_bringup_dir, 'ontologies', 'URJCpilot.owl'),
+        default_value=os.path.join(mros_ontology_bringup_dir, 'owl', 'urjc_pilot.owl'),
         description='File name for the Working ontology file')
 
     declare_desired_configuration_cmd = DeclareLaunchArgument(
