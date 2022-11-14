@@ -8,6 +8,7 @@
   <maintainer email="c.h.corbato@tudelft.nl">Carlos Hernandez Corbato</maintainer>
   <license>Apache License 2.0</license>
 
+  <exec_depend>system_modes</exec_depend>
   <build_depend>system_modes</build_depend>
 
   <exec_depend>python3-owlready2-pip</exec_depend>
