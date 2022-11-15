@@ -30,6 +30,7 @@ A meta-controller implementation for ROS2
 Install deps:
 ```console
   cd ~/mros_reasoner_ws/
+  vcs import src < src/mc_mros_reasoner/mros2_reasoner.rosinstall
   rosdep install --from-paths src --ignore-src -r -y
 ```
 
