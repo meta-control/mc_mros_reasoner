@@ -1,6 +1,6 @@
 # mros_reasoner
 
-A meta-controller implementation for ROS2 foxy
+A meta-controller implementation for ROS2
 
 ### Note:
 
@@ -8,23 +8,7 @@ A meta-controller implementation for ROS2 foxy
 
 ## Installation
 
-### Previous steps
-
-#### Install java jre
-
-The `mros_reasoner` uses  [Owlready2](https://owlready2.readthedocs.io/en/latest/index.html) to handle the ontologies and perform reasoning.
-
-Owlready2 by default uses the [HermiT reasoner](http://www.hermit-reasoner.com/) which is written in Java, and thus you need a Java Vitual Machine to perform reasoning in Owlready2.
-
-You can use this command **To install the Java Vitual Machine**
-
-```console
-sudo apt-get install openjdk-14-jre
-```
-
-Under Linux, Owlready should automatically find Java.
-
-### Create reasoner_ws - ROS2  Foxy
+### Create mros_reasoner workspace   
 
 - We recommend you to create a workspace only for `mros_reasoner`, for example:
 
@@ -33,35 +17,53 @@ Under Linux, Owlready should automatically find Java.
   cd mros_reasoner_ws
 ```
 
-### Get mros2_reasoner - ROS2  Foxy
+### Get mros2_reasoner
 
 - You need to clone the `mc_mros_reasoner` into the reasoner workspace (ie: `mros_reasoner_ws`).
-- Make sure to change to the branch `foxy_devel`
+- Make sure to change to the branch `humble`
 
 ```console
   cd ~/mros_reasoner_ws/src
-  git clone --branch foxy_devel https://github.com/tud-cor/mc_mros_reasoner.git
+  git clone --branch humble https://github.com/meta-control/mc_mros_reasoner.git
 ```
-### Get the Pilot URJC components - ROS2  Foxy
+
+Install deps:
+```console
+  cd ~/mros_reasoner_ws/
+  rosdep install --from-paths src --ignore-src -r -y
+```
+
+### Build MROS2 workspace
+
+- Once you have the workspace setup, you can build the workspace
+- Do not forget to source ROS humble workspace before building your `mros_reasoner_ws`
+
+```console
+cd ~/mros_reasoner_ws/src
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install
+```
+
+## Example - Pilot URJC
 
 - To test the code, get the Turtlebot3 Pilot from https://github.com/MROS-RobMoSys-ITP/Pilot-URJC
 - **Make sure you check the** metacontrol-test-integration **branch**
 - Put the packages in the same ws (i.e. `~/mros_reasoner_ws/`)
 - Follow the instructions on how to build the packages there
 
+**Disclaimer:** The example might not work for all ros2 versions supported by MROS. Check the example page to find out which versions are supported.
 
-### Build the code - ROS2  Foxy
+### Build workspace with example
 
-- Once you have the workspace setup, you can build the workspace
-- Do not forget to source ROS foxy workspace before building your `mros_reasoner_ws`
+Make sure to rebuild the workspace after you get the example code.
 
 ```console
 cd ~/mros_reasoner_ws/src
-source /opt/ros/foxy/setup.bash
+source /opt/ros/hubmle/setup.bash
 colcon build --symlink-install
 ```
 
-## Execution - ROS2  Foxy - with simulated turtlebot3
+### Execution - with simulated turtlebot3
 
 
 1. **Launch turtlebot3 world in gazebo sim**
@@ -72,7 +74,7 @@ colcon build --symlink-install
       ros2 launch pilot_urjc_bringup tb3_sim_launch.py
     ```
   - After the last command, the Gazebo simulator is running in background. Don't worry if no window is opened.
-  
+
 2. **Turtlebot3 Navigation launcher**
 
     This launcher includes rviz, nav2, amcl, map-server, **[system-modes](https://github.com/micro-ROS/system_modes)**, etc.
@@ -110,30 +112,4 @@ With all the above, we will have enough to test some navigation actions and expe
     ```console
       ros2 run mros2_reasoner mros2_publish_qa_node
     ```
-
-
-
-### Testing  - **Does not work on ROS2**
-
-Two [rostest](http://wiki.ros.org/rostest) have been created for this package:
-
-1. The **1-level functional architecture** test, which checks that the reasoner is capable of loading an `owl` file compliant with TOMAsys including:
-
-    1. a Function and multiple FDs that solves it.
-    1. QA performance values for the FDs.
-
-    To run this first test use:
-
-    ```console
-    source mros1_reasoner_ws/devel/setup.bash
-    rostest mros1_reasoner test_level_1_functional_arch.test
-    ```
-
-1. The **QA reception** test, checks wheter or not the reasoner can correctly receive a QA value and update it on its knowledge base.
-
-    To run this second test use:
-
-    ```console
-    source mros1_reasoner_ws/devel/setup.bash
-    rostest mros1_reasoner test_qa_reception.test
     ```  
