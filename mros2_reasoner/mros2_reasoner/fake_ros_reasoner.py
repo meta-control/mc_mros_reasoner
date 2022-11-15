@@ -4,7 +4,6 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.action import ActionServer, CancelResponse
-from system_modes.srv import ChangeMode
 from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import KeyValue
 
