@@ -4,7 +4,7 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.action import ActionServer, CancelResponse
-from system_modes.srv import ChangeMode
+from system_modes_msgs.srv import ChangeMode
 from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import KeyValue
 
@@ -313,7 +313,7 @@ class RosReasoner(Node):
         system_modes_cli = self.create_client(ChangeMode, '/' + self.node_name + '/change_mode', callback_group=self.cb_group)
 
         while not system_modes_cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().warn('Mode change service not available, waiting again...')
+            self.get_logger().warn('Mode change service /'+ self.node_name+'/change_mode not available, waiting again...')
         try:
             req = ChangeMode.Request()
             req.mode_name = new_configuration
