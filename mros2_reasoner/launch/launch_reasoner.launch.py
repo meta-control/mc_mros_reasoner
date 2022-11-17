@@ -38,8 +38,7 @@ def generate_launch_description():
     tomasys_files_array = [
         os.path.join(
             tomasys_ontology_bringup_dir, 'owl', 'tomasys.owl'), os.path.join(
-            mros_ontology_bringup_dir, 'owl', 'mros.owl'), os.path.join(
-                mros_ontology_bringup_dir, 'owl', 'navigation_domain.owl')]
+            mros_ontology_bringup_dir, 'owl', 'mros.owl')]
 
     declare_working_ontology_cmd = DeclareLaunchArgument(
         'model_file',
@@ -51,18 +50,8 @@ def generate_launch_description():
 
     declare_desired_configuration_cmd = DeclareLaunchArgument(
         'desired_configuration',
-        default_value='f_normal_mode',
+        default_value='',
         description='Desired inital configuration (system mode)')
-
-    declare_nfr_energy_cmd = DeclareLaunchArgument(
-        'nfr_energy',
-        default_value='0.5',
-        description='Required value for Energy NFR')
-
-    declare_nfr_safety_cmd = DeclareLaunchArgument(
-        'nfr_safety',
-        default_value='0.5',
-        description='Required value for Safety NFR')
 
     bringup_reasoner_cmd = Node(
         package='mros2_reasoner',
@@ -75,24 +64,14 @@ def generate_launch_description():
         }],
     )
 
-    wrapper_cmd = Node(
-        package='mros2_wrapper',
-        executable='mros2_wrapper',
-        name='mros2_wrapper',
-        output='screen'
-    )
-
     # Create the launch description and populate
     ld = LaunchDescription()
 
     # Declare the launch options
     ld.add_action(declare_working_ontology_cmd)
     ld.add_action(declare_desired_configuration_cmd)
-    ld.add_action(declare_nfr_energy_cmd)
-    ld.add_action(declare_nfr_safety_cmd)
 
     # Add the actions to launch the reasoner node
     ld.add_action(bringup_reasoner_cmd)
-    ld.add_action(wrapper_cmd)
 
     return ld
