@@ -25,21 +25,28 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
     # Get the launch directory
-    tomasys_ontology_bringup_dir = get_package_share_directory('mc_mdl_tomasys')
+    tomasys_ontology_bringup_dir = get_package_share_directory(
+        'mc_mdl_tomasys')
     mros_ontology_bringup_dir = get_package_share_directory('mros_ontology')
-    
+
     # Create the launch configuration variables
     working_ontology_file = LaunchConfiguration('model_file')
 
-    tomasys_files_array = [os.path.join(tomasys_ontology_bringup_dir, 'owl', 'tomasys.owl'),
-                        os.path.join(mros_ontology_bringup_dir, 'owl', 'mros.owl'),
-                        os.path.join(mros_ontology_bringup_dir, 'owl', 'navigation_domain.owl')]
+    tomasys_files_array = [
+        os.path.join(
+            tomasys_ontology_bringup_dir, 'owl', 'tomasys.owl'), os.path.join(
+            mros_ontology_bringup_dir, 'owl', 'mros.owl'), os.path.join(
+                mros_ontology_bringup_dir, 'owl', 'navigation_domain.owl')]
 
     declare_working_ontology_cmd = DeclareLaunchArgument(
         'model_file',
-        default_value=os.path.join(mros_ontology_bringup_dir, 'owl', 'urjc_pilot.owl'),
+        default_value=os.path.join(
+            mros_ontology_bringup_dir,
+            'owl',
+            'urjc_pilot.owl'),
         description='File name for the Working ontology file')
 
     declare_desired_configuration_cmd = DeclareLaunchArgument(
@@ -56,7 +63,7 @@ def generate_launch_description():
         'nfr_safety',
         default_value='0.5',
         description='Required value for Safety NFR')
-    
+
     bringup_reasoner_cmd = Node(
         package='mros2_reasoner',
         executable='mros2_reasoner_node',
@@ -65,7 +72,7 @@ def generate_launch_description():
         parameters=[{
             'tomasys_file': tomasys_files_array,
             'model_file': working_ontology_file,
-            }],
+        }],
     )
 
     wrapper_cmd = Node(

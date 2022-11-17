@@ -25,15 +25,16 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
 
     desired_configuration = LaunchConfiguration('desired_configuration')
-    
+
     declare_desired_configuration_cmd = DeclareLaunchArgument(
         'desired_configuration',
         default_value='f_normal_mode',
         description='Desired inital configuration (system mode)')
-      
+
     bringup_reasoner_cmd = Node(
         package='mros2_reasoner',
         executable='mros2_fake_reasoner_node',
