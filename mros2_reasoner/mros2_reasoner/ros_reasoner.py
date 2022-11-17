@@ -47,7 +47,7 @@ class RosReasoner(Node):
             "use_reconfigure_srv", True)
 
         # Get ontology and tomasys file paths from parameters
-        model_file = self.check_and_read_parameter('model_file')
+        model_file_arr = self.check_and_read_parameter('model_file')
         tomasys_file_arr = self.check_and_read_parameter('tomasys_file')
 
         self.node_name = self.check_and_read_parameter('node_name', 'pilot')
@@ -76,17 +76,12 @@ class RosReasoner(Node):
             cancel_callback=self.objective_cancel_goal_callback)
 
         # First read fixed ontologies (Tomasys + MROS)
-        for tomasys_file in list(tomasys_file_arr):
-            if self.reasoner.tomasys is None:
-                # load ontology from file
-                self.reasoner.tomasys = self.read_ontology_file(tomasys_file)
-            else:
-                # Import additional ontology from files
-                self.reasoner.tomasys.imported_ontologies.append(
-                    self.read_ontology_file(tomasys_file))
+        self.get_logger().error(str(tomasys_file_arr))
+        self.reasoner.tomasys = self.read_ontology_file(tomasys_file_arr)
 
         # Load the application model (individuals of tomasys classes)
-        self.reasoner.onto = self.read_ontology_file(model_file)
+        self.get_logger().error(str(model_file_arr))
+        self.reasoner.onto = self.read_ontology_file(model_file_arr)
 
         # Check if ontologies have been correctly loaded
         if self.reasoner.tomasys is None or self.reasoner.onto is None:
@@ -187,7 +182,7 @@ class RosReasoner(Node):
 
         return ControlQos.Result()
 
-    def read_ontology_file(self, ontology_file_name):
+    def read_ontology_file(self, ontology_file_array):
         """ Checks if an ontology file exists and reads its value
             Args:
                     ontology_file_name (string): The name of the parameter.
@@ -195,19 +190,28 @@ class RosReasoner(Node):
             Returns:
                     The ontology if it's readed correctly, None otherwise.
         """
-        if ontology_file_name is not None:
-            ontology = loadKB_from_file(ontology_file_name)
-            if ontology is not None:
-                self.get_logger().info("Loaded ontology: " + str(ontology_file_name))
+        if (type(ontology_file_array) == str):
+            ontology_file_array = [ontology_file_array]
+        ontology_obj = None
+        for ontology_file in ontology_file_array:
+            if ontology_file is not None:
+                ontology = loadKB_from_file(ontology_file)
+                if ontology is not None:
+                    self.get_logger().info("Loaded ontology: " + str(ontology_file))
+                else:
+                    self.get_logger().error(
+                        "Failed to load ontology from: " +
+                        str(ontology_file))
+                    return None
+                if ontology_obj:
+                    ontology_obj.imported_ontologies.append(ontology)
+                else:
+                    ontology_obj = ontology
             else:
-                self.get_logger().error(
-                    "Failed to load ontology from: " +
-                    str(ontology_file_name))
+                self.get_logger().warning("No ontology file provided!")
                 return None
-        else:
-            self.get_logger().warning("No ontology file provided!")
-            return None
-        return ontology
+
+        return ontology_obj
 
     def check_and_read_parameter(self, param_name, default_value=None):
         """ Checks if a parameter exists and returns its value
