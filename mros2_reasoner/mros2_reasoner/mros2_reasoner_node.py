@@ -10,7 +10,8 @@ def main(args=None):
 
     ros_reasoner = RosReasoner()
 
-    # Use a MultiThreadedExecutor to enable processing service request concurrently
+    # Use a MultiThreadedExecutor to enable processing service request
+    # concurrently
     mt_executor = MultiThreadedExecutor()
 
     if ros_reasoner.isInitialized is True:

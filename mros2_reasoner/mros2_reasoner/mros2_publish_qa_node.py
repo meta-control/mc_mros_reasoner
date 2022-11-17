@@ -6,11 +6,13 @@ from mros2_msgs.action import ControlQos
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
+
 class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('mros2_publish_qa_node')
-        self.publisher_ = self.create_publisher(DiagnosticArray, '/diagnostics', 10)
+        self.publisher_ = self.create_publisher(
+            DiagnosticArray, '/diagnostics', 10)
         # timer_period = 2.0  # seconds
         # self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
@@ -20,12 +22,12 @@ class MinimalPublisher(Node):
         self.reconf = False
         self.recover = False
 
-
     def send_goal(self):
         goal_msg = ControlQos.Goal()
 
         goal_msg.qos_expected.objective_type = "f_navigate"
-        goal_msg.qos_expected.objective_id = "obj_navigate_{:.0f}".format(ROSClock().now().to_msg().sec/10)
+        goal_msg.qos_expected.objective_id = "obj_navigate_{:.0f}".format(
+            ROSClock().now().to_msg().sec / 10)
         goal_msg.qos_expected.selected_mode = ""
         nfr = KeyValue()
         nfr.key = "energy"
@@ -35,24 +37,32 @@ class MinimalPublisher(Node):
         nfr.key = "safety"
         nfr.value = str(0.5)
         goal_msg.qos_expected.qos.append(nfr)
-        
+
         self.get_logger().info('Waiting for server')
         self._action_client.wait_for_server()
-        
-        self.get_logger().info('Sending goal  {0}'.format(goal_msg.qos_expected.objective_type))
-        self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
+
+        self.get_logger().info(
+            'Sending goal  {0}'.format(
+                goal_msg.qos_expected.objective_type))
+        self._action_client.send_goal_async(
+            goal_msg, feedback_callback=self.feedback_callback)
         self.get_logger().info('Goal Sent!!!')
 
-    
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
-        self.get_logger().info('Best mode: {0}'.format(feedback.qos_status.selected_mode))
-        self.get_logger().info('Solving: {0} of type {1}'.format(
-            feedback.qos_status.objective_id, feedback.qos_status.objective_type))
-        self.get_logger().info('obj status: {0}'.format(feedback.qos_status.objective_status))
+        self.get_logger().info(
+            'Best mode: {0}'.format(
+                feedback.qos_status.selected_mode))
+        self.get_logger().info(
+            'Solving: {0} of type {1}'.format(
+                feedback.qos_status.objective_id,
+                feedback.qos_status.objective_type))
+        self.get_logger().info(
+            'obj status: {0}'.format(
+                feedback.qos_status.objective_status))
         for qos in feedback.qos_status.qos:
-            self.get_logger().info('QoS Status: Key: {0} - Value {1}'.format(qos.key, qos.value))
-
+            self.get_logger().info(
+                'QoS Status: Key: {0} - Value {1}'.format(qos.key, qos.value))
 
     def timer_callback(self):
         if self.qa_value > 1.0:
@@ -73,7 +83,6 @@ class MinimalPublisher(Node):
         diag_msg.status.append(status_msg)
 
         self.publisher_.publish(diag_msg)
-             
 
         self.qa_value += 0.015
         # self.get_logger().info('qa: {0}'.format(self.qa_value))
@@ -112,8 +121,8 @@ class MinimalPublisher(Node):
                 diag_msg_2.status.append(status_msg_2)
                 self.publisher_.publish(diag_msg_2)
                 self.reconf = True
-           
-            
+
+
 def main(args=None):
     rclpy.init(args=args)
 
