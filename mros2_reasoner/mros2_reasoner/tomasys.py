@@ -200,8 +200,6 @@ def meetNFRs(o, fds):
             elif nfr.isQAtype.name == 'safety':
                 if qas[0].hasValue < nfr.hasValue:  # specific semantics for energy
                     break
-            else:
-                logging.warning("No known criteria for FD selection for that QA")
         filtered.append(fd)
     if filtered == []:
         logging.warning("No FDs meet NFRs")
