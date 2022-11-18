@@ -34,21 +34,21 @@ class RosReasoner(Node):
         self.declare_parameter("tomasys_file", Parameter.Type.STRING_ARRAY)
         self.declare_parameter("desired_configuration", "")
         self.declare_parameter("node_name", Parameter.Type.STRING)
-        self.declare_parameter("reasoning_rate", 2.0)  # TODO: too low?
+        self.declare_parameter("reasoning_rate", 2.0)
         self.declare_parameter("use_reconfigure_srv", True)
 
         # Read ROS parameters
 
         # Whether or not to use system modes reconfiguration
         #  Used mainly for testing
-        self.use_reconfiguration_srv = self.check_and_read_parameter(
-            "use_reconfigure_srv", True)
+        self.use_reconfiguration_srv = self.get_parameter(
+            "use_reconfigure_srv").value
 
         # Get ontology and tomasys file paths from parameters
-        model_file_arr = self.check_and_read_parameter('model_file')
-        tomasys_file_arr = self.check_and_read_parameter('tomasys_file')
+        model_file_arr = self.get_parameter('model_file').value
+        tomasys_file_arr = self.get_parameter('tomasys_file').value
 
-        self.node_name = self.check_and_read_parameter('node_name', '')
+        self.node_name = self.get_parameter('node_name').value
 
         self.cb_group = ReentrantCallbackGroup()
 
@@ -85,12 +85,10 @@ class RosReasoner(Node):
             return
 
         # Get desired_configuration_name from parameters
-        self.set_initial_fd(
-            self.check_and_read_parameter('desired_configuration'))
+        self.set_initial_fd(self.get_parameter('desired_configuration').value)
 
-        timer_rate = float(
-            self.check_and_read_parameter(
-                'reasoning_rate', 2.0))
+        timer_rate = self.get_parameter('reasoning_rate').value
+
         self.feedback_rate = self.create_rate(timer_rate)
         self.timer = self.create_timer(
             timer_rate, self.timer_cb, callback_group=self.cb_group)
@@ -208,30 +206,6 @@ class RosReasoner(Node):
                 return None
 
         return ontology_obj
-
-    def check_and_read_parameter(self, param_name, default_value=None):
-        """ Checks if a parameter exists and returns its value
-            Args:
-                    param_name (string): The name of the parameter.
-            Returns:
-                    The parameter value if it exists, None otherwise.
-        """
-        # Helper function to return value of a parameter
-        if self.has_parameter(param_name):
-            param_desc = self.get_parameter(param_name)
-            if param_desc.type_ == Parameter.Type.NOT_SET:
-                ret = default_value
-            else:
-                ret = param_desc.value
-        else:
-            self.get_logger().warning(
-                'Fetch of parameter that does not exist: ' +
-                param_name +
-                ' - Returning ' +
-                str(default_value))
-            ret = default_value
-
-        return ret
 
     def create_objective(self, goal_request):
         ##
