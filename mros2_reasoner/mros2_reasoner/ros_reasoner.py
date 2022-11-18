@@ -30,14 +30,12 @@ class RosReasoner(Node):
         self.mode_change_srv_call_future = None
         self.req_reconfiguration_result = None
 
-        self.declare_parameter("model_file")
-        self.declare_parameter("tomasys_file")
-        self.declare_parameter("desired_configuration")
-        self.declare_parameter("nfr_energy")
-        self.declare_parameter("nfr_safety")
-        self.declare_parameter("reasoning_rate")
-        self.declare_parameter("node_name")
-        self.declare_parameter("use_reconfigure_srv")
+        self.declare_parameter("model_file", Parameter.Type.STRING)
+        self.declare_parameter("tomasys_file", Parameter.Type.STRING_ARRAY)
+        self.declare_parameter("desired_configuration", "")
+        self.declare_parameter("node_name", Parameter.Type.STRING)
+        self.declare_parameter("reasoning_rate", 2.0)  # TODO: too low?
+        self.declare_parameter("use_reconfigure_srv", True)
 
         # Read ROS parameters
 
