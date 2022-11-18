@@ -26,13 +26,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(mros2_launch_path),
         launch_arguments={'model_file': mock_ontology_path}.items())
 
-
-    # mission_node = Node(
-    #     package='pipeline_inspection',
-    #     executable='mission.py',
-    #     output='screen',
-    # )
-
     return LaunchDescription([
         mros2_reasoner_node
     ])
