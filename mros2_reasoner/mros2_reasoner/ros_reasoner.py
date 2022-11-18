@@ -50,7 +50,7 @@ class RosReasoner(Node):
         model_file_arr = self.check_and_read_parameter('model_file')
         tomasys_file_arr = self.check_and_read_parameter('tomasys_file')
 
-        self.node_name = self.check_and_read_parameter('node_name', 'pilot')
+        self.node_name = self.check_and_read_parameter('node_name', '')
 
         self.cb_group = ReentrantCallbackGroup()
 

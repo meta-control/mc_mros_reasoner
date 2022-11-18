@@ -42,10 +42,7 @@ def generate_launch_description():
 
     declare_working_ontology_cmd = DeclareLaunchArgument(
         'model_file',
-        default_value=os.path.join(
-            mros_ontology_bringup_dir,
-            'owl',
-            'urjc_pilot.owl'),
+        default_value="",
         description='File name for the Working ontology file')
 
     declare_desired_configuration_cmd = DeclareLaunchArgument(
