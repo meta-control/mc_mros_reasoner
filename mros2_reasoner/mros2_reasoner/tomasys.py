@@ -177,7 +177,7 @@ def remove_objective_grounding(objective, tbox, abox):
         destroy_entity(fg)
 
 
-# Returns all FunctionDesign individuals from a given set (fds) that comply with the NFRs of a giben Objective individual (o)
+# Returns all FunctionDesign individuals from a given set (fds) that comply with the NFRs of a given Objective individual (o)
 def meetNFRs(o, fds):
     if fds == []:
         logging.warning("Empty set of given FDs")
@@ -204,7 +204,7 @@ def meetNFRs(o, fds):
                 logging.warning("No known criteria for FD selection for that QA")
         filtered.append(fd)
     if filtered == []:
-        logging.warning("No FDs meetf NFRs")
+        logging.warning("No FDs meet NFRs")
 
     return filtered
 

@@ -76,11 +76,9 @@ class RosReasoner(Node):
             cancel_callback=self.objective_cancel_goal_callback)
 
         # First read fixed ontologies (Tomasys + MROS)
-        self.get_logger().error(str(tomasys_file_arr))
         self.reasoner.tomasys = self.read_ontology_file(tomasys_file_arr)
 
         # Load the application model (individuals of tomasys classes)
-        self.get_logger().error(str(model_file_arr))
         self.reasoner.onto = self.read_ontology_file(model_file_arr)
 
         # Check if ontologies have been correctly loaded
