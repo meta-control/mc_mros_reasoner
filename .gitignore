@@ -2,6 +2,10 @@ mros1_examples/owl/catalog-v001.xml
 mros1_reasoner/scripts/__pycache__
 mros1_reasoner/scripts/catalog-v001.xml
 
+mros2_reasoner/install/
+mros2_reasoner/log/
+mros2_reasoner/owl/catalog-v001.xml
+
 devel/
 logs/
 build/
