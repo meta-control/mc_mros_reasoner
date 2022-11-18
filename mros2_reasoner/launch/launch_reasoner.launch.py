@@ -16,7 +16,8 @@
 
 import os
 
-from ament_index_python.packages import get_package_share_directory, get_package_prefix
+from ament_index_python.packages import get_package_prefix
+from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
@@ -34,6 +35,7 @@ def generate_launch_description():
 
     # Create the launch configuration variables
     working_ontology_file = LaunchConfiguration('model_file')
+    node_name = LaunchConfiguration('node_name')
 
     tomasys_files_array = [
         os.path.join(
@@ -44,6 +46,11 @@ def generate_launch_description():
         'model_file',
         default_value="",
         description='File name for the Working ontology file')
+
+    declare_node_name = DeclareLaunchArgument(
+        'node_name',
+        default_value="",
+        description='Group/Node name to be actuated by system_modes')
 
     declare_desired_configuration_cmd = DeclareLaunchArgument(
         'desired_configuration',
@@ -58,17 +65,13 @@ def generate_launch_description():
         parameters=[{
             'tomasys_file': tomasys_files_array,
             'model_file': working_ontology_file,
+            'node_name': node_name,
         }],
     )
 
-    # Create the launch description and populate
-    ld = LaunchDescription()
-
-    # Declare the launch options
-    ld.add_action(declare_working_ontology_cmd)
-    ld.add_action(declare_desired_configuration_cmd)
-
-    # Add the actions to launch the reasoner node
-    ld.add_action(bringup_reasoner_cmd)
-
-    return ld
+    return LaunchDescription([
+        declare_working_ontology_cmd,
+        declare_desired_configuration_cmd,
+        declare_node_name,
+        bringup_reasoner_cmd
+    ])
