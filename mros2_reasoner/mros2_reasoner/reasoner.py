@@ -25,7 +25,7 @@ from owlready2 import sync_reasoner_pellet, destroy_entity
 import logging
 
 
-class Reasoner(object):
+class Reasoner:
     """docstring for Reasoner."""
 
     def __init__(self):

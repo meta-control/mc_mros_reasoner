@@ -155,14 +155,14 @@ def obtainBestFunctionDesign(o, tbox):
     # fiter fds to only those available
     # FILTER if FD realisability is NOT FALSE (TODO check SWRL rules are
     # complete for this)
-    realisable_fds = [fd for fd in fds if fd.fd_realisability]
+    realisable_fds = [fd for fd in fds if fd.fd_realisability is not False]
     logging.warning("== FunctionDesigns REALISABLE: %s",
                     str([fd.name for fd in realisable_fds]))
     # discard FDs already grounded for this objective when objective in error
     suitable_fds = [
         fd for fd in fds if (
             (o not in fd.fd_error_log) and (
-                fd.fd_realisability))]
+                fd.fd_realisability is not False))]
     logging.warning("== FunctionDesigns NOT IN ERROR LOG: %s",
                     str([fd.name for fd in suitable_fds]))
     # discard those FD that will not meet objective NFRs

@@ -32,9 +32,9 @@ class RosReasoner(Node):
 
         self.declare_parameter("model_file", Parameter.Type.STRING)
         self.declare_parameter("tomasys_file", Parameter.Type.STRING_ARRAY)
-        self.declare_parameter("desired_configuration", "")
-        self.declare_parameter("node_name", Parameter.Type.STRING)
-        self.declare_parameter("reasoning_rate", 2.0)
+        self.declare_parameter("desired_configuration", Parameter.Type.STRING)
+        self.declare_parameter("node_name", "")
+        self.declare_parameter("reasoning_period", 2)
         self.declare_parameter("use_reconfigure_srv", True)
 
         # Read ROS parameters
@@ -87,7 +87,7 @@ class RosReasoner(Node):
         # Get desired_configuration_name from parameters
         self.set_initial_fd(self.get_parameter('desired_configuration').value)
 
-        timer_rate = self.get_parameter('reasoning_rate').value
+        timer_rate = self.get_parameter('reasoning_period').value
 
         self.feedback_rate = self.create_rate(timer_rate)
         self.timer = self.create_timer(
@@ -98,7 +98,7 @@ class RosReasoner(Node):
         self.get_logger().info("[RosReasoner] -- Reasoner Initialization Ok")
 
     def set_initial_fd(self, initial_fd):
-        if not initial_fd:
+        if initial_fd != '':
             self.grounded_configuration = initial_fd
             self.get_logger().info('grounded_configuration initialized to: ' +
                                    str(self.grounded_configuration))
@@ -176,6 +176,7 @@ class RosReasoner(Node):
 
         return ControlQos.Result()
 
+    # TODO: Move this to tomasys? No reason for it to be here
     def read_ontology_file(self, ontology_file_array):
         """ Checks if an ontology file exists and reads its value
             Args:
@@ -244,7 +245,8 @@ class RosReasoner(Node):
         # if no objectives in the OWL file, standard navigation objective is
         # assumed
         if objectives == []:
-            self.get_logger().info('No objectives found, waiting for new Objective')
+            self.get_logger().info(
+                'No objectives found, waiting for new Objective')
             # # # Function Groundings and Objectives
         elif len(objectives) == 1:
             self.get_logger().info(
@@ -346,7 +348,6 @@ class RosReasoner(Node):
             return mode_change_srv_call_future
 
     # main metacontrol loop
-
     async def timer_cb(self):
 
         # self.get_logger().info('Entered timer_cb for metacontrol reasoning')
@@ -393,8 +394,6 @@ class RosReasoner(Node):
         # ADAPT MAPE -Plan & Execute
         self.get_logger().info('  >> Started MAPE-K ** PLAN adaptation **')
 
-        new_grounded = None
-
         if obj_in_error.o_status in ["UPDATABLE"]:
             self.get_logger().info("  >> UPDATABLE objective - Try to clear Components status")
             for comp_inst in list(
@@ -404,18 +403,20 @@ class RosReasoner(Node):
                         comp_inst.name, comp_inst.c_status))
                     comp_inst.c_status = None
 
-        if obj_in_error.o_status in ["UNGROUNDED"]:
+        new_grounded = None
+        # TODO: this seems redundant, set_new_grounding is being called in different places
+        if obj_in_error.o_status in ["UNGROUNDED"] and self.grounded_configuration is not None:
             self.get_logger().info("  >>  UNGROUNDED objective - Try to set FD {0}".format(
                 self.grounded_configuration))
             new_grounded = self.reasoner.set_new_grounding(
                 self.grounded_configuration, obj_in_error)
 
-        if not new_grounded:
+        if new_grounded is None:
             self.get_logger().info("  >> Reasoner searches an FD ")
             new_grounded = obtainBestFunctionDesign(
                 obj_in_error, self.reasoner.tomasys)
 
-        if not new_grounded:
+        if new_grounded is None:
             self.get_logger().error(
                 "No FD found to solve Objective {} ".format(
                     obj_in_error.name))  # for DEBUGGING in csv
