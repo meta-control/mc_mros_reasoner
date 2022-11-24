@@ -12,66 +12,73 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This is all-in-one launch script intended for use by nav2 developers."""
-
 import os
 
 from ament_index_python.packages import get_package_prefix
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.conditions import IfCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
     # Get the launch directory
-    tomasys_ontology_bringup_dir = get_package_share_directory(
-        'mc_mdl_tomasys')
-    mros_ontology_bringup_dir = get_package_share_directory('mros_ontology')
+    pkg_mc_mdl_tomasys_path = get_package_share_directory('mc_mdl_tomasys')
+    pkg_mros_ontology_path = get_package_share_directory('mros_ontology')
 
     # Create the launch configuration variables
-    working_ontology_file = LaunchConfiguration('model_file')
+    tomasys_file = LaunchConfiguration('tomasys_file')
+    model_file = LaunchConfiguration('model_file')
     node_name = LaunchConfiguration('node_name')
+    desired_configuration = LaunchConfiguration('desired_configuration')
 
     tomasys_files_array = [
-        os.path.join(
-            tomasys_ontology_bringup_dir, 'owl', 'tomasys.owl'), os.path.join(
-            mros_ontology_bringup_dir, 'owl', 'mros.owl')]
+        os.path.join(pkg_mc_mdl_tomasys_path, 'owl', 'tomasys.owl'),
+        os.path.join(pkg_mros_ontology_path, 'owl', 'mros.owl')]
 
-    declare_working_ontology_cmd = DeclareLaunchArgument(
+    tomasys_file_arg = DeclareLaunchArgument(
+        'tomasys_file',
+        default_value=str(tomasys_files_array),
+        description='tomasys ontologies'
+    )
+
+    mock_ontology_path = os.path.join(
+        pkg_mros_ontology_path, 'owl', 'mock.owl')
+
+    model_file_arg = DeclareLaunchArgument(
         'model_file',
-        default_value="",
+        default_value=mock_ontology_path,
         description='File name for the Working ontology file')
 
-    declare_node_name = DeclareLaunchArgument(
+    node_name_arg = DeclareLaunchArgument(
         'node_name',
         default_value="",
         description='Group/Node name to be actuated by system_modes')
 
-    declare_desired_configuration_cmd = DeclareLaunchArgument(
+    desired_configuration_arg = DeclareLaunchArgument(
         'desired_configuration',
         default_value='',
         description='Desired inital configuration (system mode)')
 
-    bringup_reasoner_cmd = Node(
+    mros_reasoner_node = Node(
         package='mros2_reasoner',
         executable='mros2_reasoner_node',
         name='mros2_reasoner_node',
         output='screen',
         parameters=[{
-            'tomasys_file': tomasys_files_array,
-            'model_file': working_ontology_file,
+            'tomasys_file': tomasys_file,
+            'model_file': model_file,
             'node_name': node_name,
+            'desired_configuration': desired_configuration,
         }],
     )
 
     return LaunchDescription([
-        declare_working_ontology_cmd,
-        declare_desired_configuration_cmd,
-        declare_node_name,
-        bringup_reasoner_cmd
+        tomasys_file_arg,
+        model_file_arg,
+        desired_configuration_arg,
+        node_name_arg,
+        mros_reasoner_node
     ])

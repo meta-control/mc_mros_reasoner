@@ -12,68 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This is all-in-one launch script intended for use by nav2 developers."""
-
 import os
 
-from ament_index_python.packages import get_package_share_directory, get_package_prefix
+from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.conditions import IfCondition
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
     # Get the launch directory
-    tomasys_ontology_bringup_dir = get_package_share_directory(
-        'mc_mdl_tomasys')
-    mros_ontology_bringup_dir = get_package_share_directory('mros_ontology')
-
-    # Create the launch configuration variables
-    working_ontology_file = LaunchConfiguration('model_file')
+    pkg_mc_mdl_tomasys_path = get_package_share_directory('mc_mdl_tomasys')
+    pkg_mros_ontology_path = get_package_share_directory('mros_ontology')
+    pkg_mros2_reasoner_path = get_package_share_directory('mros2_reasoner')
+    pkg_mros_ontology_path = get_package_share_directory('mros_ontology')
 
     tomasys_files_array = [
-        os.path.join(
-            tomasys_ontology_bringup_dir, 'owl', 'tomasys.owl'), os.path.join(
-            mros_ontology_bringup_dir, 'owl', 'mros.owl'), os.path.join(
-                mros_ontology_bringup_dir, 'owl', 'navigation_domain.owl')]
+        os.path.join(pkg_mc_mdl_tomasys_path, 'owl', 'tomasys.owl'),
+        os.path.join(pkg_mros_ontology_path, 'owl', 'mros.owl'),
+        os.path.join(pkg_mros_ontology_path, 'owl', 'navigation_domain.owl')]
 
-    declare_working_ontology_cmd = DeclareLaunchArgument(
-        'model_file',
-        default_value=[os.path.join(
-            mros_ontology_bringup_dir,
-            'owl',
-            'urjc_pilot.owl')],
-        description='File name for the Working ontology file')
+    urjc_pilot_ontology = os.path.join(
+        pkg_mros_ontology_path, 'owl', 'urjc_pilot.owl')
 
-    declare_desired_configuration_cmd = DeclareLaunchArgument(
-        'desired_configuration',
-        default_value='f_normal_mode',
-        description='Desired inital configuration (system mode)')
+    mros2_launch_path = os.path.join(
+        pkg_mros2_reasoner_path, 'launch_reasoner.launch.py')
 
-    declare_nfr_energy_cmd = DeclareLaunchArgument(
-        'nfr_energy',
-        default_value='0.5',
-        description='Required value for Energy NFR')
-
-    declare_nfr_safety_cmd = DeclareLaunchArgument(
-        'nfr_safety',
-        default_value='0.5',
-        description='Required value for Safety NFR')
-
-    bringup_reasoner_cmd = Node(
-        package='mros2_reasoner',
-        executable='mros2_reasoner_node',
-        name='mros2_reasoner_node',
-        output='screen',
-        parameters=[{
-            'tomasys_file': tomasys_files_array,
-            'model_file': working_ontology_file,
-        }],
-    )
+    mros2_reasoner_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(mros2_launch_path),
+        launch_arguments={
+            'tomasys_file': str(tomasys_files_array),
+            'model_file': urjc_pilot_ontology,
+            'desired_configuration': 'f_normal_mode'}.items())
 
     wrapper_cmd = Node(
         package='mros2_wrapper',
@@ -82,17 +54,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # Create the launch description and populate
-    ld = LaunchDescription()
-
-    # Declare the launch options
-    ld.add_action(declare_working_ontology_cmd)
-    ld.add_action(declare_desired_configuration_cmd)
-    ld.add_action(declare_nfr_energy_cmd)
-    ld.add_action(declare_nfr_safety_cmd)
-
-    # Add the actions to launch the reasoner node
-    ld.add_action(bringup_reasoner_cmd)
-    ld.add_action(wrapper_cmd)
-
-    return ld
+    return LaunchDescription([
+     mros2_reasoner_node,
+     wrapper_cmd
+    ])
