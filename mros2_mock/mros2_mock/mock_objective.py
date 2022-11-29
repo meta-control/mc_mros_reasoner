@@ -5,6 +5,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from mros2_msgs.action import ControlQos
+from diagnostic_msgs.msg import DiagnosticArray
+from diagnostic_msgs.msg import DiagnosticStatus
 from diagnostic_msgs.msg import KeyValue
 
 
@@ -14,6 +16,14 @@ class MockNode(Node):
         super().__init__('mock')
 
         self._action_client = ActionClient(self, ControlQos, 'mros_objective')
+
+        self.diagnostics_publisher = self.create_publisher(
+            DiagnosticArray, '/diagnostics', 10)
+
+        timer_period = 4.0  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+
+        self.mockiness_level = 1
 
     def start(self):
         self.get_logger().info('Waiting for server')
@@ -52,6 +62,27 @@ class MockNode(Node):
         for qos in feedback.qos_status.qos:
             self.get_logger().info(
                 'QoS Status: Key: {0} - Value {1}'.format(qos.key, qos.value))
+
+    def timer_callback(self):
+        if self.mockiness_level <= 0.1:
+            self.destroy_node()
+            return
+
+        diag_msg = DiagnosticArray()
+        diag_msg.header.stamp = self.get_clock().now().to_msg()
+        status_msg = DiagnosticStatus()
+        status_msg.level = DiagnosticStatus.OK
+        status_msg.name = ""
+        key_value = KeyValue()
+        key_value.key = "mockiness"
+        key_value.value = str(self.mockiness_level)
+        status_msg.values.append(key_value)
+        status_msg.message = "QA status"
+        diag_msg.status.append(status_msg)
+
+        self.diagnostics_publisher.publish(diag_msg)
+
+        self.mockiness_level -= 0.05
 
 
 if __name__ == '__main__':
