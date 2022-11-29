@@ -132,10 +132,26 @@ def evaluateObjectives(objectives):
     for o in objectives:
         if o.o_status in ["UNGROUNDED",
                           "UPDATABLE",
+                          "IN_ERROR_FR",
                           "IN_ERROR_NFR",
                           "IN_ERROR_COMPONENT"]:
             objectives_internal_error.append(o)
     return objectives_internal_error
+
+
+def getFunctionGrouding(o, tbox):
+    fgs = tbox.FunctionGrounding.instances()
+    for fg in fgs:
+        if fg.solvesO == o:
+            return fg
+    return None
+
+
+def getCurrentFunctionDesign(o, tbox):
+    fg = getFunctionGrouding(o, tbox)
+    if fg is not None:
+        return fg.typeFD
+    return None
 
 
 # Select best FD in the KB, given:
@@ -169,18 +185,20 @@ def obtainBestFunctionDesign(o, tbox):
 
     fds_for_obj = meetNFRs(o, suitable_fds)
     # get best FD based on higher Utility/trade-off of QAs
+    current_fd = getCurrentFunctionDesign(o, tbox)
+    best_fd = current_fd
     if fds_for_obj != []:
         logging.warning(
             "== FunctionDesigns also meeting NFRs: %s", [
                 fd.name for fd in fds_for_obj])
         best_utility = 0
-        # best_fd = fds_for_obj[0]
         for fd in fds_for_obj:
-            utility_fd = utility(fd)
-            logging.warning("== Utility for %s : %f", fd.name, utility_fd)
-            if utility_fd > best_utility:
-                best_fd = fd
-                best_utility = utility_fd
+            if fd != current_fd:
+                utility_fd = utility(fd)
+                logging.warning("== Utility for %s : %f", fd.name, utility_fd)
+                if utility_fd > best_utility:
+                    best_fd = fd
+                    best_utility = utility_fd
 
         logging.warning("\t\t\t == Best FD available %s", str(best_fd.name))
         return best_fd.name
