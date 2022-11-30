@@ -14,10 +14,7 @@ def main(args=None):
     # concurrently
     mt_executor = MultiThreadedExecutor()
 
-    if ros_reasoner.is_initialized is True:
-        # initialize KB with the ontology
-        ros_reasoner.init_kb()
-    else:
+    if ros_reasoner.is_initialized is not True:
         ros_reasoner.get_logger().info(
             "There was an error in the reasoner initialization")
         return

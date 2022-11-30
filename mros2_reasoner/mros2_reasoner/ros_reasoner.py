@@ -189,36 +189,6 @@ class RosReasoner(Node, Reasoner):
 
         return True
 
-    # NOTE REFACTORING: This KB initialization is completely mixed with ROS interfaces, probably libraty should not have an initKB method, but utility methods to update the abox according to incoming information
-    # Initializes the KB according to 2 cases:
-    # - If there is an Objective individual in the ontology file, the KB is initialized only using the OWL file
-    # - If there is no Objective individual, a navigation Objective is create in the KB, with associated NFRs that are read frmo rosparam
-    def init_kb(self):
-
-        self.get_logger().info(
-            'KB initialization:\n' +
-            '\t - Supported QAs: \n \t \t - for Function f_navigate: /nfr_energy, /nfr_safety' +
-            '\n \t - Searching for objectives in the owl file:')
-
-        objectives = self.search_objectives()
-        # if no objectives in the OWL file, standard navigation objective is
-        # assumed
-        if objectives == []:
-            self.get_logger().info(
-                'No objectives found, waiting for new Objective')
-            # # # Function Groundings and Objectives
-        elif len(objectives) == 1:
-            self.get_logger().info(
-                'Objective {} found'.format(
-                    objectives[0].name))
-            self.has_objective = True
-        else:
-            self.get_logger().error(
-                'Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
-
-        # For debugging InConsistent ontology errors, save the ontology before reasoning
-        # self.onto.save(file="tmp_debug.owl", format="rdfxml")
-
     # MVP: callback for diagnostic msg received from QA Observer
     def diagnostics_callback(self, msg):
         if self.onto is not None and self.has_objective is True:
