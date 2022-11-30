@@ -82,7 +82,7 @@ class MockNode(Node):
 
         self.diagnostics_publisher.publish(diag_msg)
 
-        self.mockiness_level -= 0.05
+        self.mockiness_level -= 0.1
 
 
 if __name__ == '__main__':
