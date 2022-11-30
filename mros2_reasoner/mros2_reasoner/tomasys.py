@@ -60,6 +60,7 @@ def read_ontology_file(ontology_file_array):
             return None
     return ontology_obj
 
+
 # To reset the individuals that no longer hold due to adaptation
 # for the moment, only Objective individuals statuses
 # - tomasys: ontology holding the Tbox

@@ -123,11 +123,6 @@ class Reasoner:
         else:
             return 0
 
-    # Converst a string to Boolean
-    @staticmethod
-    def str2bool(v):
-        return v.lower() in ("yes", "true", "t", "1")
-
     # the DiagnosticStatus message process contains, per field
     # - message: "Component status"
     # - key: name of the Component Reported, as named in the OWL file
