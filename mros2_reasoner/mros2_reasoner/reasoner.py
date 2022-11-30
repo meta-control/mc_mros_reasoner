@@ -64,14 +64,12 @@ class Reasoner:
         if objectives == []:
             self.get_logger().info(
                 'No objectives found, waiting for new Objective')
-        elif len(objectives) == 1:
-            self.get_logger().info(
-                'Objective {} found'.format(
-                    objectives[0].name))
-            has_objective = True
         else:
-            self.get_logger().error(
-                'Metacontrol cannot handle more than one Objective')
+            has_objective = True
+            for objective in objectives:
+                self.get_logger().info(
+                    'Objective {} found'.format(
+                        objective.name))
         return has_objective
 
     def get_new_tomasys_objective(self, objective_name, iri_seed):
