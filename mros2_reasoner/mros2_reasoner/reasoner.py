@@ -58,6 +58,22 @@ class Reasoner:
         objectives = self.onto.search(type=self.tomasys.Objective)
         return objectives
 
+    def has_objective(self):
+        objectives = self.search_objectives()
+        has_objective = False
+        if objectives == []:
+            self.get_logger().info(
+                'No objectives found, waiting for new Objective')
+        elif len(objectives) == 1:
+            self.get_logger().info(
+                'Objective {} found'.format(
+                    objectives[0].name))
+            has_objective = True
+        else:
+            self.get_logger().error(
+                'Metacontrol cannot handle more than one Objective')
+        return has_objective
+
     def get_new_tomasys_objective(self, objective_name, iri_seed):
         """ Creates Objective individual in the KB given a desired name and a
         string seed for the Function name

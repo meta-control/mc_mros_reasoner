@@ -47,7 +47,6 @@ class RosReasoner(Node, Reasoner):
             "use_reconfigure_srv").value
 
         self.is_initialized = False
-        self.has_objective = False
         self.mode_change_srv_call_future = None
         self.req_reconfiguration_result = None
 
@@ -60,13 +59,13 @@ class RosReasoner(Node, Reasoner):
         # Node's default callback group is mutually exclusive. This would
         # prevent the change mode requests' response from being processed until
         # the timer callback finished. The callback_group should solve this.
-
         self.diganostic_sub = self.create_subscription(
             DiagnosticArray,
             '/diagnostics',
             self.diagnostics_callback,
             1,
             callback_group=self.cb_group)
+
         # Create action server
         self.objective_action_server = ActionServer(
             self,
@@ -108,13 +107,11 @@ class RosReasoner(Node, Reasoner):
             # Checks if there are previously defined objectives.
             for old_objective in self.search_objectives():
                 self.remove_objective(old_objective.name)
-                self.has_objective = False
                 return CancelResponse.ACCEPT
         else:
             if self.remove_objective(
                     cancel_request.qos_expected.objective_id):
                 self.get_logger().info("Objective Cancelled")
-                self.has_objective = False
                 return CancelResponse.ACCEPT
             else:
                 self.get_logger().info("Not found")
@@ -124,7 +121,6 @@ class RosReasoner(Node, Reasoner):
 
         self.get_logger().info("Objective Action Callback!")
         # Stop reasoning
-        self.has_objective = False
 
         # Checks if there are previously defined objectives.
         for old_objective in self.search_objectives():
@@ -133,7 +129,6 @@ class RosReasoner(Node, Reasoner):
         # MonitorObjective.Goal = objective_handle.request.Goal
         obj_created = self.create_objective(objective_handle.request)
         if obj_created:
-            self.has_objective = True
             while True:
                 feedback_msg = ControlQos.Feedback()
                 for objective in self.search_objectives():
@@ -191,7 +186,7 @@ class RosReasoner(Node, Reasoner):
 
     # MVP: callback for diagnostic msg received from QA Observer
     def diagnostics_callback(self, msg):
-        if self.onto is not None and self.has_objective is True:
+        if self.onto is not None and self.has_objective() is True:
             for diagnostic_status in msg.status:
                 # 2 types of diagnostics considered: about bindings in error
                 # (TODO not implemented yet) or about QAs
@@ -278,13 +273,10 @@ class RosReasoner(Node, Reasoner):
     # main metacontrol loop
     async def metacontrol_loop_callback(self):
 
-        # self.get_logger().info('Entered metacontrol_loop_callback for metacontrol reasoning')
-        # If we're waiting for a response from the reconfiguration, nothing
-        # should be done
         if self.is_initialized is not True:
             self.get_logger().info('Waiting to initialize Reasoner -  Nothing else will be done')
             return
-        if self.has_objective is not True:
+        if self.has_objective() is not True:
             return
 
         # PRINT system status
