@@ -11,10 +11,10 @@ from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import KeyValue
 
 from mros2_reasoner.reasoner import Reasoner
-from mros2_reasoner.tomasys import evaluateObjectives
-from mros2_reasoner.tomasys import obtainBestFunctionDesign
+from mros2_reasoner.tomasys import evaluate_objectives
+from mros2_reasoner.tomasys import obtain_best_function_design
 from mros2_reasoner.tomasys import print_ontology_status
-from mros2_reasoner.tomasys import resetObjStatus
+from mros2_reasoner.tomasys import reset_objective_status
 
 from mros2_msgs.action import ControlQos
 from mros2_msgs.msg import QoS
@@ -30,24 +30,24 @@ class RosReasoner(Node, Reasoner):
         self.declare_parameter("tomasys_file", Parameter.Type.STRING_ARRAY)
 
         # Get ontology and tomasys file paths from parameters
-        tomasys_file_arr = self.get_parameter('tomasys_file').value
-        model_file_arr = self.get_parameter('model_file').value
-        Reasoner.__init__(self, tomasys_file_arr, model_file_arr)
+        Reasoner.__init__(
+            self,
+            self.get_parameter('tomasys_file').value,
+            self.get_parameter('model_file').value
+        )
 
         self.declare_parameter("desired_configuration", Parameter.Type.STRING)
         self.declare_parameter("node_name", "")
         self.declare_parameter("reasoning_period", 2)
         self.declare_parameter("use_reconfigure_srv", False)
 
-        # Read ROS parameters
-
         # Whether or not to use system modes reconfiguration
         #  Used mainly for testing
         self.use_reconfiguration_srv = self.get_parameter(
             "use_reconfigure_srv").value
 
-        self.isInitialized = False
-        self.hasObjective = False
+        self.is_initialized = False
+        self.has_objective = False
         self.mode_change_srv_call_future = None
         self.req_reconfiguration_result = None
 
@@ -64,7 +64,7 @@ class RosReasoner(Node, Reasoner):
         self.diganostic_sub = self.create_subscription(
             DiagnosticArray,
             '/diagnostics',
-            self.callbackDiagnostics,
+            self.diagnostics_callback,
             1,
             callback_group=self.cb_group)
         # Create action server
@@ -82,10 +82,12 @@ class RosReasoner(Node, Reasoner):
         timer_rate = self.get_parameter('reasoning_period').value
 
         self.feedback_rate = self.create_rate(timer_rate)
-        self.timer = self.create_timer(
-            timer_rate, self.timer_cb, callback_group=self.cb_group)
+        self.metacontrol_loop_timer = self.create_timer(
+            timer_rate,
+            self.metacontrol_loop_callback,
+            callback_group=self.cb_group)
 
-        self.isInitialized = True
+        self.is_initialized = True
         # Reasoner initialization completed
         self.get_logger().info("[RosReasoner] -- Reasoner Initialization Ok")
 
@@ -106,13 +108,13 @@ class RosReasoner(Node, Reasoner):
             # Checks if there are previously defined objectives.
             for old_objective in self.search_objectives():
                 self.remove_objective(old_objective.name)
-                self.hasObjective = False
+                self.has_objective = False
                 return CancelResponse.ACCEPT
         else:
             if self.remove_objective(
                     cancel_request.qos_expected.objective_id):
                 self.get_logger().info("Objective Cancelled")
-                self.hasObjective = False
+                self.has_objective = False
                 return CancelResponse.ACCEPT
             else:
                 self.get_logger().info("Not found")
@@ -122,16 +124,16 @@ class RosReasoner(Node, Reasoner):
 
         self.get_logger().info("Objective Action Callback!")
         # Stop reasoning
-        self.hasObjective = False
+        self.has_objective = False
 
         # Checks if there are previously defined objectives.
         for old_objective in self.search_objectives():
             self.remove_objective(old_objective.name)
 
-        #MonitorObjective.Goal = objective_handle.request.Goal
+        # MonitorObjective.Goal = objective_handle.request.Goal
         obj_created = self.create_objective(objective_handle.request)
         if obj_created:
-            self.hasObjective = True
+            self.has_objective = True
             while True:
                 feedback_msg = ControlQos.Feedback()
                 for objective in self.search_objectives():
@@ -191,7 +193,7 @@ class RosReasoner(Node, Reasoner):
     # Initializes the KB according to 2 cases:
     # - If there is an Objective individual in the ontology file, the KB is initialized only using the OWL file
     # - If there is no Objective individual, a navigation Objective is create in the KB, with associated NFRs that are read frmo rosparam
-    def initKB(self):
+    def init_kb(self):
 
         self.get_logger().info(
             'KB initialization:\n' +
@@ -209,7 +211,7 @@ class RosReasoner(Node, Reasoner):
             self.get_logger().info(
                 'Objective {} found'.format(
                     objectives[0].name))
-            self.hasObjective = True
+            self.has_objective = True
         else:
             self.get_logger().error(
                 'Metacontrol cannot handle more than one Objective in the OWL file (the Root Objective)')
@@ -218,15 +220,14 @@ class RosReasoner(Node, Reasoner):
         # self.onto.save(file="tmp_debug.owl", format="rdfxml")
 
     # MVP: callback for diagnostic msg received from QA Observer
-
-    def callbackDiagnostics(self, msg):
-        if self.onto is not None and self.hasObjective is True:
+    def diagnostics_callback(self, msg):
+        if self.onto is not None and self.has_objective is True:
             for diagnostic_status in msg.status:
                 # 2 types of diagnostics considered: about bindings in error
                 # (TODO not implemented yet) or about QAs
                 if diagnostic_status.message == "binding error":
                     self.get_logger().info("binding error received")
-                    up_binding = self.updateBinding(diagnostic_status)
+                    up_binding = self.update_binding(diagnostic_status)
                     if up_binding == -1:
                         self.get_logger().warning(
                             "Unkown Function Grounding: %s", diagnostic_status.name)
@@ -238,7 +239,7 @@ class RosReasoner(Node, Reasoner):
                 # Component error
                 elif diagnostic_status.message == "Component status":
                     # self.get_logger().warning("Component status value received \tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
-                    up_cs = self.updateComponentStatus(
+                    up_cs = self.update_component_status(
                         diagnostic_status)
                     if up_cs == -1:
                         self.get_logger().warning("CS message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
@@ -254,7 +255,7 @@ class RosReasoner(Node, Reasoner):
 
                 elif diagnostic_status.message == "QA status":
                     # self.get_logger().warning("QA value received for\t{0} \tTYPE: {1}\tVALUE: {2}".format(diagnostic_status.name, diagnostic_status.values[0].key, diagnostic_status.values[0].value))
-                    up_qa = self.updateQA(diagnostic_status)
+                    up_qa = self.update_qa(diagnostic_status)
                     if up_qa == -1:
                         self.get_logger().warning("QA message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
                     elif up_qa == 1:
@@ -305,15 +306,15 @@ class RosReasoner(Node, Reasoner):
             return mode_change_srv_call_future
 
     # main metacontrol loop
-    async def timer_cb(self):
+    async def metacontrol_loop_callback(self):
 
-        # self.get_logger().info('Entered timer_cb for metacontrol reasoning')
+        # self.get_logger().info('Entered metacontrol_loop_callback for metacontrol reasoning')
         # If we're waiting for a response from the reconfiguration, nothing
         # should be done
-        if self.isInitialized is not True:
+        if self.is_initialized is not True:
             self.get_logger().info('Waiting to initialize Reasoner -  Nothing else will be done')
             return
-        if self.hasObjective is not True:
+        if self.has_objective is not True:
             return
 
         # PRINT system status
@@ -329,17 +330,17 @@ class RosReasoner(Node, Reasoner):
             return
 
         # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
-        objectives_internal_error = evaluateObjectives(
+        objectives_internal_error = evaluate_objectives(
             self.search_objectives())
         if not objectives_internal_error:
             self.get_logger().info("  >> No Objectives in ERROR: no adaptation is needed")
             # self.get_logger().info('  >> Finished MAPE-K ** ANALYSIS **')
-            # self.get_logger().info('Exited timer_cb for metacontrol reasoning')
+            # self.get_logger().info('Exited metacontrol_loop_callback for metacontrol reasoning')
             return
         elif len(objectives_internal_error) > 1:
             self.get_logger().error("- More than 1 objective in error, case not supported yet.")
             self.get_logger().info('  >> Finished MAPE-K ** ANALYSIS **')
-            self.get_logger().info('Exited timer_cb for metacontrol reasoning')
+            self.get_logger().info('Exited metacontrol_loop_callback for metacontrol reasoning')
             return
         else:
             for obj_in_error in objectives_internal_error:
@@ -370,16 +371,14 @@ class RosReasoner(Node, Reasoner):
 
         if new_grounded is None:
             self.get_logger().info("  >> Reasoner searches an FD ")
-            new_grounded = obtainBestFunctionDesign(
+            new_grounded = obtain_best_function_design(
                 obj_in_error, self.tomasys)
 
         if new_grounded is None:
             self.get_logger().error(
                 "No FD found to solve Objective {} ".format(
                     obj_in_error.name))  # for DEBUGGING in csv
-            # resetObjStatus(obj_in_error, "UNREACHABLE")
-            # self.set_new_grounding(None, obj_in_error)
-            self.get_logger().info('Exited timer_cb for metacontrol reasoning')
+            self.get_logger().info('Exited metacontrol_loop_callback for metacontrol reasoning')
             return
 
         # request new configuration
@@ -414,4 +413,4 @@ class RosReasoner(Node, Reasoner):
                 new_grounded, obj_in_error)  # Set new grounded_configuration
 
         self.get_logger().info(
-            'Exited timer_cb after successful reconfiguration - Obj set to None')
+            'Exited metacontrol_loop_callback after successful reconfiguration - Obj set to None')
