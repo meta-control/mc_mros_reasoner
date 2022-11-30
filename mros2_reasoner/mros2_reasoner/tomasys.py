@@ -8,7 +8,8 @@
 #  based on the tomasys metamodel (Tbox), using the owlready2 library
 ##########################################
 
-from owlready2 import get_ontology, destroy_entity
+from owlready2 import destroy_entity
+from owlready2 import get_ontology
 import logging
 
 

@@ -5,11 +5,6 @@
 #             c.h.corbato@tudelft.nl
 ##########################################
 
-from collections import defaultdict
-
-import argparse
-from decimal import Decimal
-
 import signal
 import sys
 from threading import Lock
@@ -21,7 +16,8 @@ from mros2_reasoner.tomasys import resetFDRealisability
 from mros2_reasoner.tomasys import resetObjStatus
 from mros2_reasoner.tomasys import updateQAvalue
 
-from owlready2 import sync_reasoner_pellet, destroy_entity
+from owlready2 import destroy_entity
+from owlready2 import sync_reasoner_pellet
 
 import logging
 
@@ -168,7 +164,6 @@ class Reasoner:
     # EXEC REASONING to update ontology with inferences
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
-
     def perform_reasoning(self):
         return_value = False
         with self.ontology_lock:

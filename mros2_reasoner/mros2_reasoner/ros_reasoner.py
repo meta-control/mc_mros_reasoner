@@ -1,17 +1,20 @@
 import rclpy
 
+from rclpy.action import ActionServer
+from rclpy.action import CancelResponse
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.parameter import Parameter
-from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.action import ActionServer, CancelResponse
+
 from system_modes_msgs.srv import ChangeMode
 from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import KeyValue
 
 from mros2_reasoner.reasoner import Reasoner
-from mros2_reasoner.tomasys import obtainBestFunctionDesign, print_ontology_status
-from mros2_reasoner.tomasys import evaluateObjectives, loadKB_from_file, destroy_entity
-from mros2_reasoner.tomasys import resetObjStatus, remove_objective_grounding
+from mros2_reasoner.tomasys import evaluateObjectives
+from mros2_reasoner.tomasys import obtainBestFunctionDesign
+from mros2_reasoner.tomasys import print_ontology_status
+from mros2_reasoner.tomasys import resetObjStatus
 
 from mros2_msgs.action import ControlQos
 from mros2_msgs.msg import QoS
