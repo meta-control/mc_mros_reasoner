@@ -29,21 +29,40 @@ def loadKB_from_file(kb_file):
         logging.exception("{0}".format(e))
         return None
     return kb_box
-# # Returns
-# # - tbox: the ontology containing the Tbox frmo the tomasys.owl
-# # - abox: the ontology containing the individuals to initialize the KB, aka the abox
-# def loadTomasysKB(tboxfile, abox_file):
-#     onto_path.append(os.path.dirname(os.path.realpath(tboxfile)))
-#     onto_path.append(os.path.dirname(os.path.realpath(abox_file)))
-#     tbox = get_ontology("tomasys.owl").load()  # TODO initilize tomasys using the import in the application ontology file (that does not seem to work)
-#     abox = get_ontology(abox_file).load()
-#     return tbox, abox
+
+
+def read_ontology_file(ontology_file_array):
+    """ Checks if an ontology file exists and reads its value
+        Args:
+                ontology_file_name (array string): The name of the parameter.
+        Returns:
+                The ontology if it's readed correctly, None otherwise.
+    """
+    if (type(ontology_file_array) == str):
+        ontology_file_array = [ontology_file_array]
+    ontology_obj = None
+    for ontology_file in ontology_file_array:
+        if ontology_file is not None:
+            ontology = loadKB_from_file(ontology_file)
+            if ontology is not None:
+                logging.info("Loaded ontology: " + str(ontology_file))
+            else:
+                logging.error(
+                    "Failed to load ontology from: " +
+                    str(ontology_file))
+                return None
+            if ontology_obj:
+                ontology_obj.imported_ontologies.append(ontology)
+            else:
+                ontology_obj = ontology
+        else:
+            logging.warning("No ontology file provided!")
+            return None
+    return ontology_obj
 
 # To reset the individuals that no longer hold due to adaptation
 # for the moment, only Objective individuals statuses
 # - tomasys: ontology holding the Tbox
-
-
 def resetObjStatus(objective, status=None):
     # logging.warning("\nReseting obj {0}".format(objective.name))
     objective.o_status = status
@@ -123,10 +142,9 @@ def updateQAvalue(fg, qa_type, value, tbox, abox):
             hasValue=value)
         fg.hasQAvalue.append(qav)
 
+
 # Evaluates the Objective individuals in the KB and returns a list with
 # those in error
-
-
 def evaluateObjectives(objectives):
     objectives_internal_error = []
     for o in objectives:
@@ -251,10 +269,10 @@ def meetNFRs(o, fds):
             break
         else:
             if nfr.isQAtype.name == 'energy':
-                if qas[0].hasValue > nfr.hasValue:  # specific semantics for energy
+                if qas[0].hasValue > nfr.hasValue:
                     break
             elif nfr.isQAtype.name == 'safety':
-                if qas[0].hasValue < nfr.hasValue:  # specific semantics for energy
+                if qas[0].hasValue < nfr.hasValue:
                     break
         filtered.append(fd)
     if filtered == []:
@@ -262,11 +280,10 @@ def meetNFRs(o, fds):
 
     return filtered
 
-# Compute expected utility based on QA trade-off, the criteria to chose FDs/configurations
+
+# Compute expected utility based on QA trade-off, the criteria to chose FDs
 # TODO utility is the selection criteria for FDs and it is hardcoded as QA
 # performance
-
-
 def utility(fd):
     # utility is equal to the expected performance
     utility = [

@@ -22,19 +22,19 @@ class RosReasoner(Node, Reasoner):
 
     def __init__(self):
         Node.__init__(self, 'mros2_reasoner_node')
-        Reasoner.__init__(self)
-
-        self.isInitialized = False
-        self.hasObjective = False
-        self.mode_change_srv_call_future = None
-        self.req_reconfiguration_result = None
 
         self.declare_parameter("model_file", Parameter.Type.STRING)
         self.declare_parameter("tomasys_file", Parameter.Type.STRING_ARRAY)
+
+        # Get ontology and tomasys file paths from parameters
+        tomasys_file_arr = self.get_parameter('tomasys_file').value
+        model_file_arr = self.get_parameter('model_file').value
+        Reasoner.__init__(self, tomasys_file_arr, model_file_arr)
+
         self.declare_parameter("desired_configuration", Parameter.Type.STRING)
         self.declare_parameter("node_name", "")
         self.declare_parameter("reasoning_period", 2)
-        self.declare_parameter("use_reconfigure_srv", True)
+        self.declare_parameter("use_reconfigure_srv", False)
 
         # Read ROS parameters
 
@@ -43,9 +43,10 @@ class RosReasoner(Node, Reasoner):
         self.use_reconfiguration_srv = self.get_parameter(
             "use_reconfigure_srv").value
 
-        # Get ontology and tomasys file paths from parameters
-        model_file_arr = self.get_parameter('model_file').value
-        tomasys_file_arr = self.get_parameter('tomasys_file').value
+        self.isInitialized = False
+        self.hasObjective = False
+        self.mode_change_srv_call_future = None
+        self.req_reconfiguration_result = None
 
         self.node_name = self.get_parameter('node_name').value
 
@@ -53,9 +54,9 @@ class RosReasoner(Node, Reasoner):
 
         # Start interfaces
         # subscriptions for different message types (named, pins, angle)
-        # Node's default callback group is mutually exclusive. This would prevent the change mode
-        # requets' response from being processed until the timer callback finished.
-        # The callback_group should solve this.
+        # Node's default callback group is mutually exclusive. This would
+        # prevent the change mode requests' response from being processed until
+        # the timer callback finished. The callback_group should solve this.
 
         self.diganostic_sub = self.create_subscription(
             DiagnosticArray,
@@ -71,17 +72,6 @@ class RosReasoner(Node, Reasoner):
             self.objective_action_callback,
             callback_group=self.cb_group,
             cancel_callback=self.objective_cancel_goal_callback)
-
-        # First read fixed ontologies (Tomasys + MROS)
-        self.tomasys = self.read_ontology_file(tomasys_file_arr)
-
-        # Load the application model (individuals of tomasys classes)
-        self.onto = self.read_ontology_file(model_file_arr)
-
-        # Check if ontologies have been correctly loaded
-        if self.tomasys is None or self.onto is None:
-            self.get_logger().error("Error while reading ontology files!")
-            return
 
         # Get desired_configuration_name from parameters
         self.set_initial_fd(self.get_parameter('desired_configuration').value)
@@ -174,38 +164,6 @@ class RosReasoner(Node, Reasoner):
             objective_handle.fail()
 
         return ControlQos.Result()
-
-    # TODO: Move this to tomasys? No reason for it to be here
-    def read_ontology_file(self, ontology_file_array):
-        """ Checks if an ontology file exists and reads its value
-            Args:
-                    ontology_file_name (string): The name of the parameter.
-                    is_base_ontology (bool): True if it's the base ontology (Tomasys).
-            Returns:
-                    The ontology if it's readed correctly, None otherwise.
-        """
-        if (type(ontology_file_array) == str):
-            ontology_file_array = [ontology_file_array]
-        ontology_obj = None
-        for ontology_file in ontology_file_array:
-            if ontology_file is not None:
-                ontology = loadKB_from_file(ontology_file)
-                if ontology is not None:
-                    self.get_logger().info("Loaded ontology: " + str(ontology_file))
-                else:
-                    self.get_logger().error(
-                        "Failed to load ontology from: " +
-                        str(ontology_file))
-                    return None
-                if ontology_obj:
-                    ontology_obj.imported_ontologies.append(ontology)
-                else:
-                    ontology_obj = ontology
-            else:
-                self.get_logger().warning("No ontology file provided!")
-                return None
-
-        return ontology_obj
 
     def create_objective(self, goal_request):
         new_objective = self.get_new_tomasys_objective(

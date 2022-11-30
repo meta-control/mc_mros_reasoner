@@ -15,6 +15,7 @@ import sys
 from threading import Lock
 
 from mros2_reasoner.tomasys import ground_fd
+from mros2_reasoner.tomasys import read_ontology_file
 from mros2_reasoner.tomasys import remove_objective_grounding
 from mros2_reasoner.tomasys import resetFDRealisability
 from mros2_reasoner.tomasys import resetObjStatus
@@ -28,16 +29,18 @@ import logging
 class Reasoner:
     """docstring for Reasoner."""
 
-    def __init__(self):
-        super(Reasoner, self).__init__()
-        # Initialize global variables
-        self.tomasys = None    # owl model with the tomasys ontology
-        # owl model with the application model as individuals of tomasys
-        # classes
-        self.onto = None
-        # whether we are running a mock system (True), so reasoning happens in
-        # isolation, or connected to the real system
-        self.mock = True
+    def __init__(self, tomasys_file, model_file):
+
+        # owl model with the tomasys ontology
+        self.tomasys = read_ontology_file(tomasys_file)
+        # application model as individuals of tomasys classes
+        self.onto = read_ontology_file(model_file)
+
+        # Check if ontologies have been correctly loaded
+        if self.tomasys is None or self.onto is None:
+            logging.error("Error while reading ontology files!")
+            return
+
         # name of the current system configuration, as stored in KB
         self.grounded_configuration = None
         # TODO move to RosReasoner or remove: there can be multiple
