@@ -9,6 +9,7 @@ import signal
 import sys
 from threading import Lock
 
+from mros2_reasoner.tomasys import get_objectives_in_error
 from mros2_reasoner.tomasys import ground_fd
 from mros2_reasoner.tomasys import read_ontology_file
 from mros2_reasoner.tomasys import remove_objective_grounding
@@ -71,6 +72,9 @@ class Reasoner:
                     'Objective {} found'.format(
                         objective.name))
         return has_objective
+
+    def get_objectives_in_error(self):
+        return get_objectives_in_error(self.search_objectives())
 
     def get_new_tomasys_objective(self, objective_name, iri_seed):
         """ Creates Objective individual in the KB given a desired name and a

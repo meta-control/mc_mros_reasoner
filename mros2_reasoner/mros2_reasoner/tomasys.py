@@ -148,7 +148,7 @@ def update_qa_value(fg, qa_type, value, tbox, abox):
 
 # Evaluates the Objective individuals in the KB and returns a list with
 # those in error
-def evaluate_objectives(objectives):
+def get_objectives_in_error(objectives):
     objectives_internal_error = []
     for o in objectives:
         if o.o_status in ["UNGROUNDED",
