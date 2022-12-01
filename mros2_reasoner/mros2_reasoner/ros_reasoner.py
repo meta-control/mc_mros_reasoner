@@ -302,19 +302,11 @@ class RosReasoner(Node, Reasoner):
                 self.get_logger().warning(
                     "Objective {0} in status: {1}".format(
                         obj_in_error.name, obj_in_error.o_status))
-            #self.get_logger().info('  >> Finished MAPE-K ** ANALYSIS **')
 
         # ADAPT MAPE -Plan & Execute
         self.get_logger().info('  >> Started MAPE-K ** PLAN adaptation **')
 
-        if obj_in_error.o_status in ["UPDATABLE"]:
-            self.get_logger().info("  >> UPDATABLE objective - Try to clear Components status")
-            for comp_inst in list(
-                    self.tomasys.ComponentState.instances()):
-                if comp_inst.c_status == "RECOVERED":
-                    self.get_logger().info("Component {0} Status {1} - Setting to None".format(
-                        comp_inst.name, comp_inst.c_status))
-                    comp_inst.c_status = None
+        self.handle_updatable_objectives(objectives_internal_error)
 
         new_grounded = None
         # TODO: this seems redundant, set_new_grounding is being called in different places

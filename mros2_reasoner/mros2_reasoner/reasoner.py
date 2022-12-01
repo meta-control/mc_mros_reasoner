@@ -198,3 +198,16 @@ class Reasoner:
     def save_ontology_exit(self, signal, frame):
         self.onto.save(file="error.owl", format="rdfxml")
         sys.exit(0)
+
+    def handle_updatable_objectives(self, objective_list):
+        for obj_in_error in objective_list:
+            if obj_in_error.o_status == "UPDATABLE":
+                self.get_logger().info(
+                    ">> UPDATABLE objective - Try to clear Components status")
+                for comp_inst in list(
+                        self.tomasys.ComponentState.instances()):
+                    if comp_inst.c_status == "RECOVERED":
+                        self.get_logger().info(
+                            "Component {0} Status {1} - Set to None".format(
+                                comp_inst.name, comp_inst.c_status))
+                        comp_inst.c_status = None
