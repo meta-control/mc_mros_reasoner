@@ -292,17 +292,10 @@ class RosReasoner(Node, Reasoner):
             return
 
         # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
-        objectives_internal_error = evaluate_objectives(
-            self.search_objectives())
-        if not objectives_internal_error:
-            self.get_logger().info("  >> No Objectives in ERROR: no adaptation is needed")
-            # self.get_logger().info('  >> Finished MAPE-K ** ANALYSIS **')
-            # self.get_logger().info('Exited metacontrol_loop_callback for metacontrol reasoning')
-            return
-        elif len(objectives_internal_error) > 1:
-            self.get_logger().error("- More than 1 objective in error, case not supported yet.")
-            self.get_logger().info('  >> Finished MAPE-K ** ANALYSIS **')
-            self.get_logger().info('Exited metacontrol_loop_callback for metacontrol reasoning')
+        objectives_internal_error = self.get_objectives_in_error()
+        if objectives_internal_error == []:
+            self.get_logger().info(
+                ">> No Objectives in ERROR: no adaptation is needed")
             return
         else:
             for obj_in_error in objectives_internal_error:
