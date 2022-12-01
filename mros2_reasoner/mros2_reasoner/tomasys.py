@@ -265,10 +265,11 @@ def meet_frs(o, fds):
     # logging.warning("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
     for fd in fds:
         for nfr in o.hasNFR:
-            qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
+            qas = [qa for qa in fd.hasQAestimation
+                   if str(qa.isQAtype) == str(nfr.isQAtype)]
         if len(qas) != 1:
             logging.warning(
-                "FD has no expected value for this QA or multiple definitions (inconsistent)")
+                'FD has no expected value for this QA or multiple definitions')
             break
         else:
             if nfr.isQAtype.name == 'energy':
