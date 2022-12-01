@@ -11,6 +11,8 @@ from threading import Lock
 
 from mros2_reasoner.tomasys import get_objectives_in_error
 from mros2_reasoner.tomasys import ground_fd
+from mros2_reasoner.tomasys import obtain_best_function_design
+from mros2_reasoner.tomasys import print_ontology_status
 from mros2_reasoner.tomasys import read_ontology_file
 from mros2_reasoner.tomasys import remove_objective_grounding
 from mros2_reasoner.tomasys import reset_fd_realisability
@@ -40,6 +42,10 @@ class Reasoner:
         # This Lock is used to ensure safety of tQAvalues
         self.ontology_lock = Lock()
 
+        # Dictionary with request configurations for functions
+        self.requested_configurations = dict()
+
+        self.logger = logging
         signal.signal(signal.SIGINT, self.save_ontology_exit)
 
     def remove_objective(self, objective_id):
@@ -63,12 +69,12 @@ class Reasoner:
         objectives = self.search_objectives()
         has_objective = False
         if objectives == []:
-            self.get_logger().info(
+            self.logger.info(
                 'No objectives found, waiting for new Objective')
         else:
             has_objective = True
             for objective in objectives:
-                self.get_logger().info(
+                self.logger.info(
                     'Objective {} found'.format(
                         objective.name))
         return has_objective
@@ -87,7 +93,7 @@ class Reasoner:
                 iri=str(iri_seed)))
         return objective
 
-    def get_new_tomasys_nrf(self, qa_value_name, iri_seed, nfr_value):
+    def get_new_tomasys_nfr(self, qa_value_name, iri_seed, nfr_value):
         """Creates QAvalue individual in the KB given a desired name and a
         string seed for the QAtype name and the value
         """
@@ -186,7 +192,7 @@ class Reasoner:
                         infer_data_property_values=True)
                     return_value = True
                 except Exception as err:
-                    logging.exception("{0}".format(err))
+                    self.logger.exception("{0}".format(err))
                     return False
                     # raise err
 
@@ -199,15 +205,88 @@ class Reasoner:
         self.onto.save(file="error.owl", format="rdfxml")
         sys.exit(0)
 
-    def handle_updatable_objectives(self, objective_list):
-        for obj_in_error in objective_list:
-            if obj_in_error.o_status == "UPDATABLE":
-                self.get_logger().info(
-                    ">> UPDATABLE objective - Try to clear Components status")
-                for comp_inst in list(
-                        self.tomasys.ComponentState.instances()):
-                    if comp_inst.c_status == "RECOVERED":
-                        self.get_logger().info(
-                            "Component {0} Status {1} - Set to None".format(
-                                comp_inst.name, comp_inst.c_status))
-                        comp_inst.c_status = None
+    def handle_updatable_objectives(self, obj_in_error):
+        if obj_in_error.o_status == "UPDATABLE":
+            self.logger.info(
+                ">> UPDATABLE objective - Try to clear Components status")
+            for comp_inst in list(
+                    self.tomasys.ComponentState.instances()):
+                if comp_inst.c_status == "RECOVERED":
+                    self.logger.info(
+                        "Component {0} Status {1} - Set to None".format(
+                            comp_inst.name, comp_inst.c_status))
+                    comp_inst.c_status = None
+
+    # selects configurations requested by the user
+    def select_requested_configurations(self):
+        objectives = self.search_objectives()
+        requested_configurations = dict()
+        for objective in objectives:
+            function = objective.typeF.name
+            if function in self.requested_configurations:
+                requested_configurations[objective] = \
+                    self.requested_configurations[function]
+        self.requested_configurations = dict()
+        return requested_configurations
+
+    # find best fds for all objectives
+    def select_desired_configuration(self, obj_in_error):
+        self.logger.info(" >> Reasoner searches an FD ")
+        desired_configuration = obtain_best_function_design(
+            obj_in_error, self.tomasys)
+
+        if desired_configuration is None:
+            self.logger.warning(
+                "No FD found to solve Objective {} ".format(obj_in_error.name))
+        return desired_configuration
+
+    # MAPE-K: Analyze step
+    def analyze(self):
+        # PRINT system status
+        print_ontology_status(self.tomasys)
+
+        objectives_in_error = []
+        if self.has_objective() is not True:
+            return objectives_in_error
+
+        self.logger.info(
+            '>> Started MAPE-K ** Analysis (ontological reasoning) **')
+
+        # EXEC REASONING to update ontology with inferences
+        if self.perform_reasoning() is False:
+            self.logger.error('>> Reasoning error')
+            self.onto.save(
+                file="error_reasoning.owl", format="rdfxml")
+            return objectives_in_error
+
+        # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
+        objectives_in_error = self.get_objectives_in_error()
+        if objectives_in_error == []:
+            self.logger.info(
+                ">> No Objectives in ERROR: no adaptation is needed")
+        else:
+            for obj_in_error in objectives_in_error:
+                self.logger.warning(
+                    "Objective {0} in status: {1}".format(
+                        obj_in_error.name, obj_in_error.o_status))
+        return objectives_in_error
+
+    # MAPE-K: Plan step
+    def plan(self, objectives_in_error):
+        self.logger.info('  >> Started MAPE-K ** PLAN adaptation **')
+
+        desired_configurations = self.select_requested_configurations()
+        for obj_in_error in objectives_in_error:
+            self.handle_updatable_objectives(obj_in_error)
+
+            if obj_in_error not in desired_configurations:
+                desired_configurations[obj_in_error] = \
+                    self.select_desired_configuration(obj_in_error)
+        return desired_configurations
+
+    # MAPE-K: Execute step
+    def execute(self, desired_configurations):
+        self.logger.info('  >> Started MAPE-K ** EXECUTION **')
+        for objective in desired_configurations:
+            self.set_new_grounding(
+                desired_configurations[objective], objective)
