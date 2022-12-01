@@ -11,10 +11,8 @@ from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import KeyValue
 
 from mros2_reasoner.reasoner import Reasoner
-from mros2_reasoner.tomasys import evaluate_objectives
 from mros2_reasoner.tomasys import obtain_best_function_design
 from mros2_reasoner.tomasys import print_ontology_status
-from mros2_reasoner.tomasys import reset_objective_status
 
 from mros2_msgs.action import ControlQos
 from mros2_msgs.msg import QoS
@@ -240,7 +238,8 @@ class RosReasoner(Node, Reasoner):
     # for MVP with QAs - request the FD.name to reconfigure to
     def request_configuration(self, new_configuration):
 
-        self.get_logger().warning('New Configuration requested: {}'.format(new_configuration))
+        self.get_logger().warning(
+            'New Configuration requested: {}'.format(new_configuration))
         self.req_reconfiguration_result = None
 
         system_modes_cli = self.create_client(
@@ -250,7 +249,7 @@ class RosReasoner(Node, Reasoner):
 
         while not system_modes_cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().warn('Mode change service /' + self.node_name +
-                                   '/change_mode not available, waiting again...')
+                                   '/change_mode not available, waiting ...')
         try:
             req = ChangeMode.Request()
             req.mode_name = new_configuration
@@ -274,7 +273,8 @@ class RosReasoner(Node, Reasoner):
     async def metacontrol_loop_callback(self):
 
         if self.is_initialized is not True:
-            self.get_logger().info('Waiting to initialize Reasoner -  Nothing else will be done')
+            self.get_logger().info(
+                'Waiting to initialize Reasoner -  Nothing else will be done')
             return
         if self.has_objective() is not True:
             return
@@ -282,10 +282,11 @@ class RosReasoner(Node, Reasoner):
         # PRINT system status
         print_ontology_status(self.tomasys)
 
-        self.get_logger().info('  >> Started MAPE-K ** Analysis (ontological reasoning) **')
+        self.get_logger().info(
+            '>> Started MAPE-K ** Analysis (ontological reasoning) **')
 
         # EXEC REASONING to update ontology with inferences
-        if not self.perform_reasoning():
+        if self.perform_reasoning() is False:
             self.get_logger().error('    >> Reasoning error')
             self.onto.save(
                 file="error_reasoning.owl", format="rdfxml")
