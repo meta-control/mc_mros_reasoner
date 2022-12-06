@@ -15,7 +15,7 @@ import logging
 
 # Returns
 # - kb_box: the ontology readed
-def loadKB_from_file(kb_file):
+def load_kb_from_file(kb_file):
     """ Reads a KB from a given file
         (Replaces loadTomasysKB)
         Args:
@@ -44,7 +44,7 @@ def read_ontology_file(ontology_file_array):
     ontology_obj = None
     for ontology_file in ontology_file_array:
         if ontology_file is not None:
-            ontology = loadKB_from_file(ontology_file)
+            ontology = load_kb_from_file(ontology_file)
             if ontology is not None:
                 logging.info("Loaded ontology: " + str(ontology_file))
             else:
@@ -56,21 +56,22 @@ def read_ontology_file(ontology_file_array):
                 ontology_obj.imported_ontologies.append(ontology)
             else:
                 ontology_obj = ontology
-        else:
-            logging.warning("No ontology file provided!")
-            return None
+
+    if ontology_obj is None:
+        logging.error("Error while reading ontology files!")
+        return None
     return ontology_obj
 
 
 # To reset the individuals that no longer hold due to adaptation
 # for the moment, only Objective individuals statuses
 # - tomasys: ontology holding the Tbox
-def resetObjStatus(objective, status=None):
+def reset_objective_status(objective, status=None):
     # logging.warning("\nReseting obj {0}".format(objective.name))
     objective.o_status = status
 
 
-def resetFDRealisability(tbox, abox, c_name):
+def reset_fd_realisability(tbox, abox, c_name):
     logging.warning("\nReset realisability:\n")
     component = abox.search_one(iri="*{}".format(c_name))
     if component is None:
@@ -119,7 +120,7 @@ def print_ontology_status(kb_box):
 
 
 # update the QA value for an FG with the value received
-def updateQAvalue(fg, qa_type, value, tbox, abox):
+def update_qa_value(fg, qa_type, value, tbox, abox):
     qas = fg.hasQAvalue
 
     if qas == []:  # for the first qa value received
@@ -147,7 +148,7 @@ def updateQAvalue(fg, qa_type, value, tbox, abox):
 
 # Evaluates the Objective individuals in the KB and returns a list with
 # those in error
-def evaluateObjectives(objectives):
+def get_objectives_in_error(objectives):
     objectives_internal_error = []
     for o in objectives:
         if o.o_status in ["UNGROUNDED",
@@ -159,7 +160,7 @@ def evaluateObjectives(objectives):
     return objectives_internal_error
 
 
-def getFunctionGrouding(o, tbox):
+def get_function_grouding(o, tbox):
     fgs = tbox.FunctionGrounding.instances()
     for fg in fgs:
         if fg.solvesO == o:
@@ -167,8 +168,8 @@ def getFunctionGrouding(o, tbox):
     return None
 
 
-def getCurrentFunctionDesign(o, tbox):
-    fg = getFunctionGrouding(o, tbox)
+def get_current_function_design(o, tbox):
+    fg = get_function_grouding(o, tbox)
     if fg is not None:
         return fg.typeFD
     return None
@@ -177,7 +178,7 @@ def getCurrentFunctionDesign(o, tbox):
 # Select best FD in the KB, given:
 # - o: individual of tomasys:Objective
 # - tomasys ontology that contains the tomasys tbox
-def obtainBestFunctionDesign(o, tbox):
+def obtain_best_function_design(o, tbox):
     logging.warning("\t\t\t == Obatin Best Function Design ==")
     f = o.typeF
     # get fds for Function F
@@ -203,9 +204,9 @@ def obtainBestFunctionDesign(o, tbox):
                     str([fd.name for fd in suitable_fds]))
     # discard those FD that will not meet objective NFRs
 
-    fds_for_obj = meetNFRs(o, suitable_fds)
+    fds_for_obj = meet_frs(o, suitable_fds)
     # get best FD based on higher Utility/trade-off of QAs
-    current_fd = getCurrentFunctionDesign(o, tbox)
+    current_fd = get_current_function_design(o, tbox)
     best_fd = current_fd
     if fds_for_obj != []:
         logging.warning(
@@ -253,7 +254,7 @@ def remove_objective_grounding(objective, tbox, abox):
 
 # Returns all FunctionDesign individuals from a given set (fds) that
 # comply with the NFRs of a given Objective individual (o)
-def meetNFRs(o, fds):
+def meet_frs(o, fds):
     if fds == []:
         logging.warning("Empty set of given FDs")
         return []
@@ -264,10 +265,11 @@ def meetNFRs(o, fds):
     # logging.warning("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
     for fd in fds:
         for nfr in o.hasNFR:
-            qas = [qa for qa in fd.hasQAestimation if qa.isQAtype is nfr.isQAtype]
+            qas = [qa for qa in fd.hasQAestimation
+                   if str(qa.isQAtype) == str(nfr.isQAtype)]
         if len(qas) != 1:
             logging.warning(
-                "FD has no expected value for this QA or multiple definitions (inconsistent)")
+                'FD has no expected value for this QA or multiple definitions')
             break
         else:
             if nfr.isQAtype.name == 'energy':

@@ -9,12 +9,15 @@ import signal
 import sys
 from threading import Lock
 
+from mros2_reasoner.tomasys import get_objectives_in_error
 from mros2_reasoner.tomasys import ground_fd
+from mros2_reasoner.tomasys import obtain_best_function_design
+from mros2_reasoner.tomasys import print_ontology_status
 from mros2_reasoner.tomasys import read_ontology_file
 from mros2_reasoner.tomasys import remove_objective_grounding
-from mros2_reasoner.tomasys import resetFDRealisability
-from mros2_reasoner.tomasys import resetObjStatus
-from mros2_reasoner.tomasys import updateQAvalue
+from mros2_reasoner.tomasys import reset_fd_realisability
+from mros2_reasoner.tomasys import reset_objective_status
+from mros2_reasoner.tomasys import update_qa_value
 
 from owlready2 import destroy_entity
 from owlready2 import sync_reasoner_pellet
@@ -32,11 +35,6 @@ class Reasoner:
         # application model as individuals of tomasys classes
         self.onto = read_ontology_file(model_file)
 
-        # Check if ontologies have been correctly loaded
-        if self.tomasys is None or self.onto is None:
-            logging.error("Error while reading ontology files!")
-            return
-
         # name of the current system configuration, as stored in KB
         self.grounded_configuration = None
         # TODO move to RosReasoner or remove: there can be multiple
@@ -44,8 +42,11 @@ class Reasoner:
         # This Lock is used to ensure safety of tQAvalues
         self.ontology_lock = Lock()
 
+        # Dictionary with request configurations for functions
+        self.requested_configurations = dict()
+
+        self.logger = logging
         signal.signal(signal.SIGINT, self.save_ontology_exit)
-        self.isInitialized = True
 
     def remove_objective(self, objective_id):
         # Checks if there are previously defined objectives.
@@ -64,18 +65,35 @@ class Reasoner:
         objectives = self.onto.search(type=self.tomasys.Objective)
         return objectives
 
-    def get_new_tomasys_objective(self, objetive_name, iri_seed):
+    def has_objective(self):
+        objectives = self.search_objectives()
+        has_objective = False
+        if objectives == []:
+            self.logger.info(
+                'No objectives found, waiting for new Objective')
+        else:
+            has_objective = True
+            for objective in objectives:
+                self.logger.info(
+                    'Objective {} found'.format(
+                        objective.name))
+        return has_objective
+
+    def get_objectives_in_error(self):
+        return get_objectives_in_error(self.search_objectives())
+
+    def get_new_tomasys_objective(self, objective_name, iri_seed):
         """ Creates Objective individual in the KB given a desired name and a
         string seed for the Function name
         """
         objective = self.tomasys.Objective(
-            str(objetive_name),
+            str(objective_name),
             namespace=self.onto,
             typeF=self.onto.search_one(
                 iri=str(iri_seed)))
         return objective
 
-    def get_new_tomasys_nrf(self, qa_value_name, iri_seed, nfr_value):
+    def get_new_tomasys_nfr(self, qa_value_name, iri_seed, nfr_value):
         """Creates QAvalue individual in the KB given a desired name and a
         string seed for the QAtype name and the value
         """
@@ -99,7 +117,7 @@ class Reasoner:
         if fd:
             with self.ontology_lock:
                 ground_fd(fd, objective, self.tomasys, self.onto)
-                resetObjStatus(objective)
+                reset_objective_status(objective)
             return str(fd.name)
         else:
             return None
@@ -109,7 +127,7 @@ class Reasoner:
     # - name: name of the fg reported, as named in the OWL file
     # - level: values 0 and 1 are mapped to nothing, values 2 or 3 are mapped
     # to fg.status="INTERNAL_ERROR"
-    def updateBinding(self, diagnostic_status):
+    def update_binding(self, diagnostic_status):
         fg = self.onto.search_one(iri="*{}".format(diagnostic_status.name))
         if fg is None:
             return -1
@@ -123,7 +141,7 @@ class Reasoner:
     # - message: "Component status"
     # - key: name of the Component Reported, as named in the OWL file
     # - value: (True, False ) Meaning wheter or not the component is working OK
-    def updateComponentStatus(self, diagnostic_status):
+    def update_component_status(self, diagnostic_status):
         # Find the Component with the same name that the one in the Component
         # Status message (in diagnostic_status.key)
         component_type = self.onto.search_one(
@@ -131,7 +149,7 @@ class Reasoner:
         if component_type is not None:
             value = diagnostic_status.values[0].value
             with self.ontology_lock:
-                resetFDRealisability(
+                reset_fd_realisability(
                     self.tomasys,
                     self.onto,
                     diagnostic_status.values[0].key)
@@ -142,7 +160,7 @@ class Reasoner:
         return return_value
 
     # update QA value based on incoming diagnostic
-    def updateQA(self, diagnostic_status):
+    def update_qa(self, diagnostic_status):
         # Find the FG with the same name that the one in the QA message (in
         # diagnostic_status.name)
         fg = next((fg for fg in self.tomasys.FunctionGrounding.instances()
@@ -155,7 +173,7 @@ class Reasoner:
         if qa_type is not None:
             value = float(diagnostic_status.values[0].value)
             with self.ontology_lock:
-                updateQAvalue(fg, qa_type, value, self.tomasys, self.onto)
+                update_qa_value(fg, qa_type, value, self.tomasys, self.onto)
             return_value = 1
         else:
             return_value = 0
@@ -174,7 +192,7 @@ class Reasoner:
                         infer_data_property_values=True)
                     return_value = True
                 except Exception as err:
-                    logging.exception("{0}".format(err))
+                    self.logger.exception("{0}".format(err))
                     return False
                     # raise err
 
@@ -186,3 +204,89 @@ class Reasoner:
     def save_ontology_exit(self, signal, frame):
         self.onto.save(file="error.owl", format="rdfxml")
         sys.exit(0)
+
+    def handle_updatable_objectives(self, obj_in_error):
+        if obj_in_error.o_status == "UPDATABLE":
+            self.logger.info(
+                ">> UPDATABLE objective - Try to clear Components status")
+            for comp_inst in list(
+                    self.tomasys.ComponentState.instances()):
+                if comp_inst.c_status == "RECOVERED":
+                    self.logger.info(
+                        "Component {0} Status {1} - Set to None".format(
+                            comp_inst.name, comp_inst.c_status))
+                    comp_inst.c_status = None
+
+    # selects configurations requested by the user
+    def select_requested_configurations(self):
+        objectives = self.search_objectives()
+        requested_configurations = dict()
+        for objective in objectives:
+            function = objective.typeF.name
+            if function in self.requested_configurations:
+                requested_configurations[objective] = \
+                    self.requested_configurations[function]
+        self.requested_configurations = dict()
+        return requested_configurations
+
+    # find best fds for all objectives
+    def select_desired_configuration(self, obj_in_error):
+        self.logger.info(" >> Reasoner searches an FD ")
+        desired_configuration = obtain_best_function_design(
+            obj_in_error, self.tomasys)
+
+        if desired_configuration is None:
+            self.logger.warning(
+                "No FD found to solve Objective {} ".format(obj_in_error.name))
+        return desired_configuration
+
+    # MAPE-K: Analyze step
+    def analyze(self):
+        # PRINT system status
+        print_ontology_status(self.tomasys)
+
+        objectives_in_error = []
+        if self.has_objective() is not True:
+            return objectives_in_error
+
+        self.logger.info(
+            '>> Started MAPE-K ** Analysis (ontological reasoning) **')
+
+        # EXEC REASONING to update ontology with inferences
+        if self.perform_reasoning() is False:
+            self.logger.error('>> Reasoning error')
+            self.onto.save(
+                file="error_reasoning.owl", format="rdfxml")
+            return objectives_in_error
+
+        # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
+        objectives_in_error = self.get_objectives_in_error()
+        if objectives_in_error == []:
+            self.logger.info(
+                ">> No Objectives in ERROR: no adaptation is needed")
+        else:
+            for obj_in_error in objectives_in_error:
+                self.logger.warning(
+                    "Objective {0} in status: {1}".format(
+                        obj_in_error.name, obj_in_error.o_status))
+        return objectives_in_error
+
+    # MAPE-K: Plan step
+    def plan(self, objectives_in_error):
+        self.logger.info('  >> Started MAPE-K ** PLAN adaptation **')
+
+        desired_configurations = self.select_requested_configurations()
+        for obj_in_error in objectives_in_error:
+            self.handle_updatable_objectives(obj_in_error)
+
+            if obj_in_error not in desired_configurations:
+                desired_configurations[obj_in_error] = \
+                    self.select_desired_configuration(obj_in_error)
+        return desired_configurations
+
+    # MAPE-K: Execute step
+    def execute(self, desired_configurations):
+        self.logger.info('  >> Started MAPE-K ** EXECUTION **')
+        for objective in desired_configurations:
+            self.set_new_grounding(
+                desired_configurations[objective], objective)
