@@ -178,7 +178,7 @@ class RosReasoner(Node, Reasoner):
             nfr_id = \
                 goal_request.qos_expected.objective_id + "_nfr_" + nfr_key.key
             new_nfr = self.get_new_tomasys_nfr(
-                 nfr_id, "*" + nfr_key.key, float(nfr_key.value))
+                 nfr_id, nfr_key.key, float(nfr_key.value))
             self.logger.info("Adding NFRs {}".format(new_nfr))
             new_objective.hasNFR.append(new_nfr)
 

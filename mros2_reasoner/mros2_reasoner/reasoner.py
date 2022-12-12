@@ -93,16 +93,21 @@ class Reasoner:
                 iri=str(iri_seed)))
         return objective
 
-    def get_new_tomasys_nfr(self, qa_value_name, iri_seed, nfr_value):
+    def get_new_tomasys_nfr(self, qa_value_name, nfr_key, nfr_value):
         """Creates QAvalue individual in the KB given a desired name and a
         string seed for the QAtype name and the value
         """
+
+        # TODO: this search is not optimal, the search + loop can be
+        # substituted by a single search
+        qa_type = self.get_qa_type(nfr_key)
+
         new_nfr = self.tomasys.QAvalue(
             str(qa_value_name),
             namespace=self.onto,
-            isQAtype=self.onto.search_one(
-                iri=str(iri_seed)),
+            isQAtype=qa_type,
             hasValue=nfr_value)
+
         return new_nfr
 
     def set_new_grounding(self, fd_name, objective):
@@ -159,6 +164,17 @@ class Reasoner:
             return_value = 0
         return return_value
 
+    def get_qa_type(self, key):
+        # TODO: this search is not optimal, the search + loop can be
+        # substituted by a single search
+        qa_types = self.onto.search(type=self.tomasys.QualityAttributeType)
+        qa_type = None
+        for qa in qa_types:
+            if qa.name == key:
+                qa_type = qa
+                break
+        return qa_type
+
     # update QA value based on incoming diagnostic
     def update_qa(self, diagnostic_status):
         # Find the FG with the same name that the one in the QA message (in
@@ -168,8 +184,8 @@ class Reasoner:
         if fg is None:
             fg = self.tomasys.FunctionGrounding.instances()[0]
             return_value = -1
-        qa_type = self.onto.search_one(
-            iri="*{}".format(diagnostic_status.values[0].key))
+
+        qa_type = self.get_qa_type(diagnostic_status.values[0].key)
         if qa_type is not None:
             value = float(diagnostic_status.values[0].value)
             with self.ontology_lock:
