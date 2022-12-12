@@ -197,8 +197,6 @@ class RosReasoner(Node, Reasoner):
     def diagnostics_callback(self, msg):
         if self.onto is not None and self.has_objective() is True:
             for diagnostic_status in msg.status:
-                # 2 types of diagnostics considered: about bindings in error
-                # (TODO not implemented yet) or about QAs
                 if diagnostic_status.message == "binding error":
                     self.logger.info("binding error received")
                     up_binding = self.update_binding(diagnostic_status)
@@ -208,19 +206,23 @@ class RosReasoner(Node, Reasoner):
                             diagnostic_status.name)
                     elif up_binding == 0:
                         self.logger.warning(
-                            "Diagnostics message received for %s with level %d, nothing done about it." %
+                            "Diagnostics message received for %s" +
+                            " with level %d, nothing done about it." %
                             (diagnostic_status.name, diagnostic_status.level))
 
                 # Component error
                 elif diagnostic_status.message == "Component status":
-                    # self.logger.warning("Component status value received \tTYPE: {0}\tVALUE: {1}".format(diagnostic_status.values[0].key, diagnostic_status.values[0].value))
                     up_cs = self.update_component_status(
                         diagnostic_status)
                     if up_cs == -1:
-                        self.logger.warning("CS message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
+                        self.logger.warning(
+                            "CS message refers to a FG not found in the KB, " +
+                            " we asume it refers to the current " +
+                            "grounded_configuration (1st fg found in the KB)")
                     elif up_cs == 1:
                         self.logger.info(
-                            "\n\nCS Message received!\tTYPE: {0}\tVALUE: {1}".format(
+                            "\n\nCS Message received!" +
+                            "\tTYPE: {0}\tVALUE: {1}".format(
                                 diagnostic_status.values[0].key,
                                 diagnostic_status.values[0].value))
                     else:
@@ -229,10 +231,12 @@ class RosReasoner(Node, Reasoner):
                                 diagnostic_status.values[0].key))
 
                 elif diagnostic_status.message == "QA status":
-                    # self.logger.warning("QA value received for\t{0} \tTYPE: {1}\tVALUE: {2}".format(diagnostic_status.name, diagnostic_status.values[0].key, diagnostic_status.values[0].value))
                     up_qa = self.update_qa(diagnostic_status)
                     if up_qa == -1:
-                        self.logger.warning("QA message refers to a FG not found in the KB, we asume it refers to the current grounded_configuration (1st fg found in the KB)")
+                        self.logger.warning(
+                            "QA message refers to a FG not found in the KB," +
+                            " we asume it refers to the current " +
+                            "grounded_configuration (1st fg found in the KB)")
                     elif up_qa == 1:
                         self.logger.info(
                             "QA value received!\tTYPE: {0}\tVALUE: {1}".format(
