@@ -208,7 +208,7 @@ class Reasoner:
                         infer_data_property_values=True)
                     return_value = True
                 except Exception as err:
-                    self.logger.exception("{0}".format(err))
+                    self.logger.error("{0}".format(err))
                     return False
                     # raise err
 
