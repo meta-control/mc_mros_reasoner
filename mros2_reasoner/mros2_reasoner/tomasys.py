@@ -205,7 +205,7 @@ def obtain_best_function_design(o, tbox):
                     str([fd.name for fd in suitable_fds]))
     # discard those FD that will not meet objective NFRs
 
-    fds_for_obj = meet_frs(o, suitable_fds)
+    fds_for_obj = filter_fds(o, suitable_fds, tbox)
     # get best FD based on higher Utility/trade-off of QAs
     current_fd = get_current_function_design(o, tbox)
     best_fd = current_fd
@@ -255,17 +255,19 @@ def remove_objective_grounding(objective, tbox, abox):
         destroy_entity(fg)
 
 
+def filter_fds(o, fds, tbox):
+    filtered = meet_nfrs(o, fds)
+    filtered = filter_water_visibility(o, fds, tbox)
+    return filtered
+
+
 # Returns all FunctionDesign individuals from a given set (fds) that
 # comply with the NFRs of a given Objective individual (o)
-def meet_frs(o, fds):
-    if fds == []:
-        logging.warning("Empty set of given FDs")
-        return []
+def meet_nfrs(o, fds):
+    if fds == [] or len(o.hasNFR) == 0:
+        return fds
+
     filtered = []
-    if len(o.hasNFR) == 0:
-        logging.warning("== Objective has no NFRs, so a random FD is picked")
-        return [next(iter(fds))]
-    # logging.warning("== Checking FDs for Objective with NFRs type: %s and value %s ", str(o.hasNFR[0].isQAtype.name), str(o.hasNFR[0].hasValue))
     for fd in fds:
         for nfr in o.hasNFR:
             qas = [qa for qa in fd.hasQAestimation
@@ -286,6 +288,35 @@ def meet_frs(o, fds):
         logging.warning("No FDs meet NFRs")
 
     return filtered
+
+
+def filter_water_visibility(o, fds, tbox):
+    qa_key = 'water_visibility'
+    observed_water_visibility = get_observed_qa(qa_key, tbox)
+    filtered = fds.copy()
+    if observed_water_visibility is not None:
+        for fd in fds:
+            qas = [qa for qa in fd.hasQAestimation
+                   if str(qa.isQAtype.name) == qa_key]
+            if len(qas) != 1:
+                logging.warning(
+                    "FD " + str(fd.name) +
+                    " has no expected value or multiple definitions for"
+                    + qa_key + "QA")
+            else:
+                if observed_water_visibility < qas[0].hasValue:
+                    filtered.remove(fd)
+    return filtered
+
+
+def get_observed_qa(key, tbox):
+    observed_qa_value = None
+    qa_values = tbox.search(type=tbox.QAvalue)
+    for qa in qa_values:
+        if qa.name == 'obs_' + key:
+            observed_qa_value = qa.hasValue
+            break
+    return observed_qa_value
 
 
 # Compute expected utility based on QA trade-off, the criteria to chose FDs
