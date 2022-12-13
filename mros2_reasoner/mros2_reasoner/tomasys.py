@@ -84,38 +84,39 @@ def reset_fd_realisability(tbox, abox, c_name):
     else:
         if component.c_status in ["FALSE", "RECOVERED"]:
             logging.warning(
-                "component status is {} - Set to None\n".format(component.c_status))
+                "component status is {} - Set to None\n".format(
+                    component.c_status))
             for fd in list(tbox.FunctionDesign.instances()):
                 if fd.fd_realisability is None:
                     continue
                 else:
                     logging.warning(
-                        "FD {0} realisability: {1} -  Set to None".format(fd.name, fd.fd_realisability))
+                        "FD {0} realisability: {1} -  Set to None".format(
+                            fd.name, fd.fd_realisability))
                     fd.fd_realisability = None
             component.c_status = None
 
 
 # For debugging purposes
 def print_ontology_status(kb_box):
-
     logging.warning("\t\t\t >>> Ontology Status   <<<")
 
     logging.warning("\n\tComponent Status:\t{0}".format(
-        [(c.name, c.c_status) for c in list(kb_box.ComponentState.instances())]))
-
-    # logging.warning("\nFD Realizability Statuses:\n")
-    # for fd in list(kb_box.FunctionDesign.instances()):
-    #     logging.warning("FD {0} realisability: {1}".format(fd.name, fd.fd_realisability))
+        [(c.name, c.c_status)
+            for c in list(kb_box.ComponentState.instances())]))
 
     for i in list(kb_box.FunctionGrounding.instances()):
         logging.warning(
-            "\n\tFG: {0}  Status: {1}  Solves: {2}  FD: {3}  QAvalues: {4}".format(
+            "\n\tFG: {0}  Status: {1}  Solves: {2}  FD: {3}  QAvalues: {4}"
+            .format(
                 i.name, i.fg_status, i.solvesO.name, i.typeFD.name, [
                     (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
 
     for i in list(kb_box.Objective.instances()):
         logging.warning("\n\tOBJECTIVE: {0}   Status: {1}   NFRs:  {2}".format(
-            i.name, i.o_status, [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
+            i.name,
+            i.o_status,
+            [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
     logging.warning("\t\t\t >>>>>>>>>>>>> <<<<<<<<<<<")
 
 
@@ -229,8 +230,9 @@ def obtain_best_function_design(o, tbox):
 
 
 def ground_fd(fd, objective, tbox, abox):
-    """Given a FunctionDesign fd and an Objective objective, creates an individual FunctionGrounds with typeF fd and solve) objective
-        returns the fg
+    """Given a FunctionDesign fd and an Objective objective, creates an
+       individual FunctionGrounds with typeF fd and solve) objective returns
+       the fg
     """
     fg = tbox.FunctionGrounding(
         "fg_" +
@@ -245,7 +247,8 @@ def ground_fd(fd, objective, tbox, abox):
 
 
 def remove_objective_grounding(objective, tbox, abox):
-    """Given an objective individual, removes the grounded hierarchy (fg tree) that solves it.
+    """Given an objective individual, removes the grounded hierarchy (fg tree)
+        that solves it.
     """
     fg = abox.search_one(solvesO=objective)
     if fg:
@@ -294,7 +297,7 @@ def utility(fd):
         qa for qa in fd.hasQAestimation if qa.isQAtype.name == "performance"]
     if len(utility) != 1:
         logging.warning(
-            "FD has no expected perfomance or multiple definitions (inconsistent)")
+            "FD has no expected perfomance or multiple definitions")
         return 0.001
     else:
         return utility[0].hasValue
