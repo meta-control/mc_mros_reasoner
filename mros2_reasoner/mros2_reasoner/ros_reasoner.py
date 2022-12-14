@@ -232,12 +232,7 @@ class RosReasoner(Node, Reasoner):
 
                 elif diagnostic_status.message == "QA status":
                     up_qa = self.update_qa(diagnostic_status)
-                    if up_qa == -1:
-                        self.logger.warning(
-                            "QA message refers to a FG not found in the KB," +
-                            " we asume it refers to the current " +
-                            "grounded_configuration (1st fg found in the KB)")
-                    elif up_qa == 1:
+                    if up_qa:
                         self.logger.info(
                             "QA value received!\tTYPE: {0}\tVALUE: {1}".format(
                                 diagnostic_status.values[0].key,
