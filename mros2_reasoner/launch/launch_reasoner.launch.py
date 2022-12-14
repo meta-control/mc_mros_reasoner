@@ -14,7 +14,6 @@
 
 import os
 
-from ament_index_python.packages import get_package_prefix
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
@@ -54,7 +53,7 @@ def generate_launch_description():
 
     node_name_arg = DeclareLaunchArgument(
         'node_name',
-        default_value="",
+        default_value='',
         description='Group/Node name to be actuated by system_modes')
 
     desired_configuration_arg = DeclareLaunchArgument(
