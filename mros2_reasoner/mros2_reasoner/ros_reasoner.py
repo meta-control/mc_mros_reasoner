@@ -263,26 +263,21 @@ class RosReasoner(Node, Reasoner):
                 callback_group=self.cb_group)
 
         while not mode_change_cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().warn('Mode change service' +
-            '/ros_reasoner/change_node_mode not available, waiting again...')
+            self.get_logger().warn(
+                'Mode change service ' +
+                '/ros_reasoner/change_node_mode not available, waiting...')
         try:
             req = MetacontrolFD.Request()
+            req.required_function_name = str(objective.typeF.name)
             req.required_fd_name = desired_configuration
-            # async call, but the follow up while loop BLOCKS execution till
-            # there is a response
+
             mode_change_srv_call_future = mode_change_cli.call_async(req)
-            # try:
-            #     rclpy.spin_until_future_complete(self, mode_change_srv_call_future)
-            #     #call_result = await mode_change_srv_call_future
-            # except Exception as e:
-            #     self.get_logger().info('Service call failed %r' % (e,))
-            # else:
-            #     self.get_logger().info('Result of reconfiguration %d' % (mode_change_srv_call_future.result().success))
+            rclpy.spin_until_future_complete(self, mode_change_srv_call_future)
         except Exception as e:
             self.get_logger().info('Request creation failed %r' % (e,))
             return None
         else:
-            return mode_change_srv_call_future
+            return mode_change_srv_call_future.result()
 
     def execute_ros(self, desired_configurations):
         self.logger.info('  >> Started MAPE-K ** EXECUTION **')
