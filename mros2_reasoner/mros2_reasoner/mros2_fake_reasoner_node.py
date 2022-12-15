@@ -1,5 +1,5 @@
-import rclpy
 from mros2_reasoner.fake_ros_reasoner import FakeRosReasoner
+import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
 
@@ -18,7 +18,8 @@ def main(args=None):
         # initialize KB with the ontology
         ros_reasoner.initKB()
     else:
-        ros_reasoner.get_logger().info("There was an error in the reasoner initialization")
+        ros_reasoner.get_logger().info(
+            "There was an error in the reasoner initialization")
         return
 
     # Spin until the process in terminated

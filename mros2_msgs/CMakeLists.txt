@@ -14,6 +14,7 @@ find_package(diagnostic_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/QoS.msg"
+  "srv/MetacontrolFD.srv"
   "action/NavigateToPoseQos.action"
   "action/ControlQos.action"
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs action_msgs diagnostic_msgs

@@ -121,30 +121,24 @@ def print_ontology_status(kb_box):
 
 
 # update the QA value for an FG with the value received
-def update_qa_value(fg, qa_type, value, tbox, abox):
-    qas = fg.hasQAvalue
+def update_measured_qa_value(qa_type, value, tbox, abox):
+    measured_qa = tbox.QAvalue(
+        "obs_{}".format(
+            qa_type.name),
+        namespace=abox,
+        isQAtype=qa_type,
+        hasValue=value)
+    return measured_qa
 
-    if qas == []:  # for the first qa value received
-        qav = tbox.QAvalue(
-            "obs_{}".format(
-                qa_type.name),
-            namespace=abox,
-            isQAtype=qa_type,
-            hasValue=value)
-        fg.hasQAvalue.append(qav)
-    else:
-        for qa in qas:
-            if qa.isQAtype == qa_type:
-                qa.hasValue = value
-                return
-        # case it is a new QA type value
-        qav = tbox.QAvalue(
-            "obs_{}".format(
-                qa_type.name),
-            isQAtype=qa_type,
-            namespace=abox,
-            hasValue=value)
-        fg.hasQAvalue.append(qav)
+
+def updated_fg_measured_qa(fg, measured_qa):
+    updated = False
+    for qa in fg.hasQAvalue:
+        if str(qa.name) == str(measured_qa.name):
+            qa = measured_qa
+            updated = True
+    if not updated:
+        fg.hasQAvalue.append(measured_qa)
 
 
 # Evaluates the Objective individuals in the KB and returns a list with
@@ -311,6 +305,7 @@ def filter_water_visibility(o, fds, tbox):
 
 def get_observed_qa(key, tbox):
     observed_qa_value = None
+    # TODO: is it better to use instances()?
     qa_values = tbox.search(type=tbox.QAvalue)
     for qa in qa_values:
         if qa.name == 'obs_' + key:

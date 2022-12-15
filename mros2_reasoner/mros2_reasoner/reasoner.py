@@ -17,7 +17,8 @@ from mros2_reasoner.tomasys import read_ontology_file
 from mros2_reasoner.tomasys import remove_objective_grounding
 from mros2_reasoner.tomasys import reset_fd_realisability
 from mros2_reasoner.tomasys import reset_objective_status
-from mros2_reasoner.tomasys import update_qa_value
+from mros2_reasoner.tomasys import updated_fg_measured_qa
+from mros2_reasoner.tomasys import update_measured_qa_value
 
 from owlready2 import destroy_entity
 from owlready2 import sync_reasoner_pellet
@@ -166,7 +167,7 @@ class Reasoner:
 
     def get_qa_type(self, key):
         # TODO: this search is not optimal, the search + loop can be
-        # substituted by a single search
+        # substituted by a single search or instances()
         qa_types = self.onto.search(type=self.tomasys.QualityAttributeType)
         qa_type = None
         for qa in qa_types:
@@ -175,24 +176,31 @@ class Reasoner:
                 break
         return qa_type
 
+    # TODO: can this be optimized with a list comprehension?
+    def get_function_groudings_require_qa(self, qa_key):
+        fgs = self.tomasys.FunctionGrounding.instances()
+        _fgs = []
+        for fg in fgs:
+            function_design = fg.typeFD
+            for qa in function_design.hasQAestimation:
+                if str(qa.isQAtype) == str(qa_key):
+                    _fgs.append(fg)
+        return _fgs
+
     # update QA value based on incoming diagnostic
     def update_qa(self, diagnostic_status):
-        # Find the FG with the same name that the one in the QA message (in
-        # diagnostic_status.name)
-        fg = next((fg for fg in self.tomasys.FunctionGrounding.instances()
-                  if fg.name == diagnostic_status.name), None)
-        if fg is None:
-            fg = self.tomasys.FunctionGrounding.instances()[0]
-            return_value = -1
-
         qa_type = self.get_qa_type(diagnostic_status.values[0].key)
         if qa_type is not None:
+            fgs = self.get_function_groudings_require_qa(qa_type)
             value = float(diagnostic_status.values[0].value)
             with self.ontology_lock:
-                update_qa_value(fg, qa_type, value, self.tomasys, self.onto)
-            return_value = 1
+                measured_qa = update_measured_qa_value(
+                    qa_type, value, self.tomasys, self.onto)
+                for fg in fgs:
+                    updated_fg_measured_qa(fg, measured_qa)
+            return_value = True
         else:
-            return_value = 0
+            return_value = False
         return return_value
 
     # EXEC REASONING to update ontology with inferences
