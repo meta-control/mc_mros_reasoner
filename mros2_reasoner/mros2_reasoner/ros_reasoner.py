@@ -253,34 +253,33 @@ class RosReasoner(Node, Reasoner):
                 objective, desired_configuration))
         self.req_reconfiguration_result = None
 
-        # TODO: Change the NodeMode srv such that it takes the function design
-        # and functions instead of node and mode. Change the bridge to
-        # incorporate the mapping.
-
         mode_change_cli = self.create_client(
                 MetacontrolFD,
                 '/ros_reasoner/change_node_mode',
                 callback_group=self.cb_group)
 
         while not mode_change_cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().warn(
+            self.logger().warn(
                 'Mode change service ' +
                 '/ros_reasoner/change_node_mode not available, waiting...')
+
         try:
             req = MetacontrolFD.Request()
             req.required_function_name = str(objective.typeF.name)
             req.required_fd_name = desired_configuration
 
-            mode_change_srv_call_future = mode_change_cli.call_async(req)
-            rclpy.spin_until_future_complete(self, mode_change_srv_call_future)
+            mode_change_response = mode_change_cli.call(req)
         except Exception as e:
-            self.get_logger().info('Request creation failed %r' % (e,))
+            self.logger().info('Request creation failed %r' % (e,))
             return None
         else:
-            return mode_change_srv_call_future.result()
+            return mode_change_response
+
 
     def execute_ros(self, desired_configurations):
         self.logger.info('  >> Started MAPE-K ** EXECUTION **')
+        self.logger.info(
+                'desired_configurations are: {}'.format(desired_configurations))
         for objective in desired_configurations:
             reconfiguration_result = self.request_configuration(
                 desired_configurations[objective], objective)
