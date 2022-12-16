@@ -4,6 +4,7 @@ from rclpy.node import Node
 from system_modes_msgs.srv import ChangeMode
 from mros2_msgs.srv import MetacontrolFD
 from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 
 # TODO: Make everything fit together: node names, mode names, function_design
 # names. Currently there is only one node available and the fd names do not
@@ -18,17 +19,21 @@ class BridgeService(Node):
                 '/ros_reasoner/change_node_mode',
                 self.change_mode_cb)
         # Dictionary to map fd names to system_mode modes and nodes
-        self.node_mapping = {'fd_spiral_low': ('spiral_lc_node', 'SLOW'),
-                'fd_spiral_medium': ('spiral_lc_node', '__DEFAULT__'),
-                'fd_spiral_high': ('spiral_lc_node', 'FAST')
+        self.system_modes_mapping = {('f_generate_search_path','fd_spiral_low'): ('spiral_lc_node', 'SLOW'),
+                ('f_generate_search_path','fd_spiral_medium'): ('spiral_lc_node', '__DEFAULT__'),
+                ('f_generate_search_path','fd_spiral_high'): ('spiral_lc_node', 'FAST')
                 }
     
     def change_mode_cb(self, request, response):
         # Get node name and mode name from dictionary
-        if request.required_fd_name in self.node_mapping:
-            (node_name, mode_name) = self.node_mapping[request.reqired_fd_name]
+        f_and_fd = (request.required_function_name, request.required_fd_name)
+        if f_and_fd in self.system_modes_mapping:
+            (node_name, mode_name) = self.system_modes_mapping[f_and_fd]
         else:
-            (node_name, mode_name) = self.node_mapping['fd_spiral_medium']
+            (node_name, mode_name) = f_and_fd
+
+        self.get_logger().info('requested node name is {}'.format(node_name))
+        self.get_logger().info('requested mode name is {}'.format(mode_name))
 
         system_modes_cli = self.create_client(
                 ChangeMode,
@@ -38,7 +43,13 @@ class BridgeService(Node):
         try:
             req = ChangeMode.Request()
             req.mode_name = mode_name
-            response = system_modes_cli.call_async(req)
+
+            system_modes_response = system_modes_cli.call(req)
+
+            response.success = system_modes_response.success
+            self.get_logger().info(
+                    'Response received: {}'.format(response.success))
+            
         except Exception as e:
             self.get_logger().info('Request creation failed %r' % (e,))
             return None
@@ -49,8 +60,10 @@ def main():
     rclpy.init()
 
     bridge_service = BridgeService()
+    
+    mt_executor = MultiThreadedExecutor()
 
-    rclpy.spin(bridge_service)
+    rclpy.spin(bridge_service, executor=mt_executor)
     
     rclpy.shutdown()
 
