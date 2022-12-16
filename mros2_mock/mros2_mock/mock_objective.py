@@ -15,6 +15,9 @@ class MockNode(Node):
     def __init__(self):
         super().__init__('mock')
 
+        self.declare_parameter('mock_param', 1.0)        
+        self.declare_parameter('fake_param', 1.0)        
+
         self._action_client = ActionClient(self, ControlQos, 'mros_objective')
 
         self.diagnostics_publisher = self.create_publisher(
@@ -47,22 +50,22 @@ class MockNode(Node):
             mock_goal_msg, feedback_callback=self.feedback_callback)
         self.get_logger().info('Goal Sent!!!')
 
-        fake_goal_msg = ControlQos.Goal()
-        fake_goal_msg.qos_expected.objective_type = "f_fake"
-        fake_goal_msg.qos_expected.objective_id = "obj_fake_{:.0f}".format(
-            self.get_clock().now().to_msg().sec / 10)
-        fake_goal_msg.qos_expected.selected_mode = ""
-        nfr2 = KeyValue()
-        nfr2.key = "mockiness"
-        nfr2.value = str(0.8)
-        fake_goal_msg.qos_expected.qos.append(nfr2)
+        # fake_goal_msg = ControlQos.Goal()
+        # fake_goal_msg.qos_expected.objective_type = "f_fake"
+        # fake_goal_msg.qos_expected.objective_id = "obj_fake_{:.0f}".format(
+            # self.get_clock().now().to_msg().sec / 10)
+        # fake_goal_msg.qos_expected.selected_mode = ""
+        # nfr2 = KeyValue()
+        # nfr2.key = "mockiness"
+        # nfr2.value = str(0.8)
+        # fake_goal_msg.qos_expected.qos.append(nfr2)
 
-        self.get_logger().info(
-            'Sending goal  {0}'.format(
-                fake_goal_msg.qos_expected.objective_type))
-        self._action_client.send_goal_async(
-            fake_goal_msg, feedback_callback=self.feedback_callback)
-        self.get_logger().info('Goal Sent!!!')
+        # self.get_logger().info(
+            # 'Sending goal  {0}'.format(
+                # fake_goal_msg.qos_expected.objective_type))
+        # self._action_client.send_goal_async(
+            # fake_goal_msg, feedback_callback=self.feedback_callback)
+        # self.get_logger().info('Goal Sent!!!')
 
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
