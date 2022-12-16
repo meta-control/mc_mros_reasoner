@@ -1,0 +1,18 @@
+---
+
+f_mock:
+  ros__parameters:
+    type: node
+    modes:
+      __DEFAULT__:
+        ros__parameters:
+          mock_param: 0.5
+      fd_mock1:
+        ros__parameters:
+          mock_param: 0.1
+      fd_mock2:
+        ros__parameters:
+          mock_param: 1.0
+      fd_mock3:
+        ros__parameters:
+          mock_param: 2.0
