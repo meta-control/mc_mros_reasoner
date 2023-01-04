@@ -97,22 +97,31 @@ class RosReasoner(Node, Reasoner):
             self.grounded_configuration = None
 
     def objective_cancel_goal_callback(self, cancel_request):
-        self.logger.info('Cancel Action Callback!')
+        self.logger.info('Cancel action callback!')
         # Stop reasoning
 
-        if (cancel_request.qos_expected is None):
-            # Checks if there are previously defined objectives.
-            for old_objective in self.search_objectives():
-                self.remove_objective(old_objective.name)
-                return CancelResponse.ACCEPT
-        else:
-            if self.remove_objective(
-                    cancel_request.qos_expected.objective_id):
-                self.logger.info('Objective Cancelled')
-                return CancelResponse.ACCEPT
-            else:
-                self.logger.info('Not found')
+        if self.use_reconfiguration_srv:
+            function_name = self.get_function_name_from_objective_id(
+                cancel_request.request.qos_expected.objective_id)
+            reconfiguration_result = self.request_configuration(
+                'fd_unground',
+                function_name)
+
+            if reconfiguration_result is None \
+               or reconfiguration_result.success is False:
+                self.logger.info('Objective {} cancel req failed'.format(
+                    cancel_request.request.qos_expected.objective_id))
                 return CancelResponse.REJECT
+
+        if self.remove_objective(
+                cancel_request.request.qos_expected.objective_id):
+            self.logger.info('Objective {} cancelled'.format(
+                cancel_request.request.qos_expected.objective_id))
+            return CancelResponse.ACCEPT
+        else:
+            self.logger.info('Objective {} not found'.format(
+                cancel_request.request.qos_expected.objective_id))
+            return CancelResponse.REJECT
 
     def objective_action_callback(self, objective_handle):
 
