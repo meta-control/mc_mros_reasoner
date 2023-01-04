@@ -17,7 +17,7 @@ from mros2_reasoner.tomasys import read_ontology_file
 from mros2_reasoner.tomasys import remove_objective_grounding
 from mros2_reasoner.tomasys import reset_fd_realisability
 from mros2_reasoner.tomasys import reset_objective_status
-from mros2_reasoner.tomasys import updated_fg_measured_qa
+from mros2_reasoner.tomasys import update_fg_measured_qa
 from mros2_reasoner.tomasys import update_measured_qa_value
 
 from owlready2 import destroy_entity
@@ -27,7 +27,6 @@ import logging
 
 
 class Reasoner:
-    """docstring for Reasoner."""
 
     def __init__(self, tomasys_file, model_file):
 
@@ -36,10 +35,6 @@ class Reasoner:
         # application model as individuals of tomasys classes
         self.onto = read_ontology_file(model_file)
 
-        # name of the current system configuration, as stored in KB
-        self.grounded_configuration = None
-        # TODO move to RosReasoner or remove: there can be multiple
-        # configurations grounded (for multiple objectives)
         # This Lock is used to ensure safety of tQAvalues
         self.ontology_lock = Lock()
 
@@ -62,22 +57,14 @@ class Reasoner:
             return False
 
     def search_objectives(self):
-        # Root objectives
         objectives = self.onto.search(type=self.tomasys.Objective)
         return objectives
 
     def has_objective(self):
         objectives = self.search_objectives()
         has_objective = False
-        if objectives == []:
-            self.logger.info(
-                'No objectives found, waiting for new Objective')
-        else:
+        if objectives != []:
             has_objective = True
-            for objective in objectives:
-                self.logger.info(
-                    'Objective {} found'.format(
-                        objective.name))
         return has_objective
 
     def get_objectives_in_error(self):
@@ -197,7 +184,7 @@ class Reasoner:
                 measured_qa = update_measured_qa_value(
                     qa_type, value, self.tomasys, self.onto)
                 for fg in fgs:
-                    updated_fg_measured_qa(fg, measured_qa)
+                    update_fg_measured_qa(fg, measured_qa)
             return_value = True
         else:
             return_value = False
@@ -270,7 +257,7 @@ class Reasoner:
         print_ontology_status(self.tomasys)
 
         objectives_in_error = []
-        if self.has_objective() is not True:
+        if self.has_objective() is False:
             return objectives_in_error
 
         self.logger.info(
