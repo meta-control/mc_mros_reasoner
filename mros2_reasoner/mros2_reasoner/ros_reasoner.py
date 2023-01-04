@@ -135,9 +135,13 @@ class RosReasoner(Node, Reasoner):
 
         obj_created = self.create_objective(objective_handle.request)
         if obj_created:
-            while True:
+            send_feedback = True
+            while send_feedback:
                 feedback_msg = ControlQos.Feedback()
-                for objective in self.search_objectives():
+                objective = self.get_objective_from_objective_id(
+                    objective_handle.request.qos_expected.objective_id)
+
+                if objective is not None:
                     feedback_msg.qos_status.objective_id = objective.name
                     if objective.o_status is None:
                         feedback_msg.qos_status.objective_status = str(
@@ -147,24 +151,21 @@ class RosReasoner(Node, Reasoner):
                             objective.o_status)
 
                     feedback_msg.qos_status.objective_type = \
-                        objective_handle.request.qos_expected.objective_type
-                    break
-                fg_instance = self.onto.search_one(solvesO=objective)
-                if fg_instance is not None:
-                    feedback_msg.qos_status.selected_mode = \
-                        fg_instance.typeFD.name
+                        str(objective.typeF.name)
 
-                    for qa in fg_instance.hasQAvalue:
-                        QAValue = KeyValue()
-                        QAValue.key = str(qa.isQAtype.name)
-                        QAValue.value = str(qa.hasValue)
-                        feedback_msg.qos_status.qos.append(QAValue)
+                    fg_instance = self.onto.search_one(solvesO=objective)
+                    if fg_instance is not None:
+                        feedback_msg.qos_status.selected_mode = \
+                            fg_instance.typeFD.name
+
+                        for qa in fg_instance.hasQAvalue:
+                            QAValue = KeyValue()
+                            QAValue.key = str(qa.isQAtype.name)
+                            QAValue.value = str(qa.hasValue)
+                            feedback_msg.qos_status.qos.append(QAValue)
+                    objective_handle.publish_feedback(feedback_msg)
                 else:
-                    if objective is None:
-                        objective_handle.canceled()
-                        break
-
-                objective_handle.publish_feedback(feedback_msg)
+                    send_feedback = False
 
                 self.feedback_rate.sleep()
             objective_handle.succeed()
