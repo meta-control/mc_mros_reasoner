@@ -30,7 +30,6 @@ def generate_launch_description():
     # Create the launch configuration variables
     tomasys_file = LaunchConfiguration('tomasys_file')
     model_file = LaunchConfiguration('model_file')
-    node_name = LaunchConfiguration('node_name')
     desired_configuration = LaunchConfiguration('desired_configuration')
 
     tomasys_files_array = [
@@ -51,11 +50,6 @@ def generate_launch_description():
         default_value=mock_ontology_path,
         description='File name for the Working ontology file')
 
-    node_name_arg = DeclareLaunchArgument(
-        'node_name',
-        default_value='',
-        description='Group/Node name to be actuated by system_modes')
-
     desired_configuration_arg = DeclareLaunchArgument(
         'desired_configuration',
         default_value='',
@@ -69,7 +63,6 @@ def generate_launch_description():
         parameters=[{
             'tomasys_file': tomasys_file,
             'model_file': model_file,
-            'node_name': node_name,
             'desired_configuration': desired_configuration,
         }],
     )
@@ -78,6 +71,5 @@ def generate_launch_description():
         tomasys_file_arg,
         model_file_arg,
         desired_configuration_arg,
-        node_name_arg,
         mros_reasoner_node
     ])
