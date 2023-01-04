@@ -309,8 +309,10 @@ class Reasoner:
             self.handle_updatable_objectives(obj_in_error)
 
             if obj_in_error not in desired_configurations:
-                desired_configurations[obj_in_error] = \
-                    self.select_desired_configuration(obj_in_error)
+                desired_config = self.select_desired_configuration(
+                    obj_in_error)
+                if desired_config is not None:
+                    desired_configurations[obj_in_error] = desired_config
         return desired_configurations
 
     # MAPE-K: Execute step
