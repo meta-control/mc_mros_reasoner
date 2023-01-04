@@ -277,6 +277,9 @@ class RosReasoner(Node, Reasoner):
 
 
     def execute_ros(self, desired_configurations):
+        if self.has_objective() is False or desired_configurations == dict():
+            return
+
         self.logger.info('  >> Started MAPE-K ** EXECUTION **')
         self.logger.info(
                 'desired_configurations are: {}'.format(desired_configurations))

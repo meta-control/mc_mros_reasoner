@@ -299,6 +299,9 @@ class Reasoner:
 
     # MAPE-K: Plan step
     def plan(self, objectives_in_error):
+        if self.has_objective() is False or objectives_in_error == []:
+            return dict()
+
         self.logger.info('  >> Started MAPE-K ** PLAN adaptation **')
 
         desired_configurations = self.select_requested_configurations()
@@ -312,6 +315,9 @@ class Reasoner:
 
     # MAPE-K: Execute step
     def execute(self, desired_configurations):
+        if self.has_objective() is False or desired_configurations == dict():
+            return
+
         self.logger.info('  >> Started MAPE-K ** EXECUTION **')
         for objective in desired_configurations:
             self.set_new_grounding(
