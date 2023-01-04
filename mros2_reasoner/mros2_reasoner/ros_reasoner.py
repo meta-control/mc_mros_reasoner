@@ -47,10 +47,6 @@ class RosReasoner(Node, Reasoner):
             self.execute = self.execute_ros
 
         self.is_initialized = False
-        self.mode_change_srv_future = None
-        self.req_reconfiguration_result = None
-
-        self.node_name = self.get_parameter('node_name').value
 
         self.cb_group = ReentrantCallbackGroup()
 
@@ -202,7 +198,7 @@ class RosReasoner(Node, Reasoner):
                     up_binding = self.update_binding(diagnostic_status)
                     if up_binding == -1:
                         self.logger.warning(
-                            'Unkown Function Grounding: %s',
+                            'Unkown Function Grounding: %s' +
                             diagnostic_status.name)
                     elif up_binding == 0:
                         self.logger.warning(
@@ -227,7 +223,7 @@ class RosReasoner(Node, Reasoner):
                                 diagnostic_status.values[0].value))
                     else:
                         self.logger.warning(
-                            'Unsupported CS Message received: %s ', str(
+                            'Unsupported CS Message received: %s ' + str(
                                 diagnostic_status.values[0].key))
 
                 elif diagnostic_status.message == "QA status":
@@ -239,12 +235,8 @@ class RosReasoner(Node, Reasoner):
                                 diagnostic_status.values[0].value))
                     else:
                         self.logger.warning(
-                            'Unsupported QA TYPE received: %s ', str(
+                            'Unsupported QA TYPE received: %s ' + str(
                                 diagnostic_status.values[0].key))
-                else:
-                    self.logger.warning(
-                        'Unsupported Message received: %s ', str(
-                            diagnostic_status.values[0].key))
 
     # for MVP with QAs - request the FD.name to reconfigure to
     def request_configuration(self, desired_configuration, objective):
@@ -267,14 +259,12 @@ class RosReasoner(Node, Reasoner):
             req = MetacontrolFD.Request()
             req.required_function_name = str(objective.typeF.name)
             req.required_fd_name = desired_configuration
-
             mode_change_response = mode_change_cli.call(req)
         except Exception as e:
-            self.logger().info('Request creation failed %r' % (e,))
+            self.logger.info('Request creation failed {}'.format(e))
             return None
         else:
             return mode_change_response
-
 
     def execute_ros(self, desired_configurations):
         if self.has_objective() is False or desired_configurations == dict():
@@ -282,7 +272,8 @@ class RosReasoner(Node, Reasoner):
 
         self.logger.info('  >> Started MAPE-K ** EXECUTION **')
         self.logger.info(
-                'desired_configurations are: {}'.format(desired_configurations))
+                'desired_configurations are: {}'.format(
+                    desired_configurations))
         for objective in desired_configurations:
             reconfiguration_result = self.request_configuration(
                 desired_configurations[objective], objective)

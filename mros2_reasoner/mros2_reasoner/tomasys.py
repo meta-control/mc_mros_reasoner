@@ -131,7 +131,7 @@ def update_measured_qa_value(qa_type, value, tbox, abox):
     return measured_qa
 
 
-def updated_fg_measured_qa(fg, measured_qa):
+def update_fg_measured_qa(fg, measured_qa):
     updated = False
     for qa in fg.hasQAvalue:
         if str(qa.name) == str(measured_qa.name):
@@ -204,9 +204,6 @@ def obtain_best_function_design(o, tbox):
     current_fd = get_current_function_design(o, tbox)
     best_fd = current_fd
     if fds_for_obj != []:
-        logging.warning(
-            "== FunctionDesigns also meeting NFRs: %s", [
-                fd.name for fd in fds_for_obj])
         best_utility = 0
         for fd in fds_for_obj:
             if fd != current_fd:
@@ -251,7 +248,13 @@ def remove_objective_grounding(objective, tbox, abox):
 
 def filter_fds(o, fds, tbox):
     filtered = meet_nfrs(o, fds)
+    logging.warning(
+        "== FunctionDesigns also meeting NFRs: %s", [
+            fd.name for fd in filtered])
     filtered = filter_water_visibility(o, fds, tbox)
+    logging.warning(
+        "== FunctionDesigns also meeting custom filters: %s", [
+            fd.name for fd in filtered])
     return filtered
 
 
