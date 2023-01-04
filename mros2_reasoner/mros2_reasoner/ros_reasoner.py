@@ -33,8 +33,7 @@ class RosReasoner(Node, Reasoner):
         )
 
         self.declare_parameter('desired_configuration', Parameter.Type.STRING)
-        self.declare_parameter('node_name', '')
-        self.declare_parameter('reasoning_period', 5)
+        self.declare_parameter('reasoning_period', 2)
         self.declare_parameter('use_reconfigure_srv', True)
 
         # Whether or not to use system modes reconfiguration
@@ -74,11 +73,11 @@ class RosReasoner(Node, Reasoner):
         # Get desired_configuration_name from parameters
         self.set_initial_fd(self.get_parameter('desired_configuration').value)
 
-        timer_rate = self.get_parameter('reasoning_period').value
+        timer_period = self.get_parameter('reasoning_period').value
 
-        self.feedback_rate = self.create_rate(timer_rate)
+        self.feedback_rate = self.create_rate(1/timer_period)
         self.metacontrol_loop_timer = self.create_timer(
-            timer_rate,
+            timer_period,
             self.metacontrol_loop_callback,
             callback_group=self.cb_group)
 
