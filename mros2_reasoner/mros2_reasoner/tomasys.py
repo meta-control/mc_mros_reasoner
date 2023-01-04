@@ -246,6 +246,17 @@ def remove_objective_grounding(objective, tbox, abox):
         destroy_entity(fg)
 
 
+def get_observed_qa(key, tbox):
+    observed_qa_value = None
+    # TODO: is it better to use instances()?
+    qa_values = tbox.search(type=tbox.QAvalue)
+    for qa in qa_values:
+        if qa.name == 'obs_' + key:
+            observed_qa_value = qa.hasValue
+            break
+    return observed_qa_value
+
+
 def filter_fds(o, fds, tbox):
     filtered = meet_nfrs(o, fds)
     logging.warning(
@@ -304,17 +315,6 @@ def filter_water_visibility(o, fds, tbox):
                 if observed_water_visibility < qas[0].hasValue:
                     filtered.remove(fd)
     return filtered
-
-
-def get_observed_qa(key, tbox):
-    observed_qa_value = None
-    # TODO: is it better to use instances()?
-    qa_values = tbox.search(type=tbox.QAvalue)
-    for qa in qa_values:
-        if qa.name == 'obs_' + key:
-            observed_qa_value = qa.hasValue
-            break
-    return observed_qa_value
 
 
 # Compute expected utility based on QA trade-off, the criteria to chose FDs

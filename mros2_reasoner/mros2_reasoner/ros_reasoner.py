@@ -227,22 +227,15 @@ class RosReasoner(Node, Reasoner):
 
                 elif diagnostic_status.message == "QA status":
                     up_qa = self.update_qa(diagnostic_status)
-                    if up_qa:
-                        self.logger.info(
-                            'QA value received!\tTYPE: {0}\tVALUE: {1}'.format(
-                                diagnostic_status.values[0].key,
-                                diagnostic_status.values[0].value))
-                    else:
+                    if not up_qa:
                         self.logger.warning(
                             'Unsupported QA TYPE received: %s ' + str(
                                 diagnostic_status.values[0].key))
 
-    # for MVP with QAs - request the FD.name to reconfigure to
-    def request_configuration(self, desired_configuration, objective):
+    def request_configuration(self, desired_configuration, function_name):
         self.logger.warning(
-            'New Configuration for objective {0} requested: {1}'.format(
-                objective, desired_configuration))
-        self.req_reconfiguration_result = None
+            'New Configuration for function_name {0} requested: {1}'.format(
+                function_name, desired_configuration))
 
         mode_change_cli = self.create_client(
                 MetacontrolFD,
@@ -256,7 +249,7 @@ class RosReasoner(Node, Reasoner):
 
         try:
             req = MetacontrolFD.Request()
-            req.required_function_name = str(objective.typeF.name)
+            req.required_function_name = function_name
             req.required_fd_name = desired_configuration
             mode_change_response = mode_change_cli.call(req)
         except Exception as e:
@@ -275,7 +268,7 @@ class RosReasoner(Node, Reasoner):
                     desired_configurations))
         for objective in desired_configurations:
             reconfiguration_result = self.request_configuration(
-                desired_configurations[objective], objective)
+                desired_configurations[objective], str(objective.typeF.name))
 
             if reconfiguration_result is not None \
                and reconfiguration_result.success is True:
