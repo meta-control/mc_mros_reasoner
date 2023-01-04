@@ -67,6 +67,21 @@ class Reasoner:
             has_objective = True
         return has_objective
 
+    def get_objective_from_objective_id(self, objective_id):
+        objectives = self.search_objectives()
+        if objectives == []:
+            return None
+        for objective in objectives:
+            if str(objective.name) == str(objective_id):
+                return objective
+
+    def get_function_name_from_objective_id(self, objective_id):
+        objective = self.get_objective_from_objective_id(objective_id)
+        if objective is None:
+            return None
+        else:
+            return str(objective.typeF.name)
+
     def get_objectives_in_error(self):
         return get_objectives_in_error(self.search_objectives())
 
