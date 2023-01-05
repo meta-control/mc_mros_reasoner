@@ -19,14 +19,8 @@ class BridgeService(Node):
                 '/ros_reasoner/change_node_mode',
                 self.change_mode_cb)
         # Dictionary to map fd names to system_mode modes and nodes
-        self.system_modes_mapping = {
-            ('f_generate_search_path', 'fd_spiral_low'): ('spiral_lc_system', 'SLOW'),
-            ('f_generate_search_path', 'fd_spiral_medium'): ('spiral_lc_system', '__DEFAULT__'),
-            ('f_generate_search_path', 'fd_spiral_high'): ('spiral_lc_system', 'FAST'),
-            ('f_generate_search_path', 'fd_unground'): ('spiral_lc_system', 'DEACTIVATED'),
-            ('f_inspect_pipeline', 'fd_inspect_pipeline'): ('follow_pipeline_system', 'ON'),
-            ('f_inspect_pipeline', 'fd_unground'): ('follow_pipeline_system', 'OFF'),
-            }
+        # example: {('f_function1', 'fd_fd1'): ('sm_system', '__DEFAULT__'),}
+        self.system_modes_mapping = dict()
 
     def change_mode_cb(self, request, response):
         # Get node name and mode name from dictionary
