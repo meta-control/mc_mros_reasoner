@@ -155,7 +155,7 @@ def get_objectives_in_error(objectives):
     return objectives_internal_error
 
 
-def get_function_grouding(o, tbox):
+def get_function_grounding(o, tbox):
     fgs = tbox.FunctionGrounding.instances()
     for fg in fgs:
         if fg.solvesO == o:
@@ -164,7 +164,7 @@ def get_function_grouding(o, tbox):
 
 
 def get_current_function_design(o, tbox):
-    fg = get_function_grouding(o, tbox)
+    fg = get_function_grounding(o, tbox)
     if fg is not None:
         return fg.typeFD
     return None
@@ -200,18 +200,15 @@ def obtain_best_function_design(o, tbox):
     # discard those FD that will not meet objective NFRs
 
     fds_for_obj = filter_fds(o, suitable_fds, tbox)
-    # get best FD based on higher Utility/trade-off of QAs
-    current_fd = get_current_function_design(o, tbox)
-    best_fd = current_fd
     if fds_for_obj != []:
         best_utility = 0
         for fd in fds_for_obj:
-            if fd != current_fd:
-                utility_fd = utility(fd)
-                logging.warning("== Utility for %s : %f", fd.name, utility_fd)
-                if utility_fd > best_utility:
-                    best_fd = fd
-                    best_utility = utility_fd
+            # if fd != current_fd:
+            utility_fd = utility(fd)
+            logging.warning("== Utility for %s : %f", fd.name, utility_fd)
+            if utility_fd > best_utility:
+                best_fd = fd
+                best_utility = utility_fd
 
         logging.warning("\t\t\t == Best FD available %s", str(best_fd.name))
         return best_fd.name
@@ -246,7 +243,7 @@ def remove_objective_grounding(objective, tbox, abox):
         destroy_entity(fg)
 
 
-def get_observed_qa(key, tbox):
+def get_measured_qa(key, tbox):
     observed_qa_value = None
     # TODO: is it better to use instances()?
     qa_values = tbox.search(type=tbox.QAvalue)
@@ -300,7 +297,7 @@ def meet_nfrs(o, fds):
 
 def filter_water_visibility(o, fds, tbox):
     qa_key = 'water_visibility'
-    observed_water_visibility = get_observed_qa(qa_key, tbox)
+    observed_water_visibility = get_measured_qa(qa_key, tbox)
     filtered = fds.copy()
     if observed_water_visibility is not None:
         for fd in fds:
