@@ -25,7 +25,6 @@ setup(
     maintainer_email='c.h.corbato@tudelft.nl',
     description='Implements the meta-controller node for ROS2, including the reasoner',
     license='Apache License 2.0',
-    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'mros2_reasoner_node = mros2_reasoner.mros2_reasoner_node:main',

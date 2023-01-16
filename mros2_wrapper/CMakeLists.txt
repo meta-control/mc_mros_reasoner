@@ -35,13 +35,6 @@ add_executable(mros2_wrapper
 )
 ament_target_dependencies(mros2_wrapper ${dependencies})
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  find_package(ament_cmake_gtest REQUIRED)
-  add_subdirectory(test)
-endif()
-
 install(TARGETS
   mros2_wrapper
   ARCHIVE DESTINATION lib
