@@ -126,12 +126,6 @@ class RosReasoner(Node, Reasoner):
     def objective_action_callback(self, objective_handle):
 
         self.logger.info('Objective Action Callback!')
-        # Stop reasoning
-
-        # TODO: objectives won't have same name
-        # Checks if there are previously defined objectives.
-        for old_objective in self.search_objectives():
-            self.remove_objective(old_objective.name)
 
         obj_created = self.create_objective(objective_handle.request)
         if obj_created:
