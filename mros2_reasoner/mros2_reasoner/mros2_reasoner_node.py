@@ -2,8 +2,6 @@ import rclpy
 from mros2_reasoner.ros_reasoner import RosReasoner
 from rclpy.executors import MultiThreadedExecutor
 
-import threading
-
 
 def main(args=None):
 
@@ -21,11 +19,8 @@ def main(args=None):
             "There was an error in the reasoner initialization")
         return
 
-    thread = threading.Thread(
-        target=rclpy.spin, args=[ros_reasoner, mt_executor], daemon=True)
-    thread.start()
-
-    thread.join()
+    # Spin until the process in terminated
+    rclpy.spin(ros_reasoner, executor=mt_executor)
     ros_reasoner.destroy_node()
     rclpy.shutdown()
 
