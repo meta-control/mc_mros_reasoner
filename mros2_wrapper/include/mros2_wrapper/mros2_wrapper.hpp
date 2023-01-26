@@ -131,13 +131,13 @@ protected:
       get_node_logging_interface(),
       get_node_waitables_interface(),
 
-      "mros_objective", on_mros_feedback, on_mros_result);
+      "/mros/objective", on_mros_feedback, on_mros_result);
 
     auto mros_goal = std::make_shared<mros2_msgs::action::ControlQos::Goal>();
     mros_goal->qos_expected = mros_action_server_->get_current_goal()->qos_expected;
     mros_goal->qos_expected.objective_id = mros_action_server_->get_uuid();
     mros_action_client->send_goal(*mros_goal);
-    while(!ros2_action_client->get_goal_status()) 
+    while(!ros2_action_client->get_goal_status())
     {
       try
       {

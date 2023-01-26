@@ -18,7 +18,7 @@ class MinimalPublisher(Node):
         self.i = 0
         self.qa_type = 'energy'
         self.qa_value = 0.3
-        self._action_client = ActionClient(self, ControlQos, 'mros_objective')
+        self._action_client = ActionClient(self, ControlQos, '/mros/objective')
         self.reconf = False
         self.recover = False
 

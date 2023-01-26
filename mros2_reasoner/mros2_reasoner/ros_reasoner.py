@@ -65,7 +65,7 @@ class RosReasoner(Node, Reasoner):
         self.objective_action_server = ActionServer(
             self,
             ControlQos,
-            'mros_objective',
+            '/mros/objective',
             self.objective_action_callback,
             callback_group=self.cb_group,
             cancel_callback=self.objective_cancel_goal_callback)
@@ -243,13 +243,13 @@ class RosReasoner(Node, Reasoner):
 
         mode_change_cli = self.create_client(
                 MetacontrolFD,
-                '/ros_reasoner/change_node_mode',
+                '/mros/request_configuration',
                 callback_group=self.cb_group)
 
         while not mode_change_cli.wait_for_service(timeout_sec=1.0):
             self.logger().warn(
                 'Mode change service ' +
-                '/ros_reasoner/change_node_mode not available, waiting...')
+                '/mros/request_configuration not available, waiting...')
 
         try:
             req = MetacontrolFD.Request()
