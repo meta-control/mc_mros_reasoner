@@ -16,7 +16,7 @@ class BridgeService(Node):
         super().__init__('system_modes_bridge')
         self.srv = self.create_service(
                 MetacontrolFD,
-                '/ros_reasoner/change_node_mode',
+                '/mros/request_configuration',
                 self.change_mode_cb)
         # Dictionary to map fd names to system_mode modes and nodes
         # example: {('f_function1', 'fd_fd1'): ('sm_system', '__DEFAULT__'),}

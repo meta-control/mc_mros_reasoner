@@ -43,7 +43,7 @@ class FakeRosReasoner(Node):
         self.objective_action_server = ActionServer(
             self,
             ControlQos,
-            'mros_objective',
+            '/mros/objective',
             self.objective_action_callback,
             callback_group=self.cb_group,
             cancel_callback=self.objective_cancel_goal_callback)

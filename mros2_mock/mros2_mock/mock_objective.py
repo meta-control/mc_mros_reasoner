@@ -15,10 +15,10 @@ class MockNode(Node):
     def __init__(self):
         super().__init__('mock')
 
-        self.declare_parameter('mock_param', 1.0)        
-        self.declare_parameter('fake_param', 1.0)        
+        self.declare_parameter('mock_param', 1.0)
+        self.declare_parameter('fake_param', 1.0)
 
-        self._action_client = ActionClient(self, ControlQos, 'mros_objective')
+        self._action_client = ActionClient(self, ControlQos, '/mros/objective')
 
         self.diagnostics_publisher = self.create_publisher(
             DiagnosticArray, '/diagnostics', 10)
