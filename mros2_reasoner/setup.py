@@ -20,6 +20,7 @@ setup(
     install_requires=[
                 'setuptools',
                 'owlready2>=0.24'],
+    tests_require=['pytest'],
     zip_safe=True,
     maintainer='Carlos Hernandez Corbato',
     maintainer_email='c.h.corbato@tudelft.nl',

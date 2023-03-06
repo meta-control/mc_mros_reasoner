@@ -14,7 +14,7 @@ import logging
 
 
 # Returns
-# - kb_box: the ontology readed
+# - kb_box: the ontology read
 def load_kb_from_file(kb_file):
     """ Reads a KB from a given file
         (Replaces loadTomasysKB)
