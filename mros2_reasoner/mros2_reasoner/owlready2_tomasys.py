@@ -11,7 +11,7 @@ def read_ontology_file(ontology_file_array):
         Returns:
     """
     try:
-        if (type(ontology_file_array) == str):
+        if (isinstance(ontology_file_array, str)):
             ontology_file_array = [ontology_file_array]
         ontology_obj = None
         for ontology_file in ontology_file_array:
@@ -37,14 +37,28 @@ def read_ontology_file(ontology_file_array):
         raise e
 
 
-class Owl2ReadyTOMASys(TOMASysInterface):
-    """! Owl2Ready interface for TOMASys
+class OwlReady2TOMASys(TOMASysInterface):
+    """! OwlReady2 interface for TOMASys
     """
+
     def __init__(self):
         super().__init__()
 
     def load_ontology_file(self, file_array):
         self.knowledge_base = read_ontology_file(file_array)
 
-    def get_instances(self, class_name):
+    def get_class_instances(self, class_name):
         return self.knowledge_base[class_name].instances()
+
+    def get_class_individual(self, class_name, individual_name):
+        return self.knowledge_base.search_one(
+            is_a=self.knowledge_base[class_name],
+            iri='*{}'.format(individual_name)
+        )
+
+    def create_instance(self, class_name, instance_name, property_dict={}):
+        class_ = getattr(self.knowledge_base, class_name)
+        instance = class_(name=instance_name, namespace=self.knowledge_base)
+        for property in property_dict:
+            setattr(instance, property, property_dict[property])
+        return instance
