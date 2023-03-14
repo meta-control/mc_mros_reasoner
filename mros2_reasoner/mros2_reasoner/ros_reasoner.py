@@ -103,9 +103,13 @@ class RosReasoner(Node, Reasoner):
         if self.use_reconfiguration_srv:
             function_name = self.get_function_name_from_objective_id(
                 cancel_request.request.qos_expected.objective_id)
-            reconfiguration_result = self.request_configuration(
-                'fd_unground',
-                function_name)
+
+            if function_name is not None:
+                reconfiguration_result = self.request_configuration(
+                    'fd_unground',
+                    function_name)
+            else:
+                reconfiguration_result = None
 
             if reconfiguration_result is None \
                or reconfiguration_result.success is False:
@@ -127,7 +131,8 @@ class RosReasoner(Node, Reasoner):
 
         self.logger.info('Objective Action Callback!')
 
-        obj_created = self.create_objective(objective_handle.request)
+        request_objective = objective_handle.request
+        obj_created = self.create_objective(request_objective)
         if obj_created:
             send_feedback = True
             while send_feedback:
@@ -145,7 +150,7 @@ class RosReasoner(Node, Reasoner):
                             objective.o_status)
 
                     feedback_msg.qos_status.objective_type = \
-                        str(objective.typeF.name)
+                        str(request_objective.qos_expected.objective_type)
 
                     fg_instance = self.onto.search_one(solvesO=objective)
                     if fg_instance is not None:
@@ -247,7 +252,7 @@ class RosReasoner(Node, Reasoner):
                 callback_group=self.cb_group)
 
         while not mode_change_cli.wait_for_service(timeout_sec=1.0):
-            self.logger().warn(
+            self.logger.warning(
                 'Mode change service ' +
                 '/mros/request_configuration not available, waiting...')
 
