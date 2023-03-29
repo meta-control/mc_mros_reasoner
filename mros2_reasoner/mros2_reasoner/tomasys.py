@@ -13,56 +13,6 @@ from owlready2 import get_ontology
 import logging
 
 
-# Returns
-# - kb_box: the ontology read
-def load_kb_from_file(kb_file):
-    """ Reads a KB from a given file
-        (Replaces loadTomasysKB)
-        Args:
-                kb_file (string): Full path to the ontology to be loaded.
-        Returns:
-                kb_box (ontology): Ontology readed, None: if there is an error.
-    """
-
-    try:
-        kb_box = get_ontology(kb_file).load()
-    except Exception as e:
-        logging.exception("{0}".format(e))
-        return None
-    return kb_box
-
-
-def read_ontology_file(ontology_file_array):
-    """ Checks if an ontology file exists and reads its value
-        Args:
-                ontology_file_name (array string): The name of the parameter.
-        Returns:
-                The ontology if it's readed correctly, None otherwise.
-    """
-    if (type(ontology_file_array) == str):
-        ontology_file_array = [ontology_file_array]
-    ontology_obj = None
-    for ontology_file in ontology_file_array:
-        if ontology_file is not None:
-            ontology = load_kb_from_file(ontology_file)
-            if ontology is not None:
-                logging.info("Loaded ontology: " + str(ontology_file))
-            else:
-                logging.error(
-                    "Failed to load ontology from: " +
-                    str(ontology_file))
-                return None
-            if ontology_obj:
-                ontology_obj.imported_ontologies.append(ontology)
-            else:
-                ontology_obj = ontology
-
-    if ontology_obj is None:
-        logging.error("Error while reading ontology files!")
-        return None
-    return ontology_obj
-
-
 # To reset the individuals that no longer hold due to adaptation
 # for the moment, only Objective individuals statuses
 # - tomasys: ontology holding the Tbox
@@ -97,29 +47,6 @@ def reset_fd_realisability(tbox, abox, c_name):
             component.c_status = None
 
 
-# For debugging purposes
-def print_ontology_status(kb_box):
-    logging.warning("\t\t\t >>> Ontology Status   <<<")
-
-    logging.warning("\n\tComponent Status:\t{0}".format(
-        [(c.name, c.c_status)
-            for c in list(kb_box.ComponentState.instances())]))
-
-    for i in list(kb_box.FunctionGrounding.instances()):
-        logging.warning(
-            "\n\tFG: {0}  Status: {1}  Solves: {2}  FD: {3}  QAvalues: {4}"
-            .format(
-                i.name, i.fg_status, i.solvesO.name, i.typeFD.name, [
-                    (qa.isQAtype.name, qa.hasValue) for qa in i.hasQAvalue]))
-
-    for i in list(kb_box.Objective.instances()):
-        logging.warning("\n\tOBJECTIVE: {0}   Status: {1}   NFRs:  {2}".format(
-            i.name,
-            i.o_status,
-            [(nfr.isQAtype.name, nfr.hasValue) for nfr in i.hasNFR]))
-    logging.warning("\t\t\t >>>>>>>>>>>>> <<<<<<<<<<<")
-
-
 # update the QA value for an FG with the value received
 def update_measured_qa_value(qa_type, value, tbox, abox):
     measured_qa = tbox.QAvalue(
@@ -143,16 +70,16 @@ def update_fg_measured_qa(fg, measured_qa):
 
 # Evaluates the Objective individuals in the KB and returns a list with
 # those in error
-def get_objectives_in_error(objectives):
-    objectives_internal_error = []
-    for o in objectives:
-        if o.o_status in ["UNGROUNDED",
-                          "UPDATABLE",
-                          "IN_ERROR_FR",
-                          "IN_ERROR_NFR",
-                          "IN_ERROR_COMPONENT"]:
-            objectives_internal_error.append(o)
-    return objectives_internal_error
+# def get_objectives_in_error(objectives):
+#     objectives_internal_error = []
+#     for o in objectives:
+#         if o.o_status in ["UNGROUNDED",
+#                           "UPDATABLE",
+#                           "IN_ERROR_FR",
+#                           "IN_ERROR_NFR",
+#                           "IN_ERROR_COMPONENT"]:
+#             objectives_internal_error.append(o)
+#     return objectives_internal_error
 
 
 def get_function_grounding(o, tbox):

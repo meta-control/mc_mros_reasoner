@@ -9,34 +9,26 @@ import signal
 import sys
 from threading import Lock
 
-from mros2_reasoner.tomasys import get_objectives_in_error
 from mros2_reasoner.tomasys import ground_fd
 from mros2_reasoner.tomasys import obtain_best_function_design
-from mros2_reasoner.tomasys import print_ontology_status
-from mros2_reasoner.tomasys import read_ontology_file
 from mros2_reasoner.tomasys import remove_objective_grounding
 from mros2_reasoner.tomasys import reset_fd_realisability
 from mros2_reasoner.tomasys import reset_objective_status
 from mros2_reasoner.tomasys import update_fg_measured_qa
 from mros2_reasoner.tomasys import update_measured_qa_value
 
-from owlready2 import destroy_entity
-from owlready2 import sync_reasoner_pellet
+from mros2_reasoner.owlready2_tomasys import OwlReady2TOMASys
+
 
 import logging
 
 
 class Reasoner:
 
-    def __init__(self, tomasys_file, model_file):
+    def __init__(self, ontology_file_array):
 
-        # owl model with the tomasys ontology
-        self.tomasys = read_ontology_file(tomasys_file)
-        # application model as individuals of tomasys classes
-        self.onto = read_ontology_file(model_file)
-
-        # This Lock is used to ensure safety of tQAvalues
-        self.ontology_lock = Lock()
+        self.kb_interface = OwlReady2TOMASys()
+        self.kb_interface.load_ontology_file(ontology_file_array)
 
         # Dictionary with request configurations for functions
         self.requested_configurations = dict()
@@ -56,17 +48,6 @@ class Reasoner:
         else:
             return False
 
-    def search_objectives(self):
-        objectives = self.onto.search(type=self.tomasys.Objective)
-        return objectives
-
-    def has_objective(self):
-        objectives = self.search_objectives()
-        has_objective = False
-        if objectives != []:
-            has_objective = True
-        return has_objective
-
     def get_objective_from_objective_id(self, objective_id):
         objectives = self.search_objectives()
         if objectives == []:
@@ -85,33 +66,33 @@ class Reasoner:
     def get_objectives_in_error(self):
         return get_objectives_in_error(self.search_objectives())
 
-    def get_new_tomasys_objective(self, objective_name, iri_seed):
-        """ Creates Objective individual in the KB given a desired name and a
-        string seed for the Function name
-        """
-        objective = self.tomasys.Objective(
-            str(objective_name),
-            namespace=self.onto,
-            typeF=self.onto.search_one(
-                iri=str(iri_seed)))
-        return objective
+    # def get_new_tomasys_objective(self, objective_name, iri_seed):
+    #     """ Creates Objective individual in the KB given a desired name and a
+    #     string seed for the Function name
+    #     """
+    #     objective = self.tomasys.Objective(
+    #         str(objective_name),
+    #         namespace=self.onto,
+    #         typeF=self.onto.search_one(
+    #             iri=str(iri_seed)))
+    #     return objective
 
-    def get_new_tomasys_nfr(self, qa_value_name, nfr_key, nfr_value):
-        """Creates QAvalue individual in the KB given a desired name and a
-        string seed for the QAtype name and the value
-        """
-
-        # TODO: this search is not optimal, the search + loop can be
-        # substituted by a single search
-        qa_type = self.get_qa_type(nfr_key)
-
-        new_nfr = self.tomasys.QAvalue(
-            str(qa_value_name),
-            namespace=self.onto,
-            isQAtype=qa_type,
-            hasValue=nfr_value)
-
-        return new_nfr
+    # def get_new_tomasys_nfr(self, qa_value_name, nfr_key, nfr_value):
+    #     """Creates QAvalue individual in the KB given a desired name and a
+    #     string seed for the QAtype name and the value
+    #     """
+    #
+    #     # TODO: this search is not optimal, the search + loop can be
+    #     # substituted by a single search
+    #     qa_type = self.get_qa_type(nfr_key)
+    #
+    #     new_nfr = self.tomasys.QAvalue(
+    #         str(qa_value_name),
+    #         namespace=self.onto,
+    #         isQAtype=qa_type,
+    #         hasValue=nfr_value)
+    #
+    #     return new_nfr
 
     def set_new_grounding(self, fd_name, objective):
         """Given a string fd_name with the name of a FunctionDesign and an
@@ -205,25 +186,6 @@ class Reasoner:
             return_value = False
         return return_value
 
-    # EXEC REASONING to update ontology with inferences
-    # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
-    # update reasoner facts
-    def perform_reasoning(self):
-        return_value = False
-        with self.ontology_lock:
-            with self.onto:
-                try:
-                    sync_reasoner_pellet(
-                        infer_property_values=True,
-                        infer_data_property_values=True)
-                    return_value = True
-                except Exception as err:
-                    self.logger.error(
-                        "Error in perform_reasoning: {0}".format(err))
-                    return False
-                    # raise err
-
-        return return_value
 
     # For debugging purposes: saves state of the KB in an ontology file
     # TODO move to library
@@ -270,33 +232,33 @@ class Reasoner:
     # MAPE-K: Analyze step
     def analyze(self):
         # PRINT system status
-        print_ontology_status(self.tomasys)
+        self.kb_interface.print_ontology_status()
 
-        objectives_in_error = []
-        if self.has_objective() is False:
-            return objectives_in_error
+        # objectives_in_error = list()
+        if self.kb_interface.has_objective() is False:
+            return list()
 
         self.logger.info(
             '>> Started MAPE-K ** Analysis (ontological reasoning) **')
 
         # EXEC REASONING to update ontology with inferences
-        if self.perform_reasoning() is False:
+        if self.kb_interface.perform_reasoning() is False:
             self.logger.error('>> Reasoning error')
             self.onto.save(
                 file="error_reasoning.owl", format="rdfxml")
-            return objectives_in_error
-
-        # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
-        objectives_in_error = self.get_objectives_in_error()
-        if objectives_in_error == []:
-            self.logger.info(
-                ">> No Objectives in ERROR: no adaptation is needed")
-        else:
-            for obj_in_error in objectives_in_error:
-                self.logger.warning(
-                    "Objective {0} in status: {1}".format(
-                        obj_in_error.name, obj_in_error.o_status))
-        return objectives_in_error
+            return self.kb_interface.get_objectives_in_error()
+        #
+        # # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
+        # objectives_in_error = self.get_objectives_in_error()
+        # if objectives_in_error == []:
+        #     self.logger.info(
+        #         ">> No Objectives in ERROR: no adaptation is needed")
+        # else:
+        #     for obj_in_error in objectives_in_error:
+        #         self.logger.warning(
+        #             "Objective {0} in status: {1}".format(
+        #                 obj_in_error.name, obj_in_error.o_status))
+        # return objectives_in_error
 
     # MAPE-K: Plan step
     def plan(self, objectives_in_error):
