@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
+## [1.0.1] - 29-03-2023
+
+### Fixed
+
+1. Minor bug fix, commit [9e687f5](https://github.com/meta-control/mc_mros_reasoner/commit/9e687f5e68a99cc52ecb83f1a7a046d36f35029b)
 
 ## [1.0.0] - 07-02-2023
 
