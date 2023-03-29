@@ -65,8 +65,64 @@ def test_owlready2_get_class_instances():
     for instance in instances:
         correct_instance_type = correct_instance_type and (
          instance.is_instance_of[0] == kb_interface.knowledge_base[class_name])
+    assert correct_instance_type is True and len(instances) > 0
 
-    assert correct_instance_type is True and len(list(instances)) > 0
+
+def test_owlready2_get_objectives():
+    kb_interface = load_mock_ontology()
+    class_name = 'Objective'
+    instance_name = 'test_objective'
+    property_dict = {
+        'typeF': kb_interface.get_class_individual('Function', 'f_mock')
+    }
+    kb_interface.create_instance(class_name, instance_name, property_dict)
+
+    instances = kb_interface.get_objectives()
+    correct_instance_type = True
+    for instance in instances:
+        correct_instance_type = correct_instance_type and (
+         instance.is_instance_of[0] == kb_interface.knowledge_base[class_name])
+    assert correct_instance_type is True and len(instances) > 0
+
+
+def test_owlready2_get_objectives_in_error():
+    kb_interface = load_mock_ontology()
+    property_dict = {
+        'o_status': 'UNGROUNDED'
+    }
+    obj = kb_interface.create_instance('Objective', 'obj_error', property_dict)
+    objectives_in_error = kb_interface.get_objectives_in_error()
+    assert obj in objectives_in_error
+
+
+def test_owlready2_has_objective():
+    kb_interface = load_mock_ontology()
+    kb_interface.remove_objectives()
+
+    objective_false = kb_interface.has_objective()
+
+    kb_interface.create_instance('Objective', 'test_objective')
+    objective_true = kb_interface.has_objective()
+
+    assert (objective_false is False) and (objective_true is True)
+
+
+def test_owlready2_get_function_designs():
+    kb_interface = load_mock_ontology()
+    class_name = "FunctionDesign"
+    instances = kb_interface.get_function_designs()
+    correct_instance_type = True
+    for instance in instances:
+        correct_instance_type = correct_instance_type and (
+         instance.is_instance_of[0] == kb_interface.knowledge_base[class_name])
+    assert correct_instance_type is True and len(instances) > 0
+
+
+def test_owlready2_get_class_instances_none():
+    kb_interface = OwlReady2TOMASys()
+    class_name = "Function"
+    instances = kb_interface.get_class_instances(class_name)
+    assert len(instances) == 0
 
 
 def test_owlready2_get_class_individual():
@@ -75,6 +131,13 @@ def test_owlready2_get_class_individual():
     individual = kb_interface.get_class_individual(class_name, 'f_mock')
     correct_cls = individual.is_a[0] == kb_interface.knowledge_base[class_name]
     assert individual.name == 'f_mock' and correct_cls
+
+
+def test_owlready2_get_class_individual_none():
+    kb_interface = OwlReady2TOMASys()
+    class_name = "Function"
+    individual = kb_interface.get_class_individual(class_name, 'f_mock')
+    assert individual is None
 
 
 def test_owlready2_create_instances():
@@ -90,3 +153,36 @@ def test_owlready2_create_instances():
     assert test_obj.name == 'test_objective' and \
         test_obj.typeF.is_a[0] == kb_interface.knowledge_base['Function'] and \
         test_obj.typeF.name == 'f_mock'
+
+
+def test_owlready2_create_instances_none():
+    kb_interface = OwlReady2TOMASys()
+    class_name = 'Objective'
+    instance_name = 'test_objective'
+    property_dict = dict()
+    instance = kb_interface.create_instance(
+        class_name, instance_name, property_dict)
+
+    assert instance is None
+
+
+def test_owlready2_remove_instance():
+    kb_interface = load_mock_ontology()
+
+    kb_interface.create_instance('Function', 'test_function_remove')
+    f = kb_interface.get_class_individual('Function', 'test_function_remove')
+    removed = kb_interface.remove_instance('Function', 'test_function_remove')
+    f2 = kb_interface.get_class_individual('Function', 'test_function_remove')
+
+    assert (f is not None) and removed and (f2 is None)
+
+
+def test_owlread2_perform_reasoning():
+    kb_interface = load_mock_ontology()
+    reasoning = kb_interface.perform_reasoning()
+    assert reasoning is True
+
+
+def test_owlready2_print_ontology():
+    kb_interface = load_mock_ontology()
+    kb_interface.print_ontology_status()
