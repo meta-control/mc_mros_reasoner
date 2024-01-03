@@ -1,3 +1,17 @@
+# Copyright 2023 Knowledge-driven Autonomous Systems Laboratory.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 from mros2_reasoner.tomasys_interface import TOMASysInterface
 from owlready2 import destroy_entity
@@ -41,7 +55,7 @@ def read_ontology_file(ontology_file_array):
         return ontology_obj
     except Exception as e:
         logging.exception(
-            'When reading the ontology {0}, returned exception {0}'.format(
+            ' When reading the ontology {0}, returned exception {1}'.format(
                 ontology_file_array, e)
         )
         raise e
@@ -154,23 +168,23 @@ class OwlReady2TOMASys(TOMASysInterface):
                     # raise err
 
     def print_ontology_status(self):
-        logging.warning('\t\t\t >>> Ontology Status   <<<')
+        logging.info('\t\t\t >>> Ontology Status   <<<')
 
         components = [
             (c.name, c.c_status)
             for c in self.get_class_instances('ComponentState')]
-        logging.warning('\n\tComponent Status:\t{0}'.format(components))
+        logging.info('\n\tComponent Status:\t{0}'.format(components))
 
         fgs = self.get_class_instances('FunctionGrounding')
         for fg in fgs:
-            qas = [(qa.isQAtype.name, qa.hasValue) for qa in fgs.hasQAvalue]
-            logging.warning(
+            qas = [(qa.isQAtype.name, qa.hasValue) for qa in fg.hasQAvalue]
+            logging.info(
                 '\n\tFG: {0}  Status: {1}  Solves: {2}  FD: {3}  QAvalues: {4}'
                 .format(
-                    fgs.name,
-                    fgs.fg_status,
-                    fgs.solvesO.name,
-                    fgs.typeFD.name,
+                    fg.name,
+                    fg.fg_status,
+                    fg.solvesO.name,
+                    fg.typeFD.name,
                     qas
                 )
             )
@@ -179,11 +193,11 @@ class OwlReady2TOMASys(TOMASysInterface):
         for objective in objectives:
             qas = [
                 (nfr.isQAtype.name, nfr.hasValue) for nfr in objective.hasNFR]
-            logging.warning(
+            logging.info(
                 '\n\tOBJECTIVE: {0}   Status: {1}   NFRs:  {2}'.format(
                     objective.name,
                     objective.o_status,
                     qas
                 )
             )
-        logging.warning('\t\t\t >>>>>>>>>>>>> <<<<<<<<<<<')
+        logging.info('\t\t\t >>>>>>>>>>>>> <<<<<<<<<<<')

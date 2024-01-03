@@ -1,9 +1,16 @@
-#!/usr/bin/env python
-###########################################
+# Copyright 2023 Knowledge-driven Autonomous Systems Laboratory.
 #
-# authors:    M.A.GarzonOviedo@tudelft.nl
-#             c.h.corbato@tudelft.nl
-##########################################
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import signal
 import sys
@@ -95,7 +102,10 @@ class Reasoner:
     #     return new_nfr
 
     def set_new_grounding(self, fd_name, objective):
-        """Given a string fd_name with the name of a FunctionDesign and an
+        """
+        Set new function grounding
+
+        Given a string fd_name with the name of a FunctionDesign and an
         objective, removes the previous fg for the objective and ground a new
         fg of typeF fd
         """
@@ -229,40 +239,39 @@ class Reasoner:
                 "No FD found to solve Objective {} ".format(obj_in_error.name))
         return desired_configuration
 
-    # MAPE-K: Analyze step
     def analyze(self):
-        # PRINT system status
-        self.kb_interface.print_ontology_status()
+        """
+        Perform Analyze step of the MAPE-K loop
 
-        # objectives_in_error = list()
-        if self.kb_interface.has_objective() is False:
-            return list()
-
+        :return: Adaptable Objectives
+        :rtype: list[str]
+        """
         self.logger.info(
             '>> Started MAPE-K ** Analysis (ontological reasoning) **')
 
-        # EXEC REASONING to update ontology with inferences
+        if self.kb_interface.has_objective() is False:
+            self.kb_interface.print_ontology_status()
+            return list()
+
+        # Perform reasoning to infer new facts
         if self.kb_interface.perform_reasoning() is False:
             self.logger.error('>> Reasoning error')
             self.onto.save(
                 file="error_reasoning.owl", format="rdfxml")
-            return self.kb_interface.get_objectives_in_error()
-        #
-        # # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
-        # objectives_in_error = self.get_objectives_in_error()
-        # if objectives_in_error == []:
-        #     self.logger.info(
-        #         ">> No Objectives in ERROR: no adaptation is needed")
-        # else:
-        #     for obj_in_error in objectives_in_error:
-        #         self.logger.warning(
-        #             "Objective {0} in status: {1}".format(
-        #                 obj_in_error.name, obj_in_error.o_status))
-        # return objectives_in_error
+
+        # PRINT system status
+        self.kb_interface.print_ontology_status()
+        return self.kb_interface.get_objectives_in_error()
 
     # MAPE-K: Plan step
     def plan(self, objectives_in_error):
-        if self.has_objective() is False or objectives_in_error == []:
+        """
+        Perform Plan step of the MAPE-K loop
+
+        :return: Selected configurations
+        :rtype: dict[str, str]
+        """
+        if objectives_in_error == []:
             return dict()
 
         self.logger.info('  >> Started MAPE-K ** PLAN adaptation **')

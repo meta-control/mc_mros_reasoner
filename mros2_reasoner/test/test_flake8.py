@@ -18,6 +18,8 @@ import pytest
 
 @pytest.mark.flake8
 @pytest.mark.linter
+@pytest.mark.skip(
+    reason='Bugs with new pytest-flake8 version')
 def test_flake8():
     rc, errors = main_with_errors(argv=[])
     assert rc == 0, \
