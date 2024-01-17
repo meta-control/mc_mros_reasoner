@@ -1,19 +1,15 @@
-import rclpy
-
 from rclpy.action import ActionServer
 from rclpy.action import CancelResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 
-from system_modes_msgs.srv import ChangeMode
 from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import KeyValue
 
 from mros2_reasoner.reasoner import Reasoner
 
 from mros2_msgs.action import ControlQos
-from mros2_msgs.msg import QoS
 from mros2_msgs.srv import MetacontrolFD
 
 
@@ -25,12 +21,11 @@ class RosReasoner(Node, Reasoner):
         self.declare_parameter('model_file', Parameter.Type.STRING)
         self.declare_parameter('tomasys_file', Parameter.Type.STRING_ARRAY)
 
+        ontology_file = self.get_parameter('tomasys_file').value
+        ontology_file.append(self.get_parameter('model_file').value)
         # Get ontology and tomasys file paths from parameters
-        Reasoner.__init__(
-            self,
-            self.get_parameter('tomasys_file').value,
-            self.get_parameter('model_file').value
-        )
+
+        Reasoner.__init__(self, ontology_file)
 
         self.declare_parameter('desired_configuration', Parameter.Type.STRING)
         self.declare_parameter('reasoning_period', 2)
@@ -152,7 +147,7 @@ class RosReasoner(Node, Reasoner):
                     feedback_msg.qos_status.objective_type = \
                         str(request_objective.qos_expected.objective_type)
 
-                    fg_instance = self.onto.search_one(solvesO=objective)
+                    fg_instance = self.tomasys.search_one(solvesO=objective)
                     if fg_instance is not None:
                         feedback_msg.qos_status.selected_mode = \
                             fg_instance.typeFD.name
@@ -199,7 +194,7 @@ class RosReasoner(Node, Reasoner):
 
     # MVP: callback for diagnostic msg received from QA Observer
     def diagnostics_callback(self, msg):
-        if self.onto is not None and self.has_objective() is True:
+        if self.tomasys is not None and self.has_objective() is True:
             for diagnostic_status in msg.status:
                 if diagnostic_status.message == 'binding error':
                     self.logger.info('binding error received')
