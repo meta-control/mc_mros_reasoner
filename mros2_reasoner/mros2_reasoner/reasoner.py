@@ -28,12 +28,10 @@ import logging
 
 class Reasoner:
 
-    def __init__(self, tomasys_file, model_file):
+    def __init__(self, ontology_file):
 
         # owl model with the tomasys ontology
-        self.tomasys = read_ontology_file(tomasys_file)
-        # application model as individuals of tomasys classes
-        self.onto = read_ontology_file(model_file)
+        self.tomasys = read_ontology_file(ontology_file)
 
         # This Lock is used to ensure safety of tQAvalues
         self.ontology_lock = Lock()
@@ -46,9 +44,9 @@ class Reasoner:
 
     def remove_objective(self, objective_id):
         # Checks if there are previously defined objectives.
-        old_objective = self.onto.search_one(iri="*{}".format(objective_id))
+        old_objective = self.tomasys.search_one(iri="*{}".format(objective_id))
         if old_objective:
-            old_fg_instance = self.onto.search_one(solvesO=old_objective)
+            old_fg_instance = self.tomasys.search_one(solvesO=old_objective)
             with self.ontology_lock:
                 destroy_entity(old_fg_instance)
                 destroy_entity(old_objective)
@@ -57,7 +55,7 @@ class Reasoner:
             return False
 
     def search_objectives(self):
-        objectives = self.onto.search(type=self.tomasys.Objective)
+        objectives = self.tomasys.search(type=self.tomasys.Objective)
         return objectives
 
     def has_objective(self):
@@ -89,12 +87,13 @@ class Reasoner:
         """ Creates Objective individual in the KB given a desired name and a
         string seed for the Function name
         """
-        objective = self.tomasys.Objective(
-            str(objective_name),
-            namespace=self.onto,
-            typeF=self.onto.search_one(
-                iri=str(iri_seed)))
-        return objective
+        with self.ontology_lock:
+            objective = self.tomasys.Objective(
+                str(objective_name),
+                namespace=self.tomasys,
+                typeF=self.tomasys.search_one(
+                    iri=str(iri_seed)))
+            return objective
 
     def get_new_tomasys_nfr(self, qa_value_name, nfr_key, nfr_value):
         """Creates QAvalue individual in the KB given a desired name and a
@@ -105,26 +104,28 @@ class Reasoner:
         # substituted by a single search
         qa_type = self.get_qa_type(nfr_key)
 
-        new_nfr = self.tomasys.QAvalue(
-            str(qa_value_name),
-            namespace=self.onto,
-            isQAtype=qa_type,
-            hasValue=nfr_value)
+        with self.ontology_lock:
+            new_nfr = self.tomasys.QAvalue(
+                str(qa_value_name),
+                namespace=self.tomasys,
+                isQAtype=qa_type,
+                hasValue=nfr_value)
 
-        return new_nfr
+            return new_nfr
 
     def set_new_grounding(self, fd_name, objective):
         """Given a string fd_name with the name of a FunctionDesign and an
         objective, removes the previous fg for the objective and ground a new
         fg of typeF fd
         """
-        remove_objective_grounding(objective, self.tomasys, self.onto)
-        fd = self.onto.search_one(
+        with self.ontology_lock:
+            remove_objective_grounding(objective, self.tomasys)
+        fd = self.tomasys.search_one(
             iri="*{}".format(fd_name),
             is_a=self.tomasys.FunctionDesign)
         if fd:
             with self.ontology_lock:
-                ground_fd(fd, objective, self.tomasys, self.onto)
+                ground_fd(fd, objective, self.tomasys)
                 reset_objective_status(objective)
             return str(fd.name)
         else:
@@ -136,12 +137,13 @@ class Reasoner:
     # - level: values 0 and 1 are mapped to nothing, values 2 or 3 are mapped
     # to fg.status="INTERNAL_ERROR"
     def update_binding(self, diagnostic_status):
-        fg = self.onto.search_one(iri="*{}".format(diagnostic_status.name))
+        fg = self.tomasys.search_one(iri="*{}".format(diagnostic_status.name))
         if fg is None:
             return -1
         if diagnostic_status.level > 1:
-            fg.fg_status = "INTERNAL_ERROR"
-            return 1
+            with self.ontology_lock:
+                fg.fg_status = "INTERNAL_ERROR"
+                return 1
         else:
             return 0
 
@@ -152,14 +154,13 @@ class Reasoner:
     def update_component_status(self, diagnostic_status):
         # Find the Component with the same name that the one in the Component
         # Status message (in diagnostic_status.key)
-        component_type = self.onto.search_one(
+        component_type = self.tomasys.search_one(
             iri="*{}".format(diagnostic_status.values[0].key))
         if component_type is not None:
             value = diagnostic_status.values[0].value
             with self.ontology_lock:
                 reset_fd_realisability(
                     self.tomasys,
-                    self.onto,
                     diagnostic_status.values[0].key)
                 component_type.c_status = value
             return_value = 1
@@ -170,7 +171,7 @@ class Reasoner:
     def get_qa_type(self, key):
         # TODO: this search is not optimal, the search + loop can be
         # substituted by a single search or instances()
-        qa_types = self.onto.search(type=self.tomasys.QualityAttributeType)
+        qa_types = self.tomasys.search(type=self.tomasys.QualityAttributeType)
         qa_type = None
         for qa in qa_types:
             if qa.name == key:
@@ -184,9 +185,10 @@ class Reasoner:
         _fgs = []
         for fg in fgs:
             function_design = fg.typeFD
-            for qa in function_design.hasQAestimation:
-                if str(qa.isQAtype) == str(qa_key):
-                    _fgs.append(fg)
+            if function_design is not None:
+                for qa in function_design.hasQAestimation:
+                    if str(qa.isQAtype) == str(qa_key):
+                        _fgs.append(fg)
         return _fgs
 
     # update QA value based on incoming diagnostic
@@ -197,7 +199,7 @@ class Reasoner:
             value = float(diagnostic_status.values[0].value)
             with self.ontology_lock:
                 measured_qa = update_measured_qa_value(
-                    qa_type, value, self.tomasys, self.onto)
+                    qa_type, value, self.tomasys)
                 for fg in fgs:
                     update_fg_measured_qa(fg, measured_qa)
             return_value = True
@@ -209,27 +211,24 @@ class Reasoner:
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
     # update reasoner facts
     def perform_reasoning(self):
-        return_value = False
         with self.ontology_lock:
-            with self.onto:
+            with self.tomasys:
                 try:
                     sync_reasoner_pellet(
                         infer_property_values=True,
                         infer_data_property_values=True)
-                    return_value = True
                 except Exception as err:
                     self.logger.error(
                         "Error in perform_reasoning: {0}".format(err))
                     return False
                     # raise err
-
-        return return_value
+        return True
 
     # For debugging purposes: saves state of the KB in an ontology file
     # TODO move to library
     # TODO save file in a temp location
     def save_ontology_exit(self, signal, frame):
-        self.onto.save(file="error.owl", format="rdfxml")
+        self.tomasys.save(file="error.owl", format="rdfxml")
         sys.exit(0)
 
     def handle_updatable_objectives(self, obj_in_error):
@@ -238,11 +237,12 @@ class Reasoner:
                 ">> UPDATABLE objective - Try to clear Components status")
             for comp_inst in list(
                     self.tomasys.ComponentState.instances()):
-                if comp_inst.c_status == "RECOVERED":
-                    self.logger.info(
-                        "Component {0} Status {1} - Set to None".format(
-                            comp_inst.name, comp_inst.c_status))
-                    comp_inst.c_status = None
+                with self.ontology_lock:
+                    if comp_inst.c_status == "RECOVERED":
+                        self.logger.info(
+                            "Component {0} Status {1} - Set to None".format(
+                                comp_inst.name, comp_inst.c_status))
+                        comp_inst.c_status = None
 
     # selects configurations requested by the user
     def select_requested_configurations(self):
@@ -282,7 +282,7 @@ class Reasoner:
         # EXEC REASONING to update ontology with inferences
         if self.perform_reasoning() is False:
             self.logger.error('>> Reasoning error')
-            self.onto.save(
+            self.tomasys.save(
                 file="error_reasoning.owl", format="rdfxml")
             return objectives_in_error
 

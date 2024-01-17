@@ -39,7 +39,7 @@ def read_ontology_file(ontology_file_array):
         Returns:
                 The ontology if it's readed correctly, None otherwise.
     """
-    if (type(ontology_file_array) == str):
+    if (type(ontology_file_array) is str):
         ontology_file_array = [ontology_file_array]
     ontology_obj = None
     for ontology_file in ontology_file_array:
@@ -71,9 +71,9 @@ def reset_objective_status(objective, status=None):
     objective.o_status = status
 
 
-def reset_fd_realisability(tbox, abox, c_name):
+def reset_fd_realisability(ontology, c_name):
     logging.warning("\nReset realisability:\n")
-    component = abox.search_one(iri="*{}".format(c_name))
+    component = ontology.search_one(iri="*{}".format(c_name))
     if component is None:
         # logging.warning("C not found Return\n\n\n")
         return
@@ -86,7 +86,7 @@ def reset_fd_realisability(tbox, abox, c_name):
             logging.warning(
                 "component status is {} - Set to None\n".format(
                     component.c_status))
-            for fd in list(tbox.FunctionDesign.instances()):
+            for fd in list(ontology.FunctionDesign.instances()):
                 if fd.fd_realisability is None:
                     continue
                 else:
@@ -121,11 +121,11 @@ def print_ontology_status(kb_box):
 
 
 # update the QA value for an FG with the value received
-def update_measured_qa_value(qa_type, value, tbox, abox):
-    measured_qa = tbox.QAvalue(
+def update_measured_qa_value(qa_type, value, ontology):
+    measured_qa = ontology.QAvalue(
         "obs_{}".format(
             qa_type.name),
-        namespace=abox,
+        namespace=ontology,
         isQAtype=qa_type,
         hasValue=value)
     return measured_qa
@@ -155,16 +155,16 @@ def get_objectives_in_error(objectives):
     return objectives_internal_error
 
 
-def get_function_grounding(o, tbox):
-    fgs = tbox.FunctionGrounding.instances()
+def get_function_grounding(o, ontology):
+    fgs = ontology.FunctionGrounding.instances()
     for fg in fgs:
         if fg.solvesO == o:
             return fg
     return None
 
 
-def get_current_function_design(o, tbox):
-    fg = get_function_grounding(o, tbox)
+def get_current_function_design(o, ontology):
+    fg = get_function_grounding(o, ontology)
     if fg is not None:
         return fg.typeFD
     return None
@@ -172,13 +172,13 @@ def get_current_function_design(o, tbox):
 
 # Select best FD in the KB, given:
 # - o: individual of tomasys:Objective
-# - tomasys ontology that contains the tomasys tbox
-def obtain_best_function_design(o, tbox):
+# - tomasys ontology that contains the tomasys ontology
+def obtain_best_function_design(o, ontology):
     logging.warning("\t\t\t == Obatin Best Function Design ==")
     f = o.typeF
     # get fds for Function F
     fds = []
-    for fd in list(tbox.FunctionDesign.instances()):
+    for fd in list(ontology.FunctionDesign.instances()):
         if fd.solvesF == f:
             fds.append(fd)
     logging.warning("== FunctionDesigns AVAILABLE: %s",
@@ -199,7 +199,7 @@ def obtain_best_function_design(o, tbox):
                     str([fd.name for fd in suitable_fds]))
     # discard those FD that will not meet objective NFRs
 
-    fds_for_obj = filter_fds(o, suitable_fds, tbox)
+    fds_for_obj = filter_fds(o, suitable_fds, ontology)
     if fds_for_obj != []:
         best_utility = 0
         for fd in fds_for_obj:
@@ -217,36 +217,36 @@ def obtain_best_function_design(o, tbox):
         return None
 
 
-def ground_fd(fd, objective, tbox, abox):
+def ground_fd(fd, objective, ontology):
     """Given a FunctionDesign fd and an Objective objective, creates an
        individual FunctionGrounds with typeF fd and solve) objective returns
        the fg
     """
-    fg = tbox.FunctionGrounding(
+    fg = ontology.FunctionGrounding(
         "fg_" +
         fd.name.replace(
             'fd_',
             ''),
-        namespace=abox,
+        namespace=ontology,
         typeFD=fd,
         solvesO=objective)
     # TODO: ground objectives required by FD
     return fg
 
 
-def remove_objective_grounding(objective, tbox, abox):
+def remove_objective_grounding(objective, ontology):
     """Given an objective individual, removes the grounded hierarchy (fg tree)
         that solves it.
     """
-    fg = abox.search_one(solvesO=objective)
+    fg = ontology.search_one(solvesO=objective)
     if fg:
         destroy_entity(fg)
 
 
-def get_measured_qa(key, tbox):
+def get_measured_qa(key, ontology):
     observed_qa_value = None
     # TODO: is it better to use instances()?
-    qa_values = tbox.search(type=tbox.QAvalue)
+    qa_values = ontology.search(type=ontology.QAvalue)
     for qa in qa_values:
         if qa.name == 'obs_' + key:
             observed_qa_value = qa.hasValue
@@ -254,12 +254,12 @@ def get_measured_qa(key, tbox):
     return observed_qa_value
 
 
-def filter_fds(o, fds, tbox):
+def filter_fds(o, fds, ontology):
     filtered = meet_nfrs(o, fds)
     logging.warning(
         "== FunctionDesigns also meeting NFRs: %s", [
             fd.name for fd in filtered])
-    filtered = filter_water_visibility(o, fds, tbox)
+    filtered = filter_water_visibility(o, fds, ontology)
     logging.warning(
         "== FunctionDesigns also meeting custom filters: %s", [
             fd.name for fd in filtered])
@@ -295,9 +295,9 @@ def meet_nfrs(o, fds):
     return filtered
 
 
-def filter_water_visibility(o, fds, tbox):
+def filter_water_visibility(o, fds, ontology):
     qa_key = 'water_visibility'
-    observed_water_visibility = get_measured_qa(qa_key, tbox)
+    observed_water_visibility = get_measured_qa(qa_key, ontology)
     filtered = fds.copy()
     if observed_water_visibility is not None:
         for fd in fds:
