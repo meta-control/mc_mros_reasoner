@@ -14,7 +14,6 @@
 
 import signal
 import sys
-from threading import Lock
 
 from mros2_reasoner.tomasys import ground_fd
 from mros2_reasoner.tomasys import obtain_best_function_design
@@ -69,9 +68,6 @@ class Reasoner:
             return None
         else:
             return str(objective.typeF.name)
-
-    def get_objectives_in_error(self):
-        return get_objectives_in_error(self.search_objectives())
 
     # def get_new_tomasys_objective(self, objective_name, iri_seed):
     #     """ Creates Objective individual in the KB given a desired name and a
@@ -259,7 +255,6 @@ class Reasoner:
             self.onto.save(
                 file="error_reasoning.owl", format="rdfxml")
 
-        # PRINT system status
         self.kb_interface.print_ontology_status()
         return self.kb_interface.get_objectives_in_error()
 
