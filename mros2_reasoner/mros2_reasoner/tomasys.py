@@ -10,6 +10,7 @@
 
 from owlready2 import destroy_entity
 from owlready2 import get_ontology
+from typing import Tuple
 import logging
 
 
@@ -65,10 +66,13 @@ def read_ontology_file(ontology_file_array):
 
 # To reset the individuals that no longer hold due to adaptation
 # for the moment, only Objective individuals statuses
-# - tomasys: ontology holding the Tbox
-def reset_objective_status(objective, status=None):
+# - ontology: ontology holding the Tbox
+def reset_objective_status(objective_name: str, ontology, status=None):
     # logging.warning("\nReseting obj {0}".format(objective.name))
-    objective.o_status = status
+    objective = ontology.search_one(
+        iri="*{}".format(objective_name), is_a=ontology.Objective)
+    if objective is not None:
+        objective.o_status = status
 
 
 def reset_fd_realisability(ontology, c_name):
@@ -143,16 +147,18 @@ def update_fg_measured_qa(fg, measured_qa):
 
 # Evaluates the Objective individuals in the KB and returns a list with
 # those in error
-def get_objectives_in_error(objectives):
+def get_objectives_in_error(objectives) -> Tuple[list[str], list[str]]:
     objectives_internal_error = []
+    objectives_internal_error_status = []
     for o in objectives:
         if o.o_status in ["UNGROUNDED",
                           "UPDATABLE",
                           "IN_ERROR_FR",
                           "IN_ERROR_NFR",
                           "IN_ERROR_COMPONENT"]:
-            objectives_internal_error.append(o)
-    return objectives_internal_error
+            objectives_internal_error.append(str(o.name))
+            objectives_internal_error_status.append(str(o.o_status))
+    return objectives_internal_error, objectives_internal_error_status
 
 
 def get_function_grounding(o, ontology):
@@ -217,30 +223,37 @@ def obtain_best_function_design(o, ontology):
         return None
 
 
-def ground_fd(fd, objective, ontology):
+def ground_fd(fd_name: str, objective_name: str, ontology):
     """Given a FunctionDesign fd and an Objective objective, creates an
        individual FunctionGrounds with typeF fd and solve) objective returns
        the fg
     """
-    fg = ontology.FunctionGrounding(
-        "fg_" +
-        fd.name.replace(
-            'fd_',
-            ''),
-        namespace=ontology,
-        typeFD=fd,
-        solvesO=objective)
-    # TODO: ground objectives required by FD
-    return fg
+    objective = ontology.search_one(
+        iri="*{}".format(objective_name), is_a=ontology.Objective)
+    fd = ontology.search_one(
+        iri="*{}".format(fd_name), is_a=ontology.FunctionDesign)
+    if objective is not None and fd is not None:
+        fg = ontology.FunctionGrounding(
+            "fg_" +
+            fd.name.replace(
+                'fd_',
+                ''),
+            namespace=ontology,
+            typeFD=fd,
+            solvesO=objective)
+        # TODO: ground objectives required by FD
+        return fg
 
 
-def remove_objective_grounding(objective, ontology):
+def remove_objective_grounding(objective_name, ontology):
     """Given an objective individual, removes the grounded hierarchy (fg tree)
         that solves it.
     """
-    fg = ontology.search_one(solvesO=objective)
-    if fg:
-        destroy_entity(fg)
+    objective = ontology.search_one(iri="*{}".format(objective_name))
+    if objective is not None:
+        fg = ontology.search_one(solvesO=objective)
+        if fg is not None:
+            destroy_entity(fg)
 
 
 def get_measured_qa(key, ontology):

@@ -97,13 +97,14 @@ class RosReasoner(Node, Reasoner):
             function_name = self.get_function_name_from_objective_id(
                 cancel_request.request.qos_expected.objective_id)
 
-            if function_name is not None:
-                reconfiguration_result = self.request_configuration(
-                    'fd_unground',
-                    function_name)
-            else:
-                reconfiguration_result = None
+            if function_name is None:
+                self.logger.info('Objective {} cancel req failed'.format(
+                    cancel_request.request.qos_expected.objective_id))
+                return CancelResponse.REJECT
 
+            reconfiguration_result = self.request_configuration(
+                'fd_unground',
+                function_name)
             if reconfiguration_result is None \
                or reconfiguration_result.success is False:
                 self.logger.info('Objective {} cancel req failed'.format(
@@ -271,11 +272,16 @@ class RosReasoner(Node, Reasoner):
                 'desired_configurations are: {}'.format(
                     desired_configurations))
         for objective in desired_configurations:
-            reconfiguration_result = self.request_configuration(
-                desired_configurations[objective], str(objective.typeF.name))
+            if self.get_objective_from_objective_id(objective) is not None:
+                reconfiguration_result = self.request_configuration(
+                    desired_configurations[objective],
+                    self.get_function_name_from_objective_id(objective))
 
-            if reconfiguration_result is not None \
-               and reconfiguration_result.success is True:
+                if reconfiguration_result is None \
+                   or reconfiguration_result.success is False:
+                    self.logger.error('= RECONFIGURATION FAILED =')
+                    continue
+
                 self.logger.info(
                     'Got Reconfiguration result {}'.format(
                         reconfiguration_result.success))
@@ -283,9 +289,6 @@ class RosReasoner(Node, Reasoner):
                 # Process adaptation feedback to update KB:
                 self.set_new_grounding(
                     desired_configurations[objective], objective)
-            else:
-                self.logger.error('= RECONFIGURATION FAILED =')
-                return
 
     # main metacontrol loop
     def metacontrol_loop_callback(self):

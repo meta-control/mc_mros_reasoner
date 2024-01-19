@@ -25,6 +25,8 @@ from owlready2 import sync_reasoner_pellet
 
 import logging
 
+from typing import Tuple
+
 
 class Reasoner:
 
@@ -42,11 +44,11 @@ class Reasoner:
         self.logger = logging
         signal.signal(signal.SIGINT, self.save_ontology_exit)
 
-    def remove_objective(self, objective_id):
+    def remove_objective(self, objective_name: str) -> bool:
         # Checks if there are previously defined objectives.
         with self.ontology_lock:
             old_objective = self.tomasys.search_one(
-                iri="*{}".format(objective_id))
+                iri="*{}".format(objective_name), is_a=self.tomasys.Objective)
             if old_objective:
                 old_fg_instance = self.tomasys.search_one(
                     solvesO=old_objective)
@@ -67,21 +69,22 @@ class Reasoner:
             has_objective = True
         return has_objective
 
-    def get_objective_from_objective_id(self, objective_id):
+    def get_objective_from_objective_id(self, objective_id: str):
         objectives = self.search_objectives()
         if objectives == []:
             return None
         for objective in objectives:
             if str(objective.name) == str(objective_id):
                 return objective
+        return None
 
-    def get_function_name_from_objective_id(self, objective_id):
+    def get_function_name_from_objective_id(self, objective_id: str) -> str:
         objective = self.get_objective_from_objective_id(objective_id)
         if objective is None:
             return None
         return str(objective.typeF.name)
 
-    def get_objectives_in_error(self):
+    def get_objectives_in_error(self) -> Tuple[list[str], list[str]]:
         return get_objectives_in_error(self.search_objectives())
 
     def get_new_tomasys_objective(self, objective_name, iri_seed):
@@ -126,21 +129,21 @@ class Reasoner:
         with self.ontology_lock:
             return self.tomasys.search_one(solvesO=objective)
 
-    def set_new_grounding(self, fd_name, objective):
+    def set_new_grounding(self, fd_name: str, obj_name: str) -> str | None:
         """Given a string fd_name with the name of a FunctionDesign and an
         objective, removes the previous fg for the objective and ground a new
         fg of typeF fd
         """
         with self.ontology_lock:
-            remove_objective_grounding(objective, self.tomasys)
+            remove_objective_grounding(obj_name, self.tomasys)
             fd = self.tomasys.search_one(
                 iri="*{}".format(fd_name),
                 is_a=self.tomasys.FunctionDesign)
             if fd:
                 # with self.ontology_lock:
-                ground_fd(fd, objective, self.tomasys)
-                reset_objective_status(objective)
-                return str(fd.name)
+                ground_fd(fd_name, obj_name, self.tomasys)
+                reset_objective_status(obj_name, self.tomasys)
+                return fd_name
             return None
 
     # the DiagnosticStatus message process contains, per field
@@ -243,7 +246,8 @@ class Reasoner:
         self.tomasys.save(file="error.owl", format="rdfxml")
         sys.exit(0)
 
-    def handle_updatable_objectives(self, obj_in_error):
+    def handle_updatable_objectives(self, obj: str) -> None:
+        obj_in_error = self.get_objective_from_objective_id(obj)
         with self.ontology_lock:
             if obj_in_error.o_status == "UPDATABLE":
                 self.logger.info(
@@ -256,20 +260,9 @@ class Reasoner:
                                 comp_inst.name, comp_inst.c_status))
                         comp_inst.c_status = None
 
-    # selects configurations requested by the user
-    def select_requested_configurations(self):
-        objectives = self.search_objectives()
-        requested_configurations = dict()
-        for objective in objectives:
-            function = objective.typeF.name
-            if function in self.requested_configurations:
-                requested_configurations[objective] = \
-                    self.requested_configurations[function]
-        self.requested_configurations = dict()
-        return requested_configurations
-
     # find best fds for all objectives
-    def select_desired_configuration(self, obj_in_error):
+    def select_desired_configuration(self, obj: str) -> dict[str, str]:
+        obj_in_error = self.get_objective_from_objective_id(obj)
         with self.ontology_lock:
             self.logger.info(" >> Reasoner searches an FD ")
             desired_configuration = obtain_best_function_design(
@@ -301,41 +294,41 @@ class Reasoner:
             return objectives_in_error
 
         # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
-        objectives_in_error = self.get_objectives_in_error()
+        objectives_in_error, o_status = self.get_objectives_in_error()
         if objectives_in_error == []:
             self.logger.info(
                 ">> No Objectives in ERROR: no adaptation is needed")
-        else:
-            for obj_in_error in objectives_in_error:
-                self.logger.warning(
-                    "Objective {0} in status: {1}".format(
-                        obj_in_error.name, obj_in_error.o_status))
+            return objectives_in_error
+
+        for obj_in_error, status in zip(objectives_in_error, o_status):
+            self.logger.warning(
+                "Objective {0} in status: {1}".format(
+                    obj_in_error, status))
         return objectives_in_error
 
     # MAPE-K: Plan step
-    def plan(self, objectives_in_error):
+    def plan(self, objectives_in_error: list[str]) -> dict[str, str]:
         if self.has_objective() is False or objectives_in_error == []:
             return dict()
 
         self.logger.info('  >> Started MAPE-K ** PLAN adaptation **')
-
-        desired_configurations = self.select_requested_configurations()
+        desired_configurations = dict()
         for obj_in_error in objectives_in_error:
             self.handle_updatable_objectives(obj_in_error)
 
-            if obj_in_error not in desired_configurations:
-                desired_config = self.select_desired_configuration(
-                    obj_in_error)
-                if desired_config is not None:
-                    desired_configurations[obj_in_error] = desired_config
+            desired_config = self.select_desired_configuration(
+                obj_in_error)
+            if desired_config is not None:
+                desired_configurations[obj_in_error] = desired_config
         return desired_configurations
 
     # MAPE-K: Execute step
-    def execute(self, desired_configurations):
+    def execute(self, desired_configurations: dict[str, str]):
         if self.has_objective() is False or desired_configurations == dict():
             return
 
         self.logger.info('  >> Started MAPE-K ** EXECUTION **')
         for objective in desired_configurations:
-            self.set_new_grounding(
-                desired_configurations[objective], objective)
+            if self.get_objective_from_objective_id(objective) is not None:
+                self.set_new_grounding(
+                    desired_configurations[objective], objective)
