@@ -1,6 +1,6 @@
 from rclpy.action import ActionServer
 from rclpy.action import CancelResponse
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 
@@ -42,8 +42,6 @@ class RosReasoner(Node, Reasoner):
 
         self.is_initialized = False
 
-        self.cb_group = ReentrantCallbackGroup()
-
         # Start interfaces
         # subscriptions for different message types (named, pins, angle)
         # Node's default callback group is mutually exclusive. This would
@@ -54,15 +52,16 @@ class RosReasoner(Node, Reasoner):
             '/diagnostics',
             self.diagnostics_callback,
             1,
-            callback_group=self.cb_group)
+            callback_group=MutuallyExclusiveCallbackGroup())
 
+        cb_group = MutuallyExclusiveCallbackGroup()
         # Create action server
         self.objective_action_server = ActionServer(
             self,
             ControlQos,
             '/mros/objective',
             self.objective_action_callback,
-            callback_group=self.cb_group,
+            callback_group=cb_group,
             cancel_callback=self.objective_cancel_goal_callback)
 
         # Get desired_configuration_name from parameters
@@ -74,7 +73,7 @@ class RosReasoner(Node, Reasoner):
         self.metacontrol_loop_timer = self.create_timer(
             timer_period,
             self.metacontrol_loop_callback,
-            callback_group=self.cb_group)
+            callback_group=cb_group)
 
         self.logger = self.get_logger()
 
@@ -99,13 +98,14 @@ class RosReasoner(Node, Reasoner):
             function_name = self.get_function_name_from_objective_id(
                 cancel_request.request.qos_expected.objective_id)
 
-            if function_name is not None:
-                reconfiguration_result = self.request_configuration(
-                    'fd_unground',
-                    function_name)
-            else:
-                reconfiguration_result = None
+            if function_name is None:
+                self.logger.info('Objective {} cancel req failed'.format(
+                    cancel_request.request.qos_expected.objective_id))
+                return CancelResponse.REJECT
 
+            reconfiguration_result = self.request_configuration(
+                'fd_unground',
+                function_name)
             if reconfiguration_result is None \
                or reconfiguration_result.success is False:
                 self.logger.info('Objective {} cancel req failed'.format(
@@ -147,7 +147,7 @@ class RosReasoner(Node, Reasoner):
                     feedback_msg.qos_status.objective_type = \
                         str(request_objective.qos_expected.objective_type)
 
-                    fg_instance = self.tomasys.search_one(solvesO=objective)
+                    fg_instance = self.get_fg_solves_objective(objective)
                     if fg_instance is not None:
                         feedback_msg.qos_status.selected_mode = \
                             fg_instance.typeFD.name
@@ -179,7 +179,8 @@ class RosReasoner(Node, Reasoner):
             new_nfr = self.get_new_tomasys_nfr(
                  nfr_id, nfr_key.key, float(nfr_key.value))
             self.logger.info('Adding NFRs {}'.format(new_nfr))
-            new_objective.hasNFR.append(new_nfr)
+            new_objective = self.append_nfr_to_objective(
+                new_objective, new_nfr)
 
         # TODO: this is not working
         if not goal_request.qos_expected.selected_mode:
@@ -188,7 +189,8 @@ class RosReasoner(Node, Reasoner):
             self.set_initial_fd(goal_request.qos_expected.selected_mode)
 
         # TODO: shouldn't this be a swrl rule instead of hardcoded?
-        new_objective.o_status = 'UNGROUNDED'
+        new_objective = self.update_objective_status(
+            new_objective, 'UNGROUNDED')
 
         return True
 
@@ -226,14 +228,14 @@ class RosReasoner(Node, Reasoner):
                                 diagnostic_status.values[0].value))
                     else:
                         self.logger.warning(
-                            'Unsupported CS Message received: %s ' + str(
+                            'Unsupported CS Message received: {} '.format(
                                 diagnostic_status.values[0].key))
 
                 elif diagnostic_status.message == "QA status":
                     up_qa = self.update_qa(diagnostic_status)
                     if not up_qa:
                         self.logger.warning(
-                            'Unsupported QA TYPE received: %s ' + str(
+                            'Unsupported QA TYPE received: {} '.format(
                                 diagnostic_status.values[0].key))
 
     def request_configuration(self, desired_configuration, function_name):
@@ -244,7 +246,7 @@ class RosReasoner(Node, Reasoner):
         mode_change_cli = self.create_client(
                 MetacontrolFD,
                 '/mros/request_configuration',
-                callback_group=self.cb_group)
+                callback_group=MutuallyExclusiveCallbackGroup())
 
         while not mode_change_cli.wait_for_service(timeout_sec=1.0):
             self.logger.warning(
@@ -271,11 +273,16 @@ class RosReasoner(Node, Reasoner):
                 'desired_configurations are: {}'.format(
                     desired_configurations))
         for objective in desired_configurations:
-            reconfiguration_result = self.request_configuration(
-                desired_configurations[objective], str(objective.typeF.name))
+            if self.get_objective_from_objective_id(objective) is not None:
+                reconfiguration_result = self.request_configuration(
+                    desired_configurations[objective],
+                    self.get_function_name_from_objective_id(objective))
 
-            if reconfiguration_result is not None \
-               and reconfiguration_result.success is True:
+                if reconfiguration_result is None \
+                   or reconfiguration_result.success is False:
+                    self.logger.error('= RECONFIGURATION FAILED =')
+                    continue
+
                 self.logger.info(
                     'Got Reconfiguration result {}'.format(
                         reconfiguration_result.success))
@@ -283,9 +290,6 @@ class RosReasoner(Node, Reasoner):
                 # Process adaptation feedback to update KB:
                 self.set_new_grounding(
                     desired_configurations[objective], objective)
-            else:
-                self.logger.error('= RECONFIGURATION FAILED =')
-                return
 
     # main metacontrol loop
     def metacontrol_loop_callback(self):
