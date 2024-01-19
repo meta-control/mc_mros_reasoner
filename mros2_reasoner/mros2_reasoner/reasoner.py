@@ -231,7 +231,9 @@ class Reasoner:
                 try:
                     sync_reasoner_pellet(
                         infer_property_values=True,
-                        infer_data_property_values=True)
+                        infer_data_property_values=True,
+                        debug=0
+                    )
                 except Exception as err:
                     self.logger.error(
                         "Error in perform_reasoning: {0}".format(err))
