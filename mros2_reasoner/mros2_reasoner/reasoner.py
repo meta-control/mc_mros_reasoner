@@ -275,9 +275,10 @@ class Reasoner:
             return desired_configuration
 
     # MAPE-K: Analyze step
-    def analyze(self):
+    def analyze(self) -> list[str]:
         # PRINT system status
-        print_ontology_status(self.tomasys)
+        with self.ontology_lock:
+            print_ontology_status(self.tomasys)
 
         objectives_in_error = []
         if self.has_objective() is False:
@@ -288,10 +289,11 @@ class Reasoner:
 
         # EXEC REASONING to update ontology with inferences
         if self.perform_reasoning() is False:
-            self.logger.error('>> Reasoning error')
-            self.tomasys.save(
-                file="error_reasoning.owl", format="rdfxml")
-            return objectives_in_error
+            with self.ontology_lock:
+                self.logger.error('>> Reasoning error')
+                self.tomasys.save(
+                    file="error_reasoning.owl", format="rdfxml")
+                return objectives_in_error
 
         # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
         objectives_in_error, o_status = self.get_objectives_in_error()
