@@ -44,18 +44,20 @@ class Reasoner:
 
     def remove_objective(self, objective_id):
         # Checks if there are previously defined objectives.
-        old_objective = self.tomasys.search_one(iri="*{}".format(objective_id))
-        if old_objective:
-            old_fg_instance = self.tomasys.search_one(solvesO=old_objective)
-            with self.ontology_lock:
+        with self.ontology_lock:
+            old_objective = self.tomasys.search_one(
+                iri="*{}".format(objective_id))
+            if old_objective:
+                old_fg_instance = self.tomasys.search_one(
+                    solvesO=old_objective)
                 destroy_entity(old_fg_instance)
                 destroy_entity(old_objective)
-            return True
-        else:
+                return True
             return False
 
     def search_objectives(self):
-        objectives = self.tomasys.search(type=self.tomasys.Objective)
+        with self.ontology_lock:
+            objectives = self.tomasys.search(type=self.tomasys.Objective)
         return objectives
 
     def has_objective(self):
@@ -77,8 +79,7 @@ class Reasoner:
         objective = self.get_objective_from_objective_id(objective_id)
         if objective is None:
             return None
-        else:
-            return str(objective.typeF.name)
+        return str(objective.typeF.name)
 
     def get_objectives_in_error(self):
         return get_objectives_in_error(self.search_objectives())
@@ -99,12 +100,10 @@ class Reasoner:
         """Creates QAvalue individual in the KB given a desired name and a
         string seed for the QAtype name and the value
         """
-
-        # TODO: this search is not optimal, the search + loop can be
-        # substituted by a single search
-        qa_type = self.get_qa_type(nfr_key)
-
         with self.ontology_lock:
+            # TODO: this search is not optimal, the search + loop can be
+            # substituted by a single search
+            qa_type = self.get_qa_type(nfr_key)
             new_nfr = self.tomasys.QAvalue(
                 str(qa_value_name),
                 namespace=self.tomasys,
@@ -113,6 +112,20 @@ class Reasoner:
 
             return new_nfr
 
+    def append_nfr_to_objective(self, objective, nfr):
+        with self.ontology_lock:
+            objective.hasNFR.append(nfr)
+        return objective
+
+    def update_objective_status(self, objective, status):
+        with self.ontology_lock:
+            objective.o_status = status
+        return objective
+
+    def get_fg_solves_objective(self, objective):
+        with self.ontology_lock:
+            return self.tomasys.search_one(solvesO=objective)
+
     def set_new_grounding(self, fd_name, objective):
         """Given a string fd_name with the name of a FunctionDesign and an
         objective, removes the previous fg for the objective and ground a new
@@ -120,15 +133,14 @@ class Reasoner:
         """
         with self.ontology_lock:
             remove_objective_grounding(objective, self.tomasys)
-        fd = self.tomasys.search_one(
-            iri="*{}".format(fd_name),
-            is_a=self.tomasys.FunctionDesign)
-        if fd:
-            with self.ontology_lock:
+            fd = self.tomasys.search_one(
+                iri="*{}".format(fd_name),
+                is_a=self.tomasys.FunctionDesign)
+            if fd:
+                # with self.ontology_lock:
                 ground_fd(fd, objective, self.tomasys)
                 reset_objective_status(objective)
-            return str(fd.name)
-        else:
+                return str(fd.name)
             return None
 
     # the DiagnosticStatus message process contains, per field
@@ -154,19 +166,19 @@ class Reasoner:
     def update_component_status(self, diagnostic_status):
         # Find the Component with the same name that the one in the Component
         # Status message (in diagnostic_status.key)
-        component_type = self.tomasys.search_one(
-            iri="*{}".format(diagnostic_status.values[0].key))
-        if component_type is not None:
-            value = diagnostic_status.values[0].value
-            with self.ontology_lock:
+        with self.ontology_lock:
+            component_type = self.tomasys.search_one(
+                iri="*{}".format(diagnostic_status.values[0].key))
+            if component_type is not None:
+                value = diagnostic_status.values[0].value
                 reset_fd_realisability(
                     self.tomasys,
                     diagnostic_status.values[0].key)
                 component_type.c_status = value
-            return_value = 1
-        else:
-            return_value = 0
-        return return_value
+                return_value = 1
+            else:
+                return_value = 0
+            return return_value
 
     def get_qa_type(self, key):
         # TODO: this search is not optimal, the search + loop can be
@@ -193,19 +205,19 @@ class Reasoner:
 
     # update QA value based on incoming diagnostic
     def update_qa(self, diagnostic_status):
-        qa_type = self.get_qa_type(diagnostic_status.values[0].key)
-        if qa_type is not None:
-            fgs = self.get_function_groudings_require_qa(qa_type)
-            value = float(diagnostic_status.values[0].value)
-            with self.ontology_lock:
+        with self.ontology_lock:
+            qa_type = self.get_qa_type(diagnostic_status.values[0].key)
+            if qa_type is not None:
+                fgs = self.get_function_groudings_require_qa(qa_type)
+                value = float(diagnostic_status.values[0].value)
                 measured_qa = update_measured_qa_value(
                     qa_type, value, self.tomasys)
                 for fg in fgs:
                     update_fg_measured_qa(fg, measured_qa)
-            return_value = True
-        else:
-            return_value = False
-        return return_value
+                return_value = True
+            else:
+                return_value = False
+            return return_value
 
     # EXEC REASONING to update ontology with inferences
     # TODO CHECK: update reasoner facts, evaluate, retrieve action, publish
@@ -232,12 +244,12 @@ class Reasoner:
         sys.exit(0)
 
     def handle_updatable_objectives(self, obj_in_error):
-        if obj_in_error.o_status == "UPDATABLE":
-            self.logger.info(
-                ">> UPDATABLE objective - Try to clear Components status")
-            for comp_inst in list(
-                    self.tomasys.ComponentState.instances()):
-                with self.ontology_lock:
+        with self.ontology_lock:
+            if obj_in_error.o_status == "UPDATABLE":
+                self.logger.info(
+                    ">> UPDATABLE objective - Try to clear Components status")
+                for comp_inst in list(
+                        self.tomasys.ComponentState.instances()):
                     if comp_inst.c_status == "RECOVERED":
                         self.logger.info(
                             "Component {0} Status {1} - Set to None".format(
@@ -258,14 +270,16 @@ class Reasoner:
 
     # find best fds for all objectives
     def select_desired_configuration(self, obj_in_error):
-        self.logger.info(" >> Reasoner searches an FD ")
-        desired_configuration = obtain_best_function_design(
-            obj_in_error, self.tomasys)
+        with self.ontology_lock:
+            self.logger.info(" >> Reasoner searches an FD ")
+            desired_configuration = obtain_best_function_design(
+                obj_in_error, self.tomasys)
 
-        if desired_configuration is None:
-            self.logger.warning(
-                "No FD found to solve Objective {} ".format(obj_in_error.name))
-        return desired_configuration
+            if desired_configuration is None:
+                self.logger.warning(
+                    "No FD found to solve Objective {} ".format(
+                        obj_in_error.name))
+            return desired_configuration
 
     # MAPE-K: Analyze step
     def analyze(self):

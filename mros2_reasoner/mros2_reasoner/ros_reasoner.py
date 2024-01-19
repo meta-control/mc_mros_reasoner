@@ -147,7 +147,7 @@ class RosReasoner(Node, Reasoner):
                     feedback_msg.qos_status.objective_type = \
                         str(request_objective.qos_expected.objective_type)
 
-                    fg_instance = self.tomasys.search_one(solvesO=objective)
+                    fg_instance = self.get_fg_solves_objective(objective)
                     if fg_instance is not None:
                         feedback_msg.qos_status.selected_mode = \
                             fg_instance.typeFD.name
@@ -179,7 +179,8 @@ class RosReasoner(Node, Reasoner):
             new_nfr = self.get_new_tomasys_nfr(
                  nfr_id, nfr_key.key, float(nfr_key.value))
             self.logger.info('Adding NFRs {}'.format(new_nfr))
-            new_objective.hasNFR.append(new_nfr)
+            new_objective = self.append_nfr_to_objective(
+                new_objective, new_nfr)
 
         # TODO: this is not working
         if not goal_request.qos_expected.selected_mode:
@@ -188,7 +189,8 @@ class RosReasoner(Node, Reasoner):
             self.set_initial_fd(goal_request.qos_expected.selected_mode)
 
         # TODO: shouldn't this be a swrl rule instead of hardcoded?
-        new_objective.o_status = 'UNGROUNDED'
+        new_objective = self.update_objective_status(
+            new_objective, 'UNGROUNDED')
 
         return True
 
@@ -226,14 +228,14 @@ class RosReasoner(Node, Reasoner):
                                 diagnostic_status.values[0].value))
                     else:
                         self.logger.warning(
-                            'Unsupported CS Message received: %s ' + str(
+                            'Unsupported CS Message received: {} '.format(
                                 diagnostic_status.values[0].key))
 
                 elif diagnostic_status.message == "QA status":
                     up_qa = self.update_qa(diagnostic_status)
                     if not up_qa:
                         self.logger.warning(
-                            'Unsupported QA TYPE received: %s ' + str(
+                            'Unsupported QA TYPE received: {} '.format(
                                 diagnostic_status.values[0].key))
 
     def request_configuration(self, desired_configuration, function_name):
