@@ -1,6 +1,6 @@
 from rclpy.action import ActionServer
 from rclpy.action import CancelResponse
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 
@@ -42,8 +42,6 @@ class RosReasoner(Node, Reasoner):
 
         self.is_initialized = False
 
-        self.cb_group = ReentrantCallbackGroup()
-
         # Start interfaces
         # subscriptions for different message types (named, pins, angle)
         # Node's default callback group is mutually exclusive. This would
@@ -54,7 +52,7 @@ class RosReasoner(Node, Reasoner):
             '/diagnostics',
             self.diagnostics_callback,
             1,
-            callback_group=self.cb_group)
+            callback_group=MutuallyExclusiveCallbackGroup())
 
         # Create action server
         self.objective_action_server = ActionServer(
@@ -62,7 +60,7 @@ class RosReasoner(Node, Reasoner):
             ControlQos,
             '/mros/objective',
             self.objective_action_callback,
-            callback_group=self.cb_group,
+            callback_group=MutuallyExclusiveCallbackGroup(),
             cancel_callback=self.objective_cancel_goal_callback)
 
         # Get desired_configuration_name from parameters
@@ -74,7 +72,7 @@ class RosReasoner(Node, Reasoner):
         self.metacontrol_loop_timer = self.create_timer(
             timer_period,
             self.metacontrol_loop_callback,
-            callback_group=self.cb_group)
+            callback_group=MutuallyExclusiveCallbackGroup())
 
         self.logger = self.get_logger()
 
@@ -246,7 +244,7 @@ class RosReasoner(Node, Reasoner):
         mode_change_cli = self.create_client(
                 MetacontrolFD,
                 '/mros/request_configuration',
-                callback_group=self.cb_group)
+                callback_group=MutuallyExclusiveCallbackGroup())
 
         while not mode_change_cli.wait_for_service(timeout_sec=1.0):
             self.logger.warning(
