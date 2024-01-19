@@ -54,13 +54,14 @@ class RosReasoner(Node, Reasoner):
             1,
             callback_group=MutuallyExclusiveCallbackGroup())
 
+        cb_group = MutuallyExclusiveCallbackGroup()
         # Create action server
         self.objective_action_server = ActionServer(
             self,
             ControlQos,
             '/mros/objective',
             self.objective_action_callback,
-            callback_group=MutuallyExclusiveCallbackGroup(),
+            callback_group=cb_group,
             cancel_callback=self.objective_cancel_goal_callback)
 
         # Get desired_configuration_name from parameters
@@ -72,7 +73,7 @@ class RosReasoner(Node, Reasoner):
         self.metacontrol_loop_timer = self.create_timer(
             timer_period,
             self.metacontrol_loop_callback,
-            callback_group=MutuallyExclusiveCallbackGroup())
+            callback_group=cb_group)
 
         self.logger = self.get_logger()
 
