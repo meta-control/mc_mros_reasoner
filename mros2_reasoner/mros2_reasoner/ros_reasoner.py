@@ -27,7 +27,7 @@ class RosReasoner(Node, Reasoner):
 
         Reasoner.__init__(self, ontology_file)
 
-        self.declare_parameter('desired_configuration', Parameter.Type.STRING)
+        self.declare_parameter('desired_configuration', '')
         self.declare_parameter('reasoning_period', 2)
         self.declare_parameter('use_reconfigure_srv', True)
 
