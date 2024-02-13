@@ -28,6 +28,7 @@ import logging
 from typing import Dict
 from typing import List
 from typing import Tuple
+from typing import Union
 
 
 class Reasoner:
@@ -131,7 +132,8 @@ class Reasoner:
         with self.ontology_lock:
             return self.tomasys.search_one(solvesO=objective)
 
-    def set_new_grounding(self, fd_name: str, obj_name: str) -> str | None:
+    def set_new_grounding(
+         self, fd_name: str, obj_name: str) -> Union[str, None]:
         """Given a string fd_name with the name of a FunctionDesign and an
         objective, removes the previous fg for the objective and ground a new
         fg of typeF fd
