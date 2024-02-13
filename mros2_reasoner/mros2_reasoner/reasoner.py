@@ -25,6 +25,8 @@ from owlready2 import sync_reasoner_pellet
 
 import logging
 
+from typing import Dict
+from typing import List
 from typing import Tuple
 
 
@@ -84,7 +86,7 @@ class Reasoner:
             return None
         return str(objective.typeF.name)
 
-    def get_objectives_in_error(self) -> Tuple[list[str], list[str]]:
+    def get_objectives_in_error(self) -> Tuple[List[str], List[str]]:
         return get_objectives_in_error(self.search_objectives())
 
     def get_new_tomasys_objective(self, objective_name, iri_seed):
@@ -263,7 +265,7 @@ class Reasoner:
                         comp_inst.c_status = None
 
     # find best fds for all objectives
-    def select_desired_configuration(self, obj: str) -> dict[str, str]:
+    def select_desired_configuration(self, obj: str) -> Dict[str, str]:
         obj_in_error = self.get_objective_from_objective_id(obj)
         with self.ontology_lock:
             self.logger.info(" >> Reasoner searches an FD ")
@@ -277,7 +279,7 @@ class Reasoner:
             return desired_configuration
 
     # MAPE-K: Analyze step
-    def analyze(self) -> list[str]:
+    def analyze(self) -> List[str]:
         # PRINT system status
         with self.ontology_lock:
             print_ontology_status(self.tomasys)
@@ -311,7 +313,7 @@ class Reasoner:
         return objectives_in_error
 
     # MAPE-K: Plan step
-    def plan(self, objectives_in_error: list[str]) -> dict[str, str]:
+    def plan(self, objectives_in_error: List[str]) -> Dict[str, str]:
         if self.has_objective() is False or objectives_in_error == []:
             return dict()
 
@@ -327,7 +329,7 @@ class Reasoner:
         return desired_configurations
 
     # MAPE-K: Execute step
-    def execute(self, desired_configurations: dict[str, str]):
+    def execute(self, desired_configurations: Dict[str, str]):
         if self.has_objective() is False or desired_configurations == dict():
             return
 

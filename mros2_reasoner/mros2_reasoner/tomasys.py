@@ -10,6 +10,7 @@
 
 from owlready2 import destroy_entity
 from owlready2 import get_ontology
+from typing import List
 from typing import Tuple
 import logging
 
@@ -147,7 +148,7 @@ def update_fg_measured_qa(fg, measured_qa):
 
 # Evaluates the Objective individuals in the KB and returns a list with
 # those in error
-def get_objectives_in_error(objectives) -> Tuple[list[str], list[str]]:
+def get_objectives_in_error(objectives) -> Tuple[List[str], List[str]]:
     objectives_internal_error = []
     objectives_internal_error_status = []
     for o in objectives:
