@@ -77,6 +77,7 @@ protected:
   void manageMrosAction()
   {
     bool mros_action_finished = false;
+    bool ros2_action_finished = false;
 
     mros2_msgs::msg::QoS::SharedPtr last_qos_status = nullptr;
 
@@ -99,6 +100,7 @@ protected:
       const typename rclcpp_action::ClientGoalHandle<Ros2ActionT>::WrappedResult &)
       {
         mros_action_finished = true;
+        ros2_action_finished = true;
         mros_action_server_->succeeded_current();
       };
 
@@ -130,7 +132,6 @@ protected:
       get_node_graph_interface(),
       get_node_logging_interface(),
       get_node_waitables_interface(),
-
       "/mros/objective", on_mros_feedback, on_mros_result);
 
     auto mros_goal = std::make_shared<mros2_msgs::action::ControlQos::Goal>();
@@ -154,13 +155,14 @@ protected:
     RCLCPP_WARN(get_logger(), "Nav goal sent ");
 
     // Main loop, waiting to finish the action
-    while (!mros_action_finished) {
+    while (!ros2_action_finished) {
       if (mros_action_server_->is_cancel_requested()) {
         ros2_action_client->abort_action();
       }
       rclcpp::Rate(3).sleep();
     }
 
+    RCLCPP_WARN(get_logger(), "Nav goal finished ");
     mros_action_client->abort_action();
     rclcpp::Rate(1).sleep();  // Wait until everything finishes ok
   }

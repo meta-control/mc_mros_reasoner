@@ -108,8 +108,9 @@ class RosReasoner(Node, Reasoner):
                 function_name)
             if reconfiguration_result is None \
                or reconfiguration_result.success is False:
-                self.logger.info('Objective {} cancel req failed'.format(
-                    cancel_request.request.qos_expected.objective_id))
+                self.logger.info(
+                    'Objective {} cancel req failed, no fd_unground'.format(
+                        cancel_request.request.qos_expected.objective_id))
                 return CancelResponse.REJECT
 
         if self.remove_objective(
