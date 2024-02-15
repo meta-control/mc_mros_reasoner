@@ -3,6 +3,8 @@ from rclpy.action import CancelResponse
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.parameter import Parameter
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
+
 
 from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import KeyValue
@@ -47,21 +49,25 @@ class RosReasoner(Node, Reasoner):
         # Node's default callback group is mutually exclusive. This would
         # prevent the change mode requests' response from being processed until
         # the timer callback finished. The callback_group should solve this.
+        qos_profile = QoSProfile(
+            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+            history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_ALL,
+        )
         self.diganostic_sub = self.create_subscription(
             DiagnosticArray,
             '/diagnostics',
             self.diagnostics_callback,
-            1,
+            qos_profile,
             callback_group=MutuallyExclusiveCallbackGroup())
 
-        cb_group = MutuallyExclusiveCallbackGroup()
+        self.cb_group = MutuallyExclusiveCallbackGroup()
         # Create action server
         self.objective_action_server = ActionServer(
             self,
             ControlQos,
             '/mros/objective',
             self.objective_action_callback,
-            callback_group=cb_group,
+            callback_group=self.cb_group,
             cancel_callback=self.objective_cancel_goal_callback)
 
         # Get desired_configuration_name from parameters
@@ -73,7 +79,7 @@ class RosReasoner(Node, Reasoner):
         self.metacontrol_loop_timer = self.create_timer(
             timer_period,
             self.metacontrol_loop_callback,
-            callback_group=cb_group)
+            callback_group=self.cb_group)
 
         self.logger = self.get_logger()
 
