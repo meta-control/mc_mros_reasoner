@@ -203,7 +203,7 @@ class RosReasoner(Node, Reasoner):
 
     # MVP: callback for diagnostic msg received from QA Observer
     def diagnostics_callback(self, msg):
-        if self.tomasys is not None and self.has_objective() is True:
+        if self.tomasys is not None:
             for diagnostic_status in msg.status:
                 if diagnostic_status.message == 'binding error':
                     self.logger.info('binding error received')
