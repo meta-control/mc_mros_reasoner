@@ -255,7 +255,7 @@ class Reasoner:
     def handle_updatable_objectives(self, obj: str) -> None:
         obj_in_error = self.get_objective_from_objective_id(obj)
         with self.ontology_lock:
-            if obj_in_error.o_status == "UPDATABLE":
+            if obj_in_error.o_updatable is True:
                 self.logger.info(
                     ">> UPDATABLE objective - Try to clear Components status")
                 for comp_inst in list(

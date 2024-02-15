@@ -74,6 +74,7 @@ def reset_objective_status(objective_name: str, ontology, status=None):
         iri="*{}".format(objective_name), is_a=ontology.Objective)
     if objective is not None:
         objective.o_status = status
+        objective.o_updatable = None
 
 
 def reset_fd_realisability(ontology, c_name):
@@ -151,12 +152,12 @@ def update_fg_measured_qa(fg, measured_qa):
 def get_objectives_in_error(objectives) -> Tuple[List[str], List[str]]:
     objectives_internal_error = []
     objectives_internal_error_status = []
+    o_error_status = ["UNGROUNDED",
+                      "IN_ERROR_FR",
+                      "IN_ERROR_NFR",
+                      "IN_ERROR_COMPONENT"]
     for o in objectives:
-        if o.o_status in ["UNGROUNDED",
-                          "UPDATABLE",
-                          "IN_ERROR_FR",
-                          "IN_ERROR_NFR",
-                          "IN_ERROR_COMPONENT"]:
+        if o.o_status in o_error_status or o.o_updatable is True:
             objectives_internal_error.append(str(o.name))
             objectives_internal_error_status.append(str(o.o_status))
     return objectives_internal_error, objectives_internal_error_status
