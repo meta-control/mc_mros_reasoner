@@ -270,20 +270,20 @@ def get_measured_qa(key, ontology):
 
 
 def filter_fds(o, fds, ontology):
-    filtered = meet_nfrs(o, fds)
+    filtered = meet_objective_nfrs(o, fds)
     logging.warning(
-        "== FunctionDesigns also meeting NFRs: %s", [
+        "== FunctionDesigns also meeting objectives NFRs: %s", [
             fd.name for fd in filtered])
-    filtered = filter_water_visibility(o, fds, ontology)
+    filtered = filter_fds_nfr(o, fds, ontology)
     logging.warning(
-        "== FunctionDesigns also meeting custom filters: %s", [
+        "== FunctionDesigns also meeting fds NFRs: %s", [
             fd.name for fd in filtered])
     return filtered
 
 
 # Returns all FunctionDesign individuals from a given set (fds) that
 # comply with the NFRs of a given Objective individual (o)
-def meet_nfrs(o, fds):
+def meet_objective_nfrs(o, fds):
     if fds == [] or len(o.hasNFR) == 0:
         return fds
 
@@ -310,22 +310,21 @@ def meet_nfrs(o, fds):
     return filtered
 
 
-def filter_water_visibility(o, fds, ontology):
-    qa_key = 'water_visibility'
-    observed_water_visibility = get_measured_qa(qa_key, ontology)
+def filter_fds_nfr(o, fds, ontology):
     filtered = fds.copy()
-    if observed_water_visibility is not None:
-        for fd in fds:
-            qas = [qa for qa in fd.hasQAestimation
-                   if str(qa.isQAtype.name) == qa_key]
-            if len(qas) != 1:
-                logging.warning(
-                    "FD " + str(fd.name) +
-                    " has no expected value or multiple definitions for"
-                    + qa_key + "QA")
-            else:
-                if observed_water_visibility < qas[0].hasValue:
-                    filtered.remove(fd)
+    for fd in fds:
+        for qa in fd.hasQAestimation:
+            qa_type = qa.isQAtype
+            operator = qa_type.qa_comparison_operator
+            measured_qa = get_measured_qa(qa_type.name, ontology)
+            if operator == "<" and measured_qa < qa.hasValue:
+                filtered.remove(fd)
+            elif operator == "<=" and measured_qa <= qa.hasValue:
+                filtered.remove(fd)
+            elif operator == ">" and measured_qa > qa.hasValue:
+                filtered.remove(fd)
+            elif operator == ">=" and measured_qa >= qa.hasValue:
+                filtered.remove(fd)
     return filtered
 
 
