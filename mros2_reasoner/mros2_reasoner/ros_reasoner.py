@@ -198,7 +198,7 @@ class RosReasoner(Node, Reasoner):
         # TODO: shouldn't this be a swrl rule instead of hardcoded?
         new_objective = self.update_objective_status(
             new_objective, 'UNGROUNDED')
-
+        self.logger.info('Objective {0} created!'.format(new_objective))
         return True
 
     # MVP: callback for diagnostic msg received from QA Observer
