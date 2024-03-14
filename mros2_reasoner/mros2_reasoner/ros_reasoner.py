@@ -53,12 +53,13 @@ class RosReasoner(Node, Reasoner):
             reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_RELIABLE,
             history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_ALL,
         )
+        self.diagnostics_cb_group = MutuallyExclusiveCallbackGroup()
         self.diganostic_sub = self.create_subscription(
             DiagnosticArray,
             '/diagnostics',
             self.diagnostics_callback,
             qos_profile,
-            callback_group=MutuallyExclusiveCallbackGroup())
+            callback_group=self.diagnostics_cb_group)
 
         self.cb_group = MutuallyExclusiveCallbackGroup()
         # Create action server
@@ -79,7 +80,8 @@ class RosReasoner(Node, Reasoner):
         self.metacontrol_loop_timer = self.create_timer(
             timer_period,
             self.metacontrol_loop_callback,
-            callback_group=self.cb_group)
+            callback_group=self.cb_group
+        )
 
         self.logger = self.get_logger()
 
@@ -167,7 +169,6 @@ class RosReasoner(Node, Reasoner):
                     objective_handle.publish_feedback(feedback_msg)
                 else:
                     send_feedback = False
-
                 self.feedback_rate.sleep()
             objective_handle.succeed()
         else:
