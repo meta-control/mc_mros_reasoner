@@ -1,13 +1,26 @@
 #!/usr/bin/env python
-###########################################
+# Copyright 2024 KAS-lab
 #
-# authors:    M.A.GarzonOviedo@tudelft.nl
-#             c.h.corbato@tudelft.nl
-##########################################
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import csv
+import os
+from pathlib import Path
 
 import signal
 import sys
 from threading import Lock
+from datetime import datetime
 
 from mros2_reasoner.tomasys import get_objectives_in_error
 from mros2_reasoner.tomasys import ground_fd
@@ -233,17 +246,18 @@ class Reasoner:
         with self.ontology_lock:
             with self.tomasys:
                 try:
+                    start_reasoning = datetime.now()
                     sync_reasoner_pellet(
                         infer_property_values=True,
                         infer_data_property_values=True,
                         debug=0
                     )
+                    return datetime.now() - start_reasoning
                 except Exception as err:
                     self.logger.error(
                         "Error in perform_reasoning: {0}".format(err))
                     return False
                     # raise err
-        return True
 
     # For debugging purposes: saves state of the KB in an ontology file
     # TODO move to library
@@ -281,7 +295,20 @@ class Reasoner:
             return desired_configuration
 
     # MAPE-K: Analyze step
-    def analyze(self) -> List[str]:
+    def analyze(
+        self,
+        save_reasoning_time = False,
+        reasoning_time_filename='metacontrol_reasoning_time',
+        reasoning_time_file_path='~/metacontrol/results') -> List[str]:
+        """Execute reasoner analyze step.
+
+        Execute reasoner analyze step, and save reasoning time if
+        save_reasoning_time is True.
+
+        :param save_reasoning_time: whether to save the reasoning times or not
+        :param reasoning_time_file_path: path where to save reasoning times
+        :param reasoning_time_filename: filename for the reasoning times
+        """
         # PRINT system status
         with self.ontology_lock:
             print_ontology_status(self.tomasys)
@@ -294,7 +321,17 @@ class Reasoner:
             '>> Started MAPE-K ** Analysis (ontological reasoning) **')
 
         # EXEC REASONING to update ontology with inferences
-        if self.perform_reasoning() is False:
+        reasoning_time = self.perform_reasoning()
+        if save_reasoning_time is True and reasoning_time is not False:
+            self.save_metrics(
+                reasoning_time_file_path,
+                reasoning_time_filename,
+                ["datetime", "reasoning time"],
+                [datetime.now().strftime("%d-%b-%Y-%H-%M-%S"),
+                    reasoning_time.total_seconds()]
+            )
+
+        if reasoning_time is False:
             with self.ontology_lock:
                 self.logger.error('>> Reasoning error')
                 self.tomasys.save(
@@ -340,3 +377,40 @@ class Reasoner:
             if self.get_objective_from_objective_id(objective) is not None:
                 self.set_new_grounding(
                     desired_configurations[objective], objective)
+
+    def save_metrics(
+        self,
+        path: str,
+        filename: str,
+        header: list[str],
+        data: list[str | float | int]) -> None:
+        """Save data into a .csv file.
+
+        Create folder if `result_path` folder does not exist.
+        Create file if `result_file` does not exist and insert header.
+        Append data if `result_file` exist.
+
+        :param data: array with data to be saved
+        """
+        result_path = Path(path).expanduser()
+
+        if result_path.is_dir() is False:
+            result_path.mkdir(parents=True)
+
+        result_file = result_path / (filename + '.csv')
+        if result_file.is_file() is False:
+            result_file.touch()
+            self.append_csv(result_file, header)
+
+        self.append_csv(result_file, data)
+
+    def append_csv(self, file_path: str,
+                   data: list[str | float | int]) -> None:
+        """Append array to .csv file.
+
+        :param file_path: file path
+        :param data: data to be saved
+        """
+        with open(file_path, 'a') as file:
+            writer = csv.writer(file)
+            writer.writerow(data)

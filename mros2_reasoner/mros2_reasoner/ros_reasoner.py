@@ -1,3 +1,17 @@
+# Copyright 2024 KAS-lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from rclpy.action import ActionServer
 from rclpy.action import CancelResponse
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
@@ -23,15 +37,21 @@ class RosReasoner(Node, Reasoner):
         self.declare_parameter('model_file', Parameter.Type.STRING)
         self.declare_parameter('tomasys_file', Parameter.Type.STRING_ARRAY)
 
+        self.declare_parameter('reasoning_time_save', False)
+        self.declare_parameter(
+            'reasoning_time_filename', 'metacontrol_reasoning_time')
+        self.declare_parameter(
+            'reasoning_time_file_path', '~/metacontrol/results')
+
+        self.declare_parameter('desired_configuration', '')
+        self.declare_parameter('reasoning_period', 1.5)
+        self.declare_parameter('use_reconfigure_srv', True)
+
         ontology_file = self.get_parameter('tomasys_file').value
         ontology_file.append(self.get_parameter('model_file').value)
         # Get ontology and tomasys file paths from parameters
 
         Reasoner.__init__(self, ontology_file)
-
-        self.declare_parameter('desired_configuration', '')
-        self.declare_parameter('reasoning_period', 2)
-        self.declare_parameter('use_reconfigure_srv', True)
 
         # Whether or not to use system modes reconfiguration
         #  Used mainly for testing
@@ -50,8 +70,8 @@ class RosReasoner(Node, Reasoner):
         # prevent the change mode requests' response from being processed until
         # the timer callback finished. The callback_group should solve this.
         qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-            history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_ALL,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_ALL,
         )
         self.diagnostics_cb_group = MutuallyExclusiveCallbackGroup()
         self.diganostic_sub = self.create_subscription(
@@ -308,7 +328,11 @@ class RosReasoner(Node, Reasoner):
             return
 
         # Analyze
-        objectives_in_error = self.analyze()
+        objectives_in_error = self.analyze(
+            save_reasoning_time = self.get_parameter('reasoning_time_save').value,
+            reasoning_time_filename = self.get_parameter('reasoning_time_filename').value,
+            reasoning_time_file_path = self.get_parameter('reasoning_time_file_path').value
+        )
 
         # Plan
         desired_configurations = self.plan(objectives_in_error)
