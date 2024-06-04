@@ -149,18 +149,21 @@ def update_fg_measured_qa(fg, measured_qa):
 
 # Evaluates the Objective individuals in the KB and returns a list with
 # those in error
-def get_objectives_in_error(objectives) -> Tuple[List[str], List[str]]:
-    objectives_internal_error = []
-    objectives_internal_error_status = []
+def get_adaptable_objectives(objectives) -> Tuple[List[str], List[str]]:
+    objectives_adaptable = []
+    objectives_adaptable_status = []
     o_error_status = ["UNGROUNDED",
                       "IN_ERROR_FR",
                       "IN_ERROR_NFR",
                       "IN_ERROR_COMPONENT"]
     for o in objectives:
         if o.o_status in o_error_status or o.o_updatable is True:
-            objectives_internal_error.append(str(o.name))
-            objectives_internal_error_status.append(str(o.o_status))
-    return objectives_internal_error, objectives_internal_error_status
+            objectives_adaptable.append(str(o.name))
+            objectives_adaptable_status.append(str(o.o_status))
+        elif o.o_always_improve is True:
+            objectives_adaptable.append(str(o.name))
+            objectives_adaptable_status.append(str(o.o_status))
+    return objectives_adaptable, objectives_adaptable_status
 
 
 def get_function_grounding(o, ontology):

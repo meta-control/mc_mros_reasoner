@@ -22,7 +22,7 @@ import sys
 from threading import Lock
 from datetime import datetime
 
-from mros2_reasoner.tomasys import get_objectives_in_error
+from mros2_reasoner.tomasys import get_adaptable_objectives
 from mros2_reasoner.tomasys import ground_fd
 from mros2_reasoner.tomasys import obtain_best_function_design
 from mros2_reasoner.tomasys import print_ontology_status
@@ -100,8 +100,8 @@ class Reasoner:
             return None
         return str(objective.typeF.name)
 
-    def get_objectives_in_error(self) -> Tuple[List[str], List[str]]:
-        return get_objectives_in_error(self.search_objectives())
+    def get_adaptable_objectives(self) -> Tuple[List[str], List[str]]:
+        return get_adaptable_objectives(self.search_objectives())
 
     def get_new_tomasys_objective(self, objective_name, iri_seed):
         """ Creates Objective individual in the KB given a desired name and a
@@ -139,6 +139,11 @@ class Reasoner:
     def update_objective_status(self, objective, status):
         with self.ontology_lock:
             objective.o_status = status
+        return objective
+
+    def set_objective_always_improve(self, objective):
+        with self.ontology_lock:
+            objective.o_always_improve = True
         return objective
 
     def get_fg_solves_objective(self, objective):
@@ -267,9 +272,9 @@ class Reasoner:
         sys.exit(0)
 
     def handle_updatable_objectives(self, obj: str) -> None:
-        obj_in_error = self.get_objective_from_objective_id(obj)
+        adaptable_obj = self.get_objective_from_objective_id(obj)
         with self.ontology_lock:
-            if obj_in_error.o_updatable is True:
+            if adaptable_obj.o_updatable is True:
                 self.logger.info(
                     ">> UPDATABLE objective - Try to clear Components status")
                 for comp_inst in list(
@@ -282,16 +287,16 @@ class Reasoner:
 
     # find best fds for all objectives
     def select_desired_configuration(self, obj: str) -> Dict[str, str]:
-        obj_in_error = self.get_objective_from_objective_id(obj)
+        adaptable_obj = self.get_objective_from_objective_id(obj)
         with self.ontology_lock:
             self.logger.info(" >> Reasoner searches an FD ")
             desired_configuration = obtain_best_function_design(
-                obj_in_error, self.tomasys)
+                adaptable_obj, self.tomasys)
 
             if desired_configuration is None:
                 self.logger.warning(
                     "No FD found to solve Objective {} ".format(
-                        obj_in_error.name))
+                        adaptable_obj.name))
             return desired_configuration
 
     # MAPE-K: Analyze step
@@ -313,9 +318,9 @@ class Reasoner:
         with self.ontology_lock:
             print_ontology_status(self.tomasys)
 
-        objectives_in_error = []
+        adaptable_objectives = []
         if self.has_objective() is False:
-            return objectives_in_error
+            return adaptable_objectives
 
         self.logger.info(
             '>> Started MAPE-K ** Analysis (ontological reasoning) **')
@@ -336,35 +341,35 @@ class Reasoner:
                 self.logger.error('>> Reasoning error')
                 self.tomasys.save(
                     file="error_reasoning.owl", format="rdfxml")
-                return objectives_in_error
+                return adaptable_objectives
 
         # EVALUATE functional hierarchy (objectives statuses) (MAPE - Analysis)
-        objectives_in_error, o_status = self.get_objectives_in_error()
-        if objectives_in_error == []:
+        adaptable_objectives, o_status = self.get_adaptable_objectives()
+        if adaptable_objectives == []:
             self.logger.info(
                 ">> No Objectives in ERROR: no adaptation is needed")
-            return objectives_in_error
+            return adaptable_objectives
 
-        for obj_in_error, status in zip(objectives_in_error, o_status):
+        for adaptable_obj, status in zip(adaptable_objectives, o_status):
             self.logger.warning(
                 "Objective {0} in status: {1}".format(
-                    obj_in_error, status))
-        return objectives_in_error
+                    adaptable_obj, status))
+        return adaptable_objectives
 
     # MAPE-K: Plan step
-    def plan(self, objectives_in_error: List[str]) -> Dict[str, str]:
-        if self.has_objective() is False or objectives_in_error == []:
+    def plan(self, adaptable_objectives: List[str]) -> Dict[str, str]:
+        if self.has_objective() is False or adaptable_objectives == []:
             return dict()
 
         self.logger.info('  >> Started MAPE-K ** PLAN adaptation **')
         desired_configurations = dict()
-        for obj_in_error in objectives_in_error:
-            self.handle_updatable_objectives(obj_in_error)
+        for adaptable_obj in adaptable_objectives:
+            self.handle_updatable_objectives(adaptable_obj)
 
             desired_config = self.select_desired_configuration(
-                obj_in_error)
+                adaptable_obj)
             if desired_config is not None:
-                desired_configurations[obj_in_error] = desired_config
+                desired_configurations[adaptable_obj] = desired_config
         return desired_configurations
 
     # MAPE-K: Execute step

@@ -200,6 +200,10 @@ class RosReasoner(Node, Reasoner):
         new_objective = self.get_new_tomasys_objective(
             goal_request.qos_expected.objective_id,
             "*" + goal_request.qos_expected.objective_type)
+
+        if goal_request.qos_expected.always_improve is True:
+            self.set_objective_always_improve(new_objective)
+
         self.logger.info('Creating Objective {0}'.format(new_objective))
         for nfr_key in goal_request.qos_expected.qos:
             nfr_id = \
